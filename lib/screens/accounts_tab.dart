@@ -7,12 +7,25 @@ import '../models/transaction.dart';
 class AccountsTab extends StatelessWidget {
   const AccountsTab({super.key});
 
-  String _formatBalance(double balance) {
-    // Always show full number with commas, never 1k/10k
-    return '₹${balance.toStringAsFixed(2).replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => ',',
-    )}';
+  String _formatIndianAmount(double amount) {
+    String sign = amount < 0 ? '-' : '';
+    amount = amount.abs();
+    String str = amount.toStringAsFixed(2);
+    List<String> parts = str.split('.');
+    String num = parts[0];
+    String dec = parts[1];
+    if (num.length > 3) {
+      String first = num.substring(0, num.length - 3);
+      String last = num.substring(num.length - 3);
+      List<String> firstParts = [];
+      while (first.length > 2) {
+        firstParts.insert(0, first.substring(first.length - 2));
+        first = first.substring(0, first.length - 2);
+      }
+      if (first.isNotEmpty) firstParts.insert(0, first);
+      num = firstParts.join(',') + ',' + last;
+    }
+    return '₹$sign$num.$dec';
   }
 
   void _showAddAccountDialog(BuildContext context) {
@@ -289,22 +302,31 @@ class AccountsTab extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
+                                    // Account info and last updated
                                     Expanded(
+                                      flex: 2,
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
                                             account.name,
                                             style: const TextStyle(
-                                              fontSize: 18,
                                               fontWeight: FontWeight.bold,
+                                              fontSize: 16,
                                             ),
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            'Last updated: ${account.balanceDate.toString().substring(0, 16)}',
+                                            'Last updated:',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          Text(
+                                            account.balanceDate.toString().substring(0, 16),
                                             style: TextStyle(
                                               color: Colors.grey[600],
                                               fontSize: 12,
@@ -313,43 +335,58 @@ class AccountsTab extends StatelessWidget {
                                         ],
                                       ),
                                     ),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          _formatBalance(account.balance),
-                                          style: TextStyle(
-                                            fontSize: 20,
-                                            fontWeight: FontWeight.bold,
-                                            color: account.balance >= 0 ? Colors.green : Colors.red,
+                                    // Amount right-aligned
+                                    Expanded(
+                                      flex: 2,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            _formatIndianAmount(account.balance),
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: account.balance >= 0 ? Colors.green : Colors.red,
+                                            ),
                                           ),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.edit),
-                                          color: Colors.deepPurple,
-                                          tooltip: 'Edit Balance',
-                                          onPressed: () => _showEditBalanceDialog(context, account),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.delete_outline),
-                                          color: Colors.red,
-                                          onPressed: () async {
-                                            if (await _confirmDelete(context, account.name)) {
-                                              if (context.mounted) {
-                                                Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text('${account.name} deleted'),
-                                                    backgroundColor: Colors.red,
-                                                    behavior: SnackBarBehavior.floating,
-                                                    margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                    duration: Duration(milliseconds: 1500),
-                                                  ),
-                                                );
-                                              }
-                                            }
-                                          },
-                                        ),
-                                      ],
+                                          // Edit and Delete icons below amount
+                                          Padding(
+                                            padding: const EdgeInsets.only(top: 8.0, right: 0.0),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.end,
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                IconButton(
+                                                  icon: const Icon(Icons.edit),
+                                                  color: Colors.deepPurple,
+                                                  tooltip: 'Edit Balance',
+                                                  onPressed: () => _showEditBalanceDialog(context, account),
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(Icons.delete_outline),
+                                                  color: Colors.red,
+                                                  onPressed: () async {
+                                                    if (await _confirmDelete(context, account.name)) {
+                                                      if (context.mounted) {
+                                                        Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text('${account.name} deleted'),
+                                                            backgroundColor: Colors.red,
+                                                            behavior: SnackBarBehavior.floating,
+                                                            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                                            duration: Duration(milliseconds: 1500),
+                                                          ),
+                                                        );
+                                                      }
+                                                    }
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),

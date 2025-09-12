@@ -4,6 +4,32 @@ import '../models/account.dart';
 import '../models/transaction.dart';
 
 class DataProvider extends ChangeNotifier {
+  Future<void> updateTransaction(int index, ExpenseTransaction updatedTx, double oldAmount, String oldAccountName) async {
+    if (index < 0 || index >= _transactions.length) return;
+    final oldTx = _transactions[index];
+    _transactions[index] = updatedTx;
+    _transactions.sort((a, b) => b.date.compareTo(a.date));
+    await _saveTransactions();
+
+    // Restore old account balance
+    final oldAccountIdx = _accounts.indexWhere((a) => a.name == oldAccountName);
+    if (oldAccountIdx != -1) {
+      _accounts[oldAccountIdx] = _accounts[oldAccountIdx].copyWith(
+        balance: _accounts[oldAccountIdx].balance + oldAmount,
+        balanceDate: DateTime.now(),
+      );
+    }
+    // Deduct new amount from new account
+    final newAccountIdx = _accounts.indexWhere((a) => a.name == updatedTx.accountName);
+    if (newAccountIdx != -1) {
+      _accounts[newAccountIdx] = _accounts[newAccountIdx].copyWith(
+        balance: _accounts[newAccountIdx].balance - updatedTx.amount,
+        balanceDate: DateTime.now(),
+      );
+    }
+    await _saveAccounts();
+    notifyListeners();
+  }
   Future<void> setAccountBalance(String accountName, double newBalance) async {
     final idx = _accounts.indexWhere((a) => a.name == accountName);
     if (idx != -1) {

@@ -5,6 +5,27 @@ import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 
+String formatIndianAmount(double amount) {
+  String sign = amount < 0 ? '-' : '';
+  amount = amount.abs();
+  String str = amount.toStringAsFixed(2);
+  List<String> parts = str.split('.');
+  String num = parts[0];
+  String dec = parts[1];
+  if (num.length > 3) {
+    String first = num.substring(0, num.length - 3);
+    String last = num.substring(num.length - 3);
+    List<String> firstParts = [];
+    while (first.length > 2) {
+      firstParts.insert(0, first.substring(first.length - 2));
+      first = first.substring(0, first.length - 2);
+    }
+    if (first.isNotEmpty) firstParts.insert(0, first);
+    num = firstParts.join(',') + ',' + last;
+  }
+  return '₹$sign$num.$dec';
+}
+
 class SummaryTab extends StatelessWidget {
   const SummaryTab({super.key});
 
@@ -183,7 +204,7 @@ class SummaryTab extends StatelessWidget {
                     Expanded(
                       child: _buildSummaryCard(
                         'Total Balance',
-                        '₹${totalBalance.toStringAsFixed(2)}',
+                        formatIndianAmount(totalBalance),
                         Icons.account_balance_wallet,
                         Colors.green,
                       ),
@@ -192,7 +213,7 @@ class SummaryTab extends StatelessWidget {
                     Expanded(
                       child: _buildSummaryCard(
                         'Total Spent',
-                        '₹${totalSpent.toStringAsFixed(2)}',
+                        formatIndianAmount(totalSpent),
                         Icons.money_off,
                         Colors.red,
                       ),

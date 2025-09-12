@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/account.dart';
 import '../providers/data_provider.dart';
 import '../models/transaction.dart';
+import 'account_transactions_page.dart';
 
 class AccountsTab extends StatelessWidget {
   const AccountsTab({super.key});
@@ -279,7 +280,13 @@ class AccountsTab extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
-                          onTap: null,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => AccountTransactionsPage(accountName: account.name),
+                              ),
+                            );
+                          },
                           onLongPress: () async {
                             if (await _confirmDelete(context, account.name)) {
                               if (context.mounted) {

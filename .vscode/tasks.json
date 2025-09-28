@@ -13,6 +13,14 @@
 				"$dart"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Flutter Web Emulator: Auto Run",
+			"type": "shell",
+			"command": "flutter run -d chrome ; start chrome \"https://flutter-web-emulator.vercel.app\"",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
 		}
 	]
 }

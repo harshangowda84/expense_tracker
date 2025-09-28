@@ -4,7 +4,6 @@ class CreditCardsTab extends StatelessWidget {
   const CreditCardsTab({super.key});
 
   void _showAddCreditCardDialog(BuildContext context) {
-    // TODO: Implement dialog for adding a credit card
     showDialog(
       context: context,
       builder: (dialogContext) => Dialog(
@@ -25,27 +24,45 @@ class CreditCardsTab extends StatelessWidget {
               Text('Add Credit Card', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
               const SizedBox(height: 16),
               // Add input fields here
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.deepPurple,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () {
-                  // TODO: Add credit card logic
-                  Navigator.pop(dialogContext);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Credit card added successfully!'),
-                      backgroundColor: Colors.deepPurple,
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                      duration: Duration(milliseconds: 1500),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.close),
+                    label: const Text('Cancel'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                  );
-                },
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      // TODO: Add credit card logic
+                      Navigator.pop(dialogContext);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Credit card added successfully!'),
+                          backgroundColor: Colors.deepPurple,
+                          behavior: SnackBarBehavior.floating,
+                          margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                          duration: Duration(milliseconds: 1500),
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),

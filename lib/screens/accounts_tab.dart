@@ -62,30 +62,48 @@ class AccountsTab extends StatelessWidget {
                 onChanged: (v) => balance = v,
               ),
               const SizedBox(height: 16),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: Colors.deepPurple,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                onPressed: () async {
-                  if (name.isNotEmpty && double.tryParse(balance) != null) {
-                    await Provider.of<DataProvider>(context, listen: false)
-                        .addAccount(Account(name: name, balance: double.parse(balance), balanceDate: DateTime.now()));
-                    Navigator.pop(dialogContext);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('Account added successfully!'),
-                        backgroundColor: Colors.deepPurple,
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                        duration: Duration(milliseconds: 1500),
-                      ),
-                    );
-                  }
-                },
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.close),
+                    label: const Text('Cancel'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () {
+                      Navigator.pop(dialogContext);
+                    },
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.deepPurple,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () async {
+                      if (name.isNotEmpty && double.tryParse(balance) != null) {
+                        await Provider.of<DataProvider>(context, listen: false)
+                            .addAccount(Account(name: name, balance: double.parse(balance), balanceDate: DateTime.now()));
+                        Navigator.pop(dialogContext);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Account added successfully!'),
+                            backgroundColor: Colors.deepPurple,
+                            behavior: SnackBarBehavior.floating,
+                            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                            duration: Duration(milliseconds: 1500),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
               ),
             ],
           ),

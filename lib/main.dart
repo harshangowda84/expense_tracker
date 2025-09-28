@@ -4,6 +4,7 @@ import 'screens/accounts_tab.dart';
 import 'screens/transactions_tab.dart';
 import 'screens/summary_tab.dart';
 import 'providers/data_provider.dart';
+import 'screens/credit_cards_tab.dart';
 
 void main() {
   runApp(const ExpenseTrackerApp());
@@ -56,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
     SummaryTab(),
     TransactionsTab(),
     AccountsTab(),
+    CreditCardsTab(),
   ];
 
   @override
@@ -75,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Summary'),
           BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Transactions'),
           BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Accounts'),
+          BottomNavigationBarItem(icon: Icon(Icons.credit_card), label: 'Credit Card'),
         ],
         selectedItemColor: Colors.deepPurple,
         unselectedItemColor: Colors.grey,

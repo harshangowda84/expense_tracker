@@ -4,70 +4,161 @@ class CreditCardsTab extends StatelessWidget {
   const CreditCardsTab({super.key});
 
   void _showAddCreditCardDialog(BuildContext context) {
+    final TextEditingController cardNameController = TextEditingController();
+    final TextEditingController cardLimitController = TextEditingController();
+    int selectedDay = 1;
     showDialog(
       context: context,
-      builder: (dialogContext) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.deepPurple, Colors.purpleAccent],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Add Credit Card', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
-              const SizedBox(height: 16),
-              // Add input fields here
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.close),
-                    label: const Text('Cancel'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.deepPurple,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-                    },
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: Container(
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.purple, Colors.pinkAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  const SizedBox(width: 16),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.deepPurple,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Add Credit Card',
+                      style: TextStyle(
+                        fontSize: 24,
+                        color: Colors.white,
+                      ),
                     ),
-                    onPressed: () {
-                      // TODO: Add credit card logic
-                      Navigator.pop(dialogContext);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Credit card added successfully!'),
-                          backgroundColor: Colors.deepPurple,
-                          behavior: SnackBarBehavior.floating,
-                          margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                          duration: Duration(milliseconds: 1500),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: cardNameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Card Name',
+                        filled: true,
+                        fillColor: Colors.white
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: cardLimitController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Card Limit',
+                        filled: true,
+                        fillColor: Colors.white
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Bill Due Date',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              const Icon(Icons.calendar_today, color: Colors.purple),
+                              const SizedBox(width: 8),
+                              DropdownButton<int>(
+                                value: selectedDay,
+                                underline: Container(),
+                                icon: const Icon(Icons.arrow_drop_down, color: Colors.purple),
+                                style: const TextStyle(
+                                  color: Colors.purple,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                items: List.generate(31, (index) {
+                                  int day = index + 1;
+                                  String suffix = '';
+                                  if (day == 1 || day == 21 || day == 31) {
+                                    suffix = 'st';
+                                  } else if (day == 2 || day == 22) {
+                                    suffix = 'nd';
+                                  } else if (day == 3 || day == 23) {
+                                    suffix = 'rd';
+                                  } else {
+                                    suffix = 'th';
+                                  }
+                                  return DropdownMenuItem(
+                                    value: day,
+                                    child: Text('$day$suffix of every month'),
+                                  );
+                                }),
+                                onChanged: (int? value) {
+                                  if (value != null) {
+                                    setState(() {
+                                      selectedDay = value;
+                                    });
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.purple,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          ),
+                          icon: const Icon(Icons.close),
+                          label: const Text('Cancel'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
                         ),
-                      );
-                    },
-                  ),
-                ],
+                        const SizedBox(width: 16),
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.purple,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                          ),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Add'),
+                          onPressed: () {
+                            // Add credit card logic here
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 

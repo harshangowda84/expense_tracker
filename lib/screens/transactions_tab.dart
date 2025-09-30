@@ -655,48 +655,27 @@ class TransactionsTab extends StatelessWidget {
                               return DropdownMenuItem<String>(
                                 value: a.name,
                                 enabled: isAvailable,
-                                child: Opacity(
-                                  opacity: isAvailable ? 1.0 : 0.5,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        sourceType == TransactionSourceType.bankAccount
-                                            ? Icons.account_balance_wallet
-                                            : Icons.credit_card,
-                                        color: isAvailable 
-                                            ? Colors.deepPurple.shade300
-                                            : Colors.grey.shade400,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      sourceType == TransactionSourceType.bankAccount
+                                          ? Icons.account_balance_wallet
+                                          : Icons.credit_card,
+                                      color: isAvailable 
+                                          ? Colors.deepPurple.shade300
+                                          : Colors.grey.shade400,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${a.name} (₹${availableAmount.toStringAsFixed(0)})',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: isAvailable ? Colors.black87 : Colors.grey,
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              a.name,
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                color: isAvailable ? Colors.black87 : Colors.grey,
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                            Text(
-                                              sourceType == TransactionSourceType.bankAccount
-                                                  ? '₹${availableAmount.toStringAsFixed(2)} available'
-                                                  : '₹${availableAmount.toStringAsFixed(2)} credit available',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: isAvailable 
-                                                    ? (availableAmount > 0 ? Colors.green : Colors.red)
-                                                    : Colors.grey,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               );
                             })

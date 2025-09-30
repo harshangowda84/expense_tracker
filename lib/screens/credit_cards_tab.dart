@@ -3,6 +3,22 @@ import 'package:flutter/material.dart';
 class CreditCardsTab extends StatelessWidget {
   const CreditCardsTab({super.key});
 
+  String _getDaySuffix(int day) {
+    if (day >= 11 && day <= 13) {
+      return 'th';
+    }
+    switch (day % 10) {
+      case 1:
+        return 'st';
+      case 2:
+        return 'nd';
+      case 3:
+        return 'rd';
+      default:
+        return 'th';
+    }
+  }
+
   void _showAddCreditCardDialog(BuildContext context) {
     final TextEditingController cardNameController = TextEditingController();
     final TextEditingController cardLimitController = TextEditingController();
@@ -54,64 +70,132 @@ class CreditCardsTab extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Bill Due Date',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(Icons.calendar_today, color: Colors.purple),
-                              const SizedBox(width: 8),
-                              DropdownButton<int>(
-                                value: selectedDay,
-                                underline: Container(),
-                                icon: const Icon(Icons.arrow_drop_down, color: Colors.purple),
-                                style: const TextStyle(
-                                  color: Colors.purple,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                    InkWell(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          builder: (BuildContext context) {
+                            return Container(
+                              height: 400,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(20),
+                                  topRight: Radius.circular(20),
                                 ),
-                                items: List.generate(31, (index) {
-                                  int day = index + 1;
-                                  String suffix = '';
-                                  if (day == 1 || day == 21 || day == 31) {
-                                    suffix = 'st';
-                                  } else if (day == 2 || day == 22) {
-                                    suffix = 'nd';
-                                  } else if (day == 3 || day == 23) {
-                                    suffix = 'rd';
-                                  } else {
-                                    suffix = 'th';
-                                  }
-                                  return DropdownMenuItem(
-                                    value: day,
-                                    child: Text('$day$suffix of every month'),
-                                  );
-                                }),
-                                onChanged: (int? value) {
-                                  if (value != null) {
-                                    setState(() {
-                                      selectedDay = value;
-                                    });
-                                  }
-                                },
                               ),
-                            ],
-                          ),
-                        ],
+                              child: Column(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.deepPurple.shade50,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(20),
+                                        topRight: Radius.circular(20),
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      children: [
+                                        Icon(Icons.calendar_today, color: Colors.deepPurple),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Select Bill Due Date',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.deepPurple,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: GridView.builder(
+                                      padding: const EdgeInsets.all(16),
+                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 5,
+                                        childAspectRatio: 1,
+                                        crossAxisSpacing: 10,
+                                        mainAxisSpacing: 10,
+                                      ),
+                                      itemCount: 31,
+                                      itemBuilder: (context, index) {
+                                        final day = index + 1;
+                                        return InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              selectedDay = day;
+                                            });
+                                            Navigator.pop(context);
+                                          },
+                                          child: AnimatedContainer(
+                                            duration: const Duration(milliseconds: 200),
+                                            decoration: BoxDecoration(
+                                              color: selectedDay == day
+                                                  ? Colors.deepPurple
+                                                  : Colors.deepPurple.shade50,
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Center(
+                                              child: Text(
+                                                day.toString(),
+                                                style: TextStyle(
+                                                  color: selectedDay == day
+                                                      ? Colors.white
+                                                      : Colors.deepPurple,
+                                                  fontSize: 16,
+                                                  fontWeight: selectedDay == day
+                                                      ? FontWeight.bold
+                                                      : FontWeight.normal,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Bill Due Date',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.calendar_today, color: Colors.deepPurple),
+                                const SizedBox(width: 12),
+                                Text(
+                                  '${selectedDay}${_getDaySuffix(selectedDay)} of every month',
+                                  style: const TextStyle(
+                                    color: Colors.deepPurple,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),

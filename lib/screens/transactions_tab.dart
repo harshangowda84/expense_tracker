@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/transaction.dart';
 import '../models/account.dart';
 import '../models/credit_card.dart';
@@ -55,7 +56,7 @@ class TransactionsTab extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Colors.deepPurple, Colors.purpleAccent],
+              colors: [Color(0xFFEF4444), Color(0xFFEC4899)], // Modern red to pink for delete
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -161,14 +162,14 @@ class TransactionsTab extends StatelessWidget {
                               children: [
                                 Text(
                                   'Edit Transaction',
-                                  style: Theme.of(stateContext).textTheme.titleLarge?.copyWith(
-                                    color: Colors.deepPurple,
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF6366F1),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 28,
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.close, color: Colors.deepPurple, size: 28),
+                                  icon: const Icon(Icons.close, color: Color(0xFF6366F1), size: 28),
                                   onPressed: () => Navigator.of(dialogContext).pop(),
                                   tooltip: 'Close',
                                 ),
@@ -181,7 +182,7 @@ class TransactionsTab extends StatelessWidget {
                                 Expanded(
                                   child: Material(
                                     color: sourceType == TransactionSourceType.bankAccount
-                                        ? Colors.deepPurple
+                                        ? const Color(0xFF6366F1)
                                         : Colors.grey[200],
                                     borderRadius: const BorderRadius.only(
                                       topLeft: Radius.circular(16),
@@ -228,7 +229,7 @@ class TransactionsTab extends StatelessWidget {
                                 Expanded(
                                   child: Material(
                                     color: sourceType == TransactionSourceType.creditCard
-                                        ? Colors.deepPurple
+                                        ? const Color(0xFF6366F1)
                                         : Colors.grey[200],
                                     borderRadius: const BorderRadius.only(
                                       topRight: Radius.circular(16),
@@ -289,7 +290,7 @@ class TransactionsTab extends StatelessWidget {
                                           sourceType == TransactionSourceType.bankAccount
                                               ? Icons.account_balance_wallet
                                               : Icons.credit_card,
-                                          color: Colors.deepPurple.shade300
+                                          color: const Color(0xFF8B5CF6)
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
@@ -309,18 +310,18 @@ class TransactionsTab extends StatelessWidget {
                                   sourceType == TransactionSourceType.bankAccount
                                       ? Icons.account_balance_wallet
                                       : Icons.credit_card,
-                                  color: Colors.deepPurple.shade300
+                                  color: const Color(0xFF8B5CF6)
                                 ),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                               ),
                               dropdownColor: Colors.white,
-                              icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple.shade300),
+                              icon: Icon(Icons.arrow_drop_down, color: const Color(0xFF8B5CF6)),
                             ),
                             const SizedBox(height: 18),
                             TextField(
                               decoration: InputDecoration(
                                 labelText: 'Amount',
-                                prefixIcon: Icon(Icons.currency_rupee, color: Colors.deepPurple.shade300),
+                                prefixIcon: Icon(Icons.currency_rupee, color: const Color(0xFF8B5CF6)),
                                 errorText: amountError,
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                               ),
@@ -368,7 +369,7 @@ class TransactionsTab extends StatelessWidget {
                                 value: c,
                                 child: Row(
                                   children: [
-                                    Icon(Icons.category, color: Colors.deepPurple.shade300),
+                                    Icon(Icons.category, color: const Color(0xFF8B5CF6)),
                                     const SizedBox(width: 8),
                                     Text(
                                       c.name[0].toUpperCase() + c.name.substring(1),
@@ -380,17 +381,17 @@ class TransactionsTab extends StatelessWidget {
                               onChanged: (v) => setState(() => category = v ?? ExpenseCategory.food),
                               decoration: InputDecoration(
                                 labelText: 'Category',
-                                prefixIcon: Icon(Icons.category, color: Colors.deepPurple.shade300),
+                                prefixIcon: Icon(Icons.category, color: const Color(0xFF8B5CF6)),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                               ),
                               dropdownColor: Colors.white,
-                              icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple.shade300),
+                              icon: Icon(Icons.arrow_drop_down, color: const Color(0xFF8B5CF6)),
                             ),
                             const SizedBox(height: 18),
                             TextField(
                               decoration: InputDecoration(
                                 labelText: 'Note',
-                                prefixIcon: Icon(Icons.note, color: Colors.deepPurple.shade300),
+                                prefixIcon: Icon(Icons.note, color: const Color(0xFF8B5CF6)),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                               ),
                               controller: noteController,
@@ -405,7 +406,7 @@ class TransactionsTab extends StatelessWidget {
                                 TextButton(
                                   onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
                                   style: TextButton.styleFrom(
-                                    foregroundColor: Colors.deepPurple,
+                                    foregroundColor: const Color(0xFF6366F1),
                                     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                                     textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
                                   ),
@@ -413,7 +414,7 @@ class TransactionsTab extends StatelessWidget {
                                 ),
                                 FloatingActionButton.extended(
                                   heroTag: 'editTxFab',
-                                  backgroundColor: Colors.deepPurple,
+                                  backgroundColor: const Color(0xFF6366F1),
                                   foregroundColor: Colors.white,
                                   elevation: 2,
                                   onPressed: (accountName.isEmpty || amountError != null || amountController.text.isEmpty || isSubmitting)
@@ -437,7 +438,7 @@ class TransactionsTab extends StatelessWidget {
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
                                                   content: const Text('Transaction updated successfully!'),
-                                                  backgroundColor: Colors.deepPurple,
+                                                  backgroundColor: const Color(0xFF6366F1),
                                                   behavior: SnackBarBehavior.floating,
                                                   margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
                                                   duration: const Duration(milliseconds: 1500),
@@ -522,14 +523,14 @@ class TransactionsTab extends StatelessWidget {
                         children: [
                           Text(
                             'Add Transaction',
-                            style: Theme.of(stateContext).textTheme.titleLarge?.copyWith(
-                              color: Colors.deepPurple,
+                            style: GoogleFonts.inter(
+                              color: const Color(0xFF6366F1), // Modern indigo
                               fontWeight: FontWeight.bold,
                               fontSize: 28,
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.close, color: Colors.deepPurple, size: 28),
+                            icon: const Icon(Icons.close, color: Color(0xFF6366F1), size: 28),
                             onPressed: () => Navigator.of(dialogContext).pop(),
                             tooltip: 'Close',
                           ),
@@ -542,7 +543,7 @@ class TransactionsTab extends StatelessWidget {
                           Expanded(
                             child: Material(
                               color: sourceType == TransactionSourceType.bankAccount
-                                  ? Colors.deepPurple
+                                  ? const Color(0xFF6366F1) // Modern indigo
                                   : Colors.grey[200],
                               borderRadius: const BorderRadius.only(
                                 topLeft: Radius.circular(16),
@@ -589,7 +590,7 @@ class TransactionsTab extends StatelessWidget {
                           Expanded(
                             child: Material(
                               color: sourceType == TransactionSourceType.creditCard
-                                  ? Colors.deepPurple
+                                  ? const Color(0xFF6366F1)
                                   : Colors.grey[200],
                               borderRadius: const BorderRadius.only(
                                 topRight: Radius.circular(16),
@@ -662,7 +663,7 @@ class TransactionsTab extends StatelessWidget {
                                           ? Icons.account_balance_wallet
                                           : Icons.credit_card,
                                       color: isAvailable 
-                                          ? Colors.deepPurple.shade300
+                                          ? const Color(0xFF8B5CF6)
                                           : Colors.grey.shade400,
                                       size: 18,
                                     ),
@@ -690,18 +691,18 @@ class TransactionsTab extends StatelessWidget {
                             sourceType == TransactionSourceType.bankAccount
                                 ? Icons.account_balance_wallet
                                 : Icons.credit_card,
-                            color: Colors.deepPurple.shade300,
+                            color: const Color(0xFF8B5CF6),
                           ),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         dropdownColor: Colors.white,
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple.shade300),
+                        icon: Icon(Icons.arrow_drop_down, color: const Color(0xFF8B5CF6)),
                       ),
                       const SizedBox(height: 18),
                       TextField(
                         decoration: InputDecoration(
                           labelText: 'Amount',
-                          prefixIcon: Icon(Icons.currency_rupee, color: Colors.deepPurple.shade300),
+                          prefixIcon: Icon(Icons.currency_rupee, color: const Color(0xFF8B5CF6)),
                           errorText: amountError,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                         ),
@@ -750,7 +751,7 @@ class TransactionsTab extends StatelessWidget {
                                   value: c,
                                   child: Row(
                                     children: [
-                                      Icon(Icons.category, color: Colors.deepPurple.shade300),
+                                      Icon(Icons.category, color: const Color(0xFF8B5CF6)),
                                       const SizedBox(width: 8),
                                       Text(
                                         c.name[0].toUpperCase() + c.name.substring(1),
@@ -763,17 +764,17 @@ class TransactionsTab extends StatelessWidget {
                         onChanged: (v) => setState(() => category = v ?? ExpenseCategory.food),
                         decoration: InputDecoration(
                           labelText: 'Category',
-                          prefixIcon: Icon(Icons.category, color: Colors.deepPurple.shade300),
+                          prefixIcon: Icon(Icons.category, color: const Color(0xFF8B5CF6)),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         dropdownColor: Colors.white,
-                        icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple.shade300),
+                        icon: Icon(Icons.arrow_drop_down, color: const Color(0xFF8B5CF6)),
                       ),
                       const SizedBox(height: 18),
                       TextField(
                         decoration: InputDecoration(
                           labelText: 'Note',
-                          prefixIcon: Icon(Icons.note, color: Colors.deepPurple.shade300),
+                          prefixIcon: Icon(Icons.note, color: const Color(0xFF8B5CF6)),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         onChanged: (v) => setState(() => note = v),
@@ -787,7 +788,7 @@ class TransactionsTab extends StatelessWidget {
                           TextButton(
                             onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
                             style: TextButton.styleFrom(
-                              foregroundColor: Colors.deepPurple,
+                              foregroundColor: const Color(0xFF6366F1),
                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                               textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
                             ),
@@ -795,7 +796,7 @@ class TransactionsTab extends StatelessWidget {
                           ),
                           FloatingActionButton.extended(
                             heroTag: 'addTxFab',
-                            backgroundColor: Colors.deepPurple,
+                            backgroundColor: const Color(0xFF6366F1),
                             foregroundColor: Colors.white,
                             elevation: 2,
                             onPressed: (accountName.isEmpty || amountError != null || amount.isEmpty || isSubmitting)
@@ -834,7 +835,7 @@ class TransactionsTab extends StatelessWidget {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(
                                             content: Text('Transaction added successfully!'),
-                                            backgroundColor: Colors.deepPurple,
+                                            backgroundColor: Color(0xFF6366F1),
                                             behavior: SnackBarBehavior.floating,
                                             margin: EdgeInsets.only(bottom: 72, left: 16, right: 16),
                                             duration: Duration(milliseconds: 1500),
@@ -1033,7 +1034,7 @@ class TransactionsTab extends StatelessWidget {
                                     children: [
                                       IconButton(
                                         icon: const Icon(Icons.edit, size: 20),
-                                        color: Colors.deepPurple,
+                                        color: const Color(0xFF6366F1),
                                         tooltip: 'Edit Transaction',
                                         padding: const EdgeInsets.all(8),
                                         constraints: const BoxConstraints(
@@ -1124,7 +1125,7 @@ class TransactionsTab extends StatelessWidget {
                 ),
                 onPressed: canAddTransaction ? () => _showAddTransactionDialog(context, provider.accounts) : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
+                  backgroundColor: const Color(0xFF6366F1), // Modern indigo
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 52),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

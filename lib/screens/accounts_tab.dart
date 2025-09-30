@@ -68,8 +68,8 @@ class AccountsTab extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.blue, Colors.blueAccent],
+            gradient: const LinearGradient(
+              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Modern indigo to purple
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -174,8 +174,8 @@ class AccountsTab extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.blue, Colors.blueAccent],
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Modern indigo to purple
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -350,7 +350,7 @@ class AccountsTab extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Colors.deepPurple, Colors.purpleAccent],
+              colors: [Color(0xFFEF4444), Color(0xFFEC4899)], // Modern red to pink for delete
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -419,7 +419,7 @@ class AccountsTab extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
+          colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)], // Modern subtle gradient
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -569,7 +569,7 @@ class AccountsTab extends StatelessWidget {
                                             style: TextStyle(
                                               fontSize: 18,
                                               fontWeight: FontWeight.bold,
-                                              color: account.balance >= 0 ? Colors.blue : Colors.red,
+                                              color: account.balance >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444), // Green/Red
                                             ),
                                           ),
                                           Text(
@@ -612,7 +612,7 @@ class AccountsTab extends StatelessWidget {
                                               style: const TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
-                                                color: Colors.blue,
+                                                color: const Color(0xFF6366F1), // Modern indigo
                                               ),
                                             ),
                                             Text(
@@ -780,7 +780,7 @@ class AccountsTab extends StatelessWidget {
               ),
               onPressed: () => _showAddAccountDialog(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: const Color(0xFF6366F1), // Modern indigo
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 52),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

@@ -22,7 +22,7 @@ class ExpenseTrackerApp extends StatelessWidget {
         title: 'Expense Tracker',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple,
+            seedColor: const Color(0xFF6366F1), // Modern indigo
             brightness: Brightness.light,
           ),
           useMaterial3: true,
@@ -33,7 +33,7 @@ class ExpenseTrackerApp extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
           appBarTheme: AppBarTheme(
-            backgroundColor: Colors.deepPurple,
+            backgroundColor: const Color(0xFF6366F1), // Modern indigo
             foregroundColor: Colors.white,
             elevation: 0,
             centerTitle: true,
@@ -102,7 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Accounts'),
             BottomNavigationBarItem(icon: Icon(Icons.credit_card), label: 'Credit Card'),
           ],
-          selectedItemColor: Colors.deepPurple,
+          selectedItemColor: const Color(0xFF6366F1), // Modern indigo
           unselectedItemColor: Colors.grey,
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,

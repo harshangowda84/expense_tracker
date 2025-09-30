@@ -16,7 +16,7 @@ class CreditCardsTab extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Colors.orange, Colors.deepOrange],
+                colors: [Color(0xFFF59E0B), Color(0xFFEAB308)], // Modern amber gradient
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -171,7 +171,7 @@ class CreditCardsTab extends StatelessWidget {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Colors.blue, Colors.blueAccent],
+                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Modern indigo to purple
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -323,7 +323,7 @@ class CreditCardsTab extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
-              colors: [Colors.deepPurple, Colors.purpleAccent],
+              colors: [Color(0xFFEF4444), Color(0xFFEC4899)], // Modern red to pink for delete
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -425,8 +425,8 @@ class CreditCardsTab extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.purple, Colors.pinkAccent],
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Modern indigo to purple
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -698,8 +698,8 @@ class CreditCardsTab extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.purple, Colors.pinkAccent],
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Modern indigo to purple
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -935,7 +935,7 @@ class CreditCardsTab extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFFEDE7F6), Color(0xFFD1C4E9)],
+          colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)], // Modern subtle gradient matching accounts
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1127,7 +1127,7 @@ class CreditCardsTab extends StatelessWidget {
                                           style: const TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.deepPurple,
+                                            color: Color(0xFF6366F1), // Modern indigo
                                           ),
                                         ),
                                         Text(
@@ -1317,7 +1317,7 @@ class CreditCardsTab extends StatelessWidget {
               ),
               onPressed: () => _showAddCreditCardDialog(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
+                backgroundColor: const Color(0xFF6366F1), // Modern indigo
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 52),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

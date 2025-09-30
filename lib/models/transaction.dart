@@ -7,6 +7,11 @@ enum ExpenseCategory {
   other,
 }
 
+enum TransactionSourceType {
+  bankAccount,
+  creditCard,
+}
+
 class ExpenseTransaction {
   String id;
   String accountName;
@@ -14,6 +19,7 @@ class ExpenseTransaction {
   DateTime date;
   ExpenseCategory category;
   String note;
+  TransactionSourceType sourceType;
 
   ExpenseTransaction({
     required this.id,
@@ -22,6 +28,7 @@ class ExpenseTransaction {
     required this.date,
     required this.category,
     this.note = '',
+    this.sourceType = TransactionSourceType.bankAccount,
   });
 
   Map<String, dynamic> toMap() => {
@@ -31,6 +38,7 @@ class ExpenseTransaction {
         'date': date.toIso8601String(),
         'category': category.index.toString(),
         'note': note,
+        'sourceType': sourceType.index.toString(),
       };
 
   factory ExpenseTransaction.fromMap(Map<String, dynamic> map) {
@@ -41,6 +49,9 @@ class ExpenseTransaction {
       date: DateTime.tryParse(map['date'] ?? '') ?? DateTime.now(),
       category: ExpenseCategory.values[int.tryParse(map['category'] ?? '0') ?? 0],
       note: map['note'] ?? '',
+      sourceType: map['sourceType'] != null
+          ? TransactionSourceType.values[int.tryParse(map['sourceType'] ?? '0') ?? 0]
+          : TransactionSourceType.bankAccount,
     );
   }
 }

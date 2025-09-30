@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
-import '../models/account.dart';
 import '../providers/data_provider.dart';
 
 class AccountTransactionsPage extends StatelessWidget {
@@ -26,7 +25,7 @@ class AccountTransactionsPage extends StatelessWidget {
       if (first.isNotEmpty) firstParts.insert(0, first);
       num = firstParts.join(',') + ',' + last;
     }
-    return '₹$sign$num.$dec';
+        return '₹$sign$num.$dec';
   }
 
   @override

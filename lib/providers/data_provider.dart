@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/account.dart';
 import '../models/transaction.dart';
+import '../models/credit_card.dart';
 
 class DataProvider extends ChangeNotifier {
   Future<void> updateTransaction(int index, ExpenseTransaction updatedTx, double oldAmount, String oldAccountName) async {
     if (index < 0 || index >= _transactions.length) return;
-    final oldTx = _transactions[index];
+    
     _transactions[index] = updatedTx;
     _transactions.sort((a, b) => b.date.compareTo(a.date));
     await _saveTransactions();
@@ -56,10 +57,12 @@ class DataProvider extends ChangeNotifier {
   }
   List<Account> _accounts = [];
   List<ExpenseTransaction> _transactions = [];
+  List<CreditCard> _creditCards = [];
   bool _initialized = false;
 
   List<Account> get accounts => List.unmodifiable(_accounts);
   List<ExpenseTransaction> get transactions => List.unmodifiable(_transactions);
+  List<CreditCard> get creditCards => List.unmodifiable(_creditCards);
   bool get initialized => _initialized;
 
   DataProvider() {
@@ -71,6 +74,7 @@ class DataProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final accountList = prefs.getStringList('accounts') ?? [];
       final txList = prefs.getStringList('transactions') ?? [];
+      final creditCardList = prefs.getStringList('creditCards') ?? [];
 
       _accounts = accountList
           .map((e) => Account.fromMap(Map<String, dynamic>.from(Uri.splitQueryString(e))))
@@ -79,6 +83,10 @@ class DataProvider extends ChangeNotifier {
       .map((e) => ExpenseTransaction.fromMap(Map<String, dynamic>.from(Uri.splitQueryString(e))))
       .toList();
     _transactions.sort((a, b) => b.date.compareTo(a.date));
+
+    _creditCards = creditCardList
+      .map((e) => CreditCard.fromMap(Map<String, dynamic>.from(Uri.splitQueryString(e))))
+      .toList();
 
       _initialized = true;
       notifyListeners();
@@ -91,20 +99,36 @@ class DataProvider extends ChangeNotifier {
 
   Future<void> addTransaction(ExpenseTransaction tx) async {
     try {
-  _transactions.add(tx);
-  _transactions.sort((a, b) => b.date.compareTo(a.date));
-  await _saveTransactions();
+      _transactions.add(tx);
+      _transactions.sort((a, b) => b.date.compareTo(a.date));
+      await _saveTransactions();
 
-      // Update account balance
-      final accountIndex = _accounts.indexWhere((a) => a.name == tx.accountName);
-      if (accountIndex != -1) {
-        final updatedAccount = Account(
-          name: _accounts[accountIndex].name,
-          balance: _accounts[accountIndex].balance - tx.amount,
-          balanceDate: DateTime.now(),
-        );
-        _accounts[accountIndex] = updatedAccount;
-        await _saveAccounts();
+      if (tx.sourceType == TransactionSourceType.bankAccount) {
+        // Update account balance
+        final accountIndex = _accounts.indexWhere((a) => a.name == tx.accountName);
+        if (accountIndex != -1) {
+          final updatedAccount = Account(
+            name: _accounts[accountIndex].name,
+            balance: _accounts[accountIndex].balance - tx.amount,
+            balanceDate: DateTime.now(),
+          );
+          _accounts[accountIndex] = updatedAccount;
+          await _saveAccounts();
+        }
+      } else {
+        // Update credit card limit
+        final cardIndex = _creditCards.indexWhere((c) => c.name == tx.accountName);
+        if (cardIndex != -1) {
+          final updatedCard = CreditCard(
+            name: _creditCards[cardIndex].name,
+            limit: _creditCards[cardIndex].limit,
+            dueDate: _creditCards[cardIndex].dueDate,
+            addedDate: _creditCards[cardIndex].addedDate,
+            usedAmount: (_creditCards[cardIndex].usedAmount ?? 0) + tx.amount,
+          );
+          _creditCards[cardIndex] = updatedCard;
+          await _saveCreditCards();
+        }
       }
 
       notifyListeners();
@@ -118,20 +142,36 @@ class DataProvider extends ChangeNotifier {
     try {
       if (index >= 0 && index < _transactions.length) {
         final tx = _transactions[index];
-  _transactions.removeAt(index);
-  _transactions.sort((a, b) => b.date.compareTo(a.date));
-  await _saveTransactions();
+        _transactions.removeAt(index);
+        _transactions.sort((a, b) => b.date.compareTo(a.date));
+        await _saveTransactions();
 
-        // Update account balance
-        final accountIndex = _accounts.indexWhere((a) => a.name == tx.accountName);
-        if (accountIndex != -1) {
-          final updatedAccount = Account(
-            name: _accounts[accountIndex].name,
-            balance: _accounts[accountIndex].balance + tx.amount,
-            balanceDate: DateTime.now(),
-          );
-          _accounts[accountIndex] = updatedAccount;
-          await _saveAccounts();
+        if (tx.sourceType == TransactionSourceType.bankAccount) {
+          // Update account balance
+          final accountIndex = _accounts.indexWhere((a) => a.name == tx.accountName);
+          if (accountIndex != -1) {
+            final updatedAccount = Account(
+              name: _accounts[accountIndex].name,
+              balance: _accounts[accountIndex].balance + tx.amount,
+              balanceDate: DateTime.now(),
+            );
+            _accounts[accountIndex] = updatedAccount;
+            await _saveAccounts();
+          }
+        } else {
+          // Update credit card limit
+          final cardIndex = _creditCards.indexWhere((c) => c.name == tx.accountName);
+          if (cardIndex != -1) {
+            final updatedCard = CreditCard(
+              name: _creditCards[cardIndex].name,
+              limit: _creditCards[cardIndex].limit,
+              dueDate: _creditCards[cardIndex].dueDate,
+              addedDate: _creditCards[cardIndex].addedDate,
+              usedAmount: (_creditCards[cardIndex].usedAmount ?? 0) - tx.amount,
+            );
+            _creditCards[cardIndex] = updatedCard;
+            await _saveCreditCards();
+          }
         }
 
         notifyListeners();
@@ -184,5 +224,50 @@ class DataProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('transactions',
         _transactions.map((t) => Uri(queryParameters: t.toMap()).query).toList());
+  }
+
+  Future<void> addCreditCard(CreditCard card) async {
+    try {
+      if (!_creditCards.any((c) => c.name == card.name)) {
+        _creditCards.add(card);
+        await _saveCreditCards();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error adding credit card: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteCreditCard(int index) async {
+    try {
+      if (index >= 0 && index < _creditCards.length) {
+        _creditCards.removeAt(index);
+        await _saveCreditCards();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error deleting credit card: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _saveCreditCards() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('creditCards',
+        _creditCards.map((c) => Uri(queryParameters: c.toMap()).query).toList());
+  }
+
+  Future<void> updateCreditCard(int index, CreditCard updatedCard) async {
+    try {
+      if (index >= 0 && index < _creditCards.length) {
+        _creditCards[index] = updatedCard;
+        await _saveCreditCards();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error updating credit card: $e');
+      rethrow;
+    }
   }
 }

@@ -1,76 +1,53 @@
-import 'package:flutter/foundation.dart';class CreditCard {
+class CreditCard {
+  final String name;
+  final double limit;
+  final int dueDate;
+  final DateTime addedDate;
+  final double? usedAmount;
 
-  final String id;
-
-class CreditCard {  final String cardHolder;
-
-  final String id;  final String cardNumber; // Masked or encrypted if needed
-
-  final String cardHolder;  final String expiryDate;
-
-  final String cardNumber;  final String bankName;
-
-  final String expiryDate;  final double creditLimit;
-
-  final String bankName;  double balance; // Current due
-
-  final double creditLimit;  DateTime dueDate;
-
-  final double balance;  String? note;
-
-  final String dueDate;
-
-  final String note;  CreditCard({
-
-    required this.id,
-
-  CreditCard({    required this.cardHolder,
-
-    required this.id,    required this.cardNumber,
-
-    required this.cardHolder,    required this.expiryDate,
-
-    required this.cardNumber,    required this.bankName,
-
-    required this.expiryDate,    required this.creditLimit,
-
-    required this.bankName,    required this.balance,
-
-    required this.creditLimit,    required this.dueDate,
-
-    required this.balance,    this.note,
-
-    required this.dueDate,  });
-
-    required this.note,}
-
+  CreditCard({
+    required this.name,
+    required this.limit,
+    required this.dueDate,
+    required this.addedDate,
+    this.usedAmount,
   });
 
-  factory CreditCard.fromMap(Map<String, dynamic> map) {
+  CreditCard copyWith({
+    String? name,
+    double? limit,
+    int? dueDate,
+    DateTime? addedDate,
+    double? usedAmount,
+  }) {
     return CreditCard(
-      id: map['id'] ?? '',
-      cardHolder: map['cardHolder'] ?? '',
-      cardNumber: map['cardNumber'] ?? '',
-      expiryDate: map['expiryDate'] ?? '',
-      bankName: map['bankName'] ?? '',
-      creditLimit: (map['creditLimit'] ?? 0).toDouble(),
-      balance: (map['balance'] ?? 0).toDouble(),
-      dueDate: map['dueDate'] ?? '',
-      note: map['note'] ?? '',
+      name: name ?? this.name,
+      limit: limit ?? this.limit,
+      dueDate: dueDate ?? this.dueDate,
+      addedDate: addedDate ?? this.addedDate,
+      usedAmount: usedAmount ?? this.usedAmount,
     );
   }
 
+  double get availableBalance => limit - (usedAmount ?? 0);
+
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
-      'cardHolder': cardHolder,
-      'cardNumber': cardNumber,
-      'expiryDate': expiryDate,
-      'bankName': bankName,
-      'creditLimit': creditLimit,
-      'balance': balance,
-      'dueDate': dueDate,
-      'note': note,
+      'name': name,
+      'limit': limit.toString(),
+      'dueDate': dueDate.toString(),
+      'addedDate': addedDate.toIso8601String(),
+      'usedAmount': (usedAmount ?? 0).toString(),
     };
+  }
+
+  factory CreditCard.fromMap(Map<String, dynamic> map) {
+    return CreditCard(
+      name: map['name'] ?? '',
+      limit: double.tryParse(map['limit'] ?? '0') ?? 0,
+      dueDate: int.tryParse(map['dueDate'] ?? '1') ?? 1,
+      addedDate: DateTime.tryParse(map['addedDate'] ?? '') ?? DateTime.now(),
+      usedAmount: double.tryParse(map['usedAmount'] ?? '0'),
+    );
   }
 }

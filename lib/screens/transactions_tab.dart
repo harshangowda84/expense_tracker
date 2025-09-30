@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../models/account.dart';
+import '../models/credit_card.dart';
 import '../providers/data_provider.dart';
 
 class TransactionsTab extends StatelessWidget {
+  const TransactionsTab({super.key});
+
   String formatIndianAmount(double amount) {
     String sign = amount < 0 ? '-' : '';
     amount = amount.abs();
@@ -21,476 +24,10 @@ class TransactionsTab extends StatelessWidget {
         first = first.substring(0, first.length - 2);
       }
       if (first.isNotEmpty) firstParts.insert(0, first);
-      num = firstParts.join(',') + ',' + last;
+      num = '${firstParts.join(',')},${last}';
     }
     return '₹$sign$num.$dec';
   }
-  void _showEditTransactionDialog(BuildContext context, List<Account> accounts, ExpenseTransaction tx, int txIndex) {
-    String accountName = tx.accountName;
-    ExpenseCategory category = tx.category;
-    String? amountError;
-    bool isSubmitting = false;
-    final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
-    final noteController = TextEditingController(text: tx.note);
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (stateContext, setState) {
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  reverse: true,
-                  padding: EdgeInsets.only(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
-                  ),
-                  child: Center(
-                    child: Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                      elevation: 12,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Edit Transaction',
-                                  style: Theme.of(stateContext).textTheme.titleLarge?.copyWith(
-                                    color: Colors.deepPurple,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 28,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.close, color: Colors.deepPurple, size: 28),
-                                  onPressed: () => Navigator.of(dialogContext).pop(),
-                                  tooltip: 'Close',
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            DropdownButtonFormField<String>(
-                              value: accountName.isEmpty ? null : accountName,
-                              items: accounts.map((a) => DropdownMenuItem(
-                                value: a.name,
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.account_balance_wallet, color: Colors.deepPurple.shade300),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      a.name,
-                                      style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                    ),
-                                  ],
-                                ),
-                              )).toList(),
-                              onChanged: (v) => setState(() => accountName = v ?? ''),
-                              decoration: InputDecoration(
-                                labelText: 'Account',
-                                prefixIcon: Icon(Icons.account_balance_wallet, color: Colors.deepPurple.shade300),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              dropdownColor: Colors.white,
-                              icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple.shade300),
-                            ),
-                            const SizedBox(height: 18),
-                            TextField(
-                              decoration: InputDecoration(
-                                labelText: 'Amount',
-                                prefixIcon: Icon(Icons.currency_rupee, color: Colors.deepPurple.shade300),
-                                errorText: amountError,
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              controller: amountController,
-                              onChanged: (v) {
-                                setState(() {
-                                  amountError = null;
-                                  if (v.isEmpty) {
-                                    amountError = 'Amount is required';
-                                  } else if (double.tryParse(v) == null || double.parse(v) <= 0) {
-                                    amountError = 'Enter a valid amount';
-                                  } else {
-                                    final selectedAccount = accounts.firstWhere(
-                                      (a) => a.name == accountName,
-                                      orElse: () => Account(name: '', balance: 0, balanceDate: DateTime.now()),
-                                    );
-                                    if (double.parse(v) > selectedAccount.balance + tx.amount) {
-                                      amountError = 'Amount exceeds account balance';
-                                    }
-                                  }
-                                });
-                              },
-                              style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500),
-                            ),
-                            const SizedBox(height: 18),
-                            DropdownButtonFormField<ExpenseCategory>(
-                              value: category,
-                              items: ExpenseCategory.values.map((c) => DropdownMenuItem(
-                                value: c,
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.category, color: Colors.deepPurple.shade300),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      c.name[0].toUpperCase() + c.name.substring(1),
-                                      style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                    ),
-                                  ],
-                                ),
-                              )).toList(),
-                              onChanged: (v) => setState(() => category = v ?? ExpenseCategory.food),
-                              decoration: InputDecoration(
-                                labelText: 'Category',
-                                prefixIcon: Icon(Icons.category, color: Colors.deepPurple.shade300),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              dropdownColor: Colors.white,
-                              icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple.shade300),
-                            ),
-                            const SizedBox(height: 18),
-                            TextField(
-                              decoration: InputDecoration(
-                                labelText: 'Note',
-                                prefixIcon: Icon(Icons.note, color: Colors.deepPurple.shade300),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              controller: noteController,
-                              onChanged: (v) => setState(() {}),
-                              style: const TextStyle(color: Colors.black87, fontSize: 16),
-                              maxLines: 2,
-                            ),
-                            const SizedBox(height: 28),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                TextButton(
-                                  onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.deepPurple,
-                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                                    textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-                                  ),
-                                  child: const Text('Cancel'),
-                                ),
-                                FloatingActionButton.extended(
-                                  heroTag: 'editTxFab',
-                                  backgroundColor: Colors.deepPurple,
-                                  foregroundColor: Colors.white,
-                                  elevation: 2,
-                                  onPressed: (accountName.isEmpty || amountError != null || amountController.text.isEmpty || isSubmitting)
-                                      ? null
-                                      : () async {
-                                          setState(() => isSubmitting = true);
-                                          try {
-                                            final enteredAmount = double.parse(amountController.text);
-                                            final updatedTx = ExpenseTransaction(
-                                              id: tx.id,
-                                              accountName: accountName,
-                                              amount: enteredAmount,
-                                              date: tx.date,
-                                              category: category,
-                                              note: noteController.text,
-                                            );
-                                            await Provider.of<DataProvider>(context, listen: false).updateTransaction(txIndex, updatedTx, tx.amount, tx.accountName);
-                                            if (dialogContext.mounted) {
-                                              Navigator.of(dialogContext).pop();
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: const Text('Transaction updated successfully!'),
-                                                  backgroundColor: Colors.deepPurple,
-                                                  behavior: SnackBarBehavior.floating,
-                                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                  duration: Duration(milliseconds: 1500),
-                                                ),
-                                              );
-                                            }
-                                          } catch (e) {
-                                            setState(() => isSubmitting = false);
-                                            if (dialogContext.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text('Error updating transaction: $e'),
-                                                  backgroundColor: Colors.red,
-                                                  behavior: SnackBarBehavior.floating,
-                                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                  duration: Duration(milliseconds: 1500),
-                                                ),
-                                              );
-                                            }
-                                          }
-                                        },
-                                  label: isSubmitting
-                                      ? const SizedBox(
-                                          width: 22,
-                                          height: 22,
-                                          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                                        )
-                                      : const Text('Save'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: Selector<DataProvider, List<ExpenseTransaction>>(
-            selector: (_, provider) => provider.transactions,
-            builder: (context, transactions, _) {
-              if (transactions.isEmpty)
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No transactions yet',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.grey[600],
-                            ),
-                      ),
-                    ],
-                  ),
-                );
-              return ListView.builder(
-                itemCount: transactions.length,
-                padding: const EdgeInsets.only(top: 8),
-                itemBuilder: (context, index) {
-                  final tx = transactions[index];
-                  return Dismissible(
-                    key: Key(tx.id),
-                    background: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 24),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    direction: DismissDirection.endToStart,
-                    confirmDismiss: (_) => _confirmDelete(context, 'transaction'),
-                    onDismissed: (_) {
-                      Provider.of<DataProvider>(context, listen: false).deleteTransaction(index);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Transaction deleted'),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                          margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                          duration: Duration(milliseconds: 1500),
-                        ),
-                      );
-                    },
-                    child: Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onLongPress: () async {
-                          if (await _confirmDelete(context, 'transaction')) {
-                            if (context.mounted) {
-                              Provider.of<DataProvider>(context, listen: false).deleteTransaction(index);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('Transaction deleted'),
-                                  backgroundColor: Colors.red,
-                                  behavior: SnackBarBehavior.floating,
-                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                  duration: Duration(milliseconds: 1500),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Account and category info
-                                  Expanded(
-                                    flex: 2,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          tx.accountName,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Amount and date (right aligned)
-                                  Expanded(
-                                    flex: 2,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            formatIndianAmount(tx.amount),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.red,
-                                              fontSize: 18,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _formatDate(tx.date),
-                                          textAlign: TextAlign.right,
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              if (tx.note.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    tx.note,
-                                    style: TextStyle(
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.grey[700],
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              // Edit and Delete buttons below notes
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8.0, left: 4.0, right: 4.0),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined),
-                                      color: Colors.deepPurple,
-                                      tooltip: 'Edit',
-                                      onPressed: () async {
-                                        final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
-                                        _showEditTransactionDialog(context, accounts, tx, index);
-                                      },
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete_outline),
-                                      color: Colors.red,
-                                      tooltip: 'Delete',
-                                      onPressed: () async {
-                                        if (await _confirmDelete(context, 'transaction')) {
-                                          if (context.mounted) {
-                                            Provider.of<DataProvider>(context, listen: false).deleteTransaction(index);
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Transaction deleted'),
-                                                backgroundColor: Colors.red,
-                                                behavior: SnackBarBehavior.floating,
-                                                margin: EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                duration: Duration(milliseconds: 1500),
-                                              ),
-                                            );
-                                          }
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ); // End of Dismissible
-                }, // End of itemBuilder
-              ); // End of ListView.builder
-            },
-          ),
-        ),
-        Container(
-          padding: const EdgeInsets.all(16.0),
-          child: Selector<DataProvider, List<Account>>(
-            selector: (_, provider) => provider.accounts,
-            builder: (context, accounts, _) => ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text(
-                'Add Transaction',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              onPressed: accounts.isEmpty ? null : () => _showAddTransactionDialog(context, accounts),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 4,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  const TransactionsTab({super.key});
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -582,13 +119,14 @@ class TransactionsTab extends StatelessWidget {
     ) ?? false;
   }
 
-  void _showAddTransactionDialog(BuildContext context, List<Account> accounts) {
-    String accountName = accounts.isNotEmpty ? accounts[0].name : '';
-    String amount = '';
-    ExpenseCategory category = ExpenseCategory.food;
-    String note = '';
+  void _showEditTransactionDialog(BuildContext context, List<Account> accounts, ExpenseTransaction tx, int txIndex) {
+    String accountName = tx.accountName;
+    ExpenseCategory category = tx.category;
     String? amountError;
     bool isSubmitting = false;
+    final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
+    final noteController = TextEditingController(text: tx.note);
+    TransactionSourceType sourceType = tx.sourceType;
 
     showModalBottomSheet(
       context: context,
@@ -622,7 +160,7 @@ class TransactionsTab extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Add Transaction',
+                                  'Edit Transaction',
                                   style: Theme.of(stateContext).textTheme.titleLarge?.copyWith(
                                     color: Colors.deepPurple,
                                     fontWeight: FontWeight.bold,
@@ -637,25 +175,142 @@ class TransactionsTab extends StatelessWidget {
                               ],
                             ),
                             const SizedBox(height: 24),
-                            DropdownButtonFormField<String>(
-                              value: accountName.isEmpty ? null : accountName,
-                              items: accounts.map((a) => DropdownMenuItem(
-                                value: a.name,
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.account_balance_wallet, color: Colors.deepPurple.shade300),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      a.name,
-                                      style: const TextStyle(fontSize: 16, color: Colors.black87),
+                            Row(
+                              mainAxisSize: MainAxisSize.max,
+                              children: [
+                                Expanded(
+                                  child: Material(
+                                    color: sourceType == TransactionSourceType.bankAccount
+                                        ? Colors.deepPurple
+                                        : Colors.grey[200],
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
                                     ),
-                                  ],
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          sourceType = TransactionSourceType.bankAccount;
+                                          accountName = accounts.isNotEmpty ? accounts[0].name : '';
+                                          amountError = null;
+                                        });
+                                      },
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(16),
+                                        bottomLeft: Radius.circular(16),
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.account_balance_wallet,
+                                              color: sourceType == TransactionSourceType.bankAccount
+                                                  ? Colors.white
+                                                  : Colors.grey[600],
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Account',
+                                              style: TextStyle(
+                                                color: sourceType == TransactionSourceType.bankAccount
+                                                    ? Colors.white
+                                                    : Colors.grey[800],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              )).toList(),
-                              onChanged: (v) => setState(() => accountName = v ?? ''),
+                                Expanded(
+                                  child: Material(
+                                    color: sourceType == TransactionSourceType.creditCard
+                                        ? Colors.deepPurple
+                                        : Colors.grey[200],
+                                    borderRadius: const BorderRadius.only(
+                                      topRight: Radius.circular(16),
+                                      bottomRight: Radius.circular(16),
+                                    ),
+                                    child: InkWell(
+                                      onTap: () {
+                                        final creditCards = Provider.of<DataProvider>(context, listen: false).creditCards;
+                                        setState(() {
+                                          sourceType = TransactionSourceType.creditCard;
+                                          accountName = creditCards.isNotEmpty ? creditCards[0].name : '';
+                                          amountError = null;
+                                        });
+                                      },
+                                      borderRadius: const BorderRadius.only(
+                                        topRight: Radius.circular(16),
+                                        bottomRight: Radius.circular(16),
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.credit_card,
+                                              color: sourceType == TransactionSourceType.creditCard
+                                                  ? Colors.white
+                                                  : Colors.grey[600],
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              'Credit Card',
+                                              style: TextStyle(
+                                                color: sourceType == TransactionSourceType.creditCard
+                                                    ? Colors.white
+                                                    : Colors.grey[800],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 16),
+                            DropdownButtonFormField<String>(
+                              initialValue: accountName.isEmpty ? null : accountName,
+                              items: (sourceType == TransactionSourceType.bankAccount
+                                      ? accounts.cast<dynamic>()
+                                      : Provider.of<DataProvider>(context, listen: false).creditCards.cast<dynamic>())
+                                  .map<DropdownMenuItem<String>>((a) => DropdownMenuItem<String>(
+                                    value: a.name,
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          sourceType == TransactionSourceType.bankAccount
+                                              ? Icons.account_balance_wallet
+                                              : Icons.credit_card,
+                                          color: Colors.deepPurple.shade300
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          a.name,
+                                          style: const TextStyle(fontSize: 16, color: Colors.black87),
+                                        ),
+                                      ],
+                                    ),
+                                  )).toList(),
+                              onChanged: (v) => setState(() {
+                                accountName = v ?? '';
+                                amountError = null; // Reset error when source changes
+                              }),
                               decoration: InputDecoration(
-                                labelText: 'Account',
-                                prefixIcon: Icon(Icons.account_balance_wallet, color: Colors.deepPurple.shade300),
+                                labelText: sourceType == TransactionSourceType.bankAccount ? 'Account' : 'Credit Card',
+                                prefixIcon: Icon(
+                                  sourceType == TransactionSourceType.bankAccount
+                                      ? Icons.account_balance_wallet
+                                      : Icons.credit_card,
+                                  color: Colors.deepPurple.shade300
+                                ),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                               ),
                               dropdownColor: Colors.white,
@@ -670,21 +325,36 @@ class TransactionsTab extends StatelessWidget {
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                               ),
                               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              controller: amountController,
                               onChanged: (v) {
                                 setState(() {
-                                  amount = v;
                                   amountError = null;
-                                  if (amount.isEmpty) {
+                                  if (v.isEmpty) {
                                     amountError = 'Amount is required';
-                                  } else if (double.tryParse(amount) == null || double.parse(amount) <= 0) {
+                                  } else if (double.tryParse(v) == null || double.parse(v) <= 0) {
                                     amountError = 'Enter a valid amount';
-                                  } else {
+                                  } else if (sourceType == TransactionSourceType.bankAccount) {
                                     final selectedAccount = accounts.firstWhere(
                                       (a) => a.name == accountName,
                                       orElse: () => Account(name: '', balance: 0, balanceDate: DateTime.now()),
                                     );
-                                    if (double.parse(amount) > selectedAccount.balance) {
+                                    if (double.parse(v) > selectedAccount.balance + tx.amount) {
                                       amountError = 'Amount exceeds account balance';
+                                    }
+                                  } else {
+                                    final selectedCard = Provider.of<DataProvider>(context, listen: false)
+                                        .creditCards
+                                        .firstWhere(
+                                          (c) => c.name == accountName,
+                                          orElse: () => CreditCard(
+                                            name: '',
+                                            limit: 0,
+                                            dueDate: 1,
+                                            addedDate: DateTime.now(),
+                                          ),
+                                        );
+                                    if (double.parse(v) > selectedCard.availableBalance + tx.amount) {
+                                      amountError = 'Amount exceeds available credit limit';
                                     }
                                   }
                                 });
@@ -693,7 +363,7 @@ class TransactionsTab extends StatelessWidget {
                             ),
                             const SizedBox(height: 18),
                             DropdownButtonFormField<ExpenseCategory>(
-                              value: category,
+                              initialValue: category,
                               items: ExpenseCategory.values.map((c) => DropdownMenuItem(
                                 value: c,
                                 child: Row(
@@ -723,7 +393,8 @@ class TransactionsTab extends StatelessWidget {
                                 prefixIcon: Icon(Icons.note, color: Colors.deepPurple.shade300),
                                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                               ),
-                              onChanged: (v) => setState(() => note = v),
+                              controller: noteController,
+                              onChanged: (v) => setState(() {}),
                               style: const TextStyle(color: Colors.black87, fontSize: 16),
                               maxLines: 2,
                             ),
@@ -741,35 +412,35 @@ class TransactionsTab extends StatelessWidget {
                                   child: const Text('Cancel'),
                                 ),
                                 FloatingActionButton.extended(
-                                  heroTag: 'addTxFab',
+                                  heroTag: 'editTxFab',
                                   backgroundColor: Colors.deepPurple,
                                   foregroundColor: Colors.white,
                                   elevation: 2,
-                                  onPressed: (accountName.isEmpty || amountError != null || amount.isEmpty || isSubmitting)
+                                  onPressed: (accountName.isEmpty || amountError != null || amountController.text.isEmpty || isSubmitting)
                                       ? null
                                       : () async {
                                           setState(() => isSubmitting = true);
                                           try {
-                                            final enteredAmount = double.parse(amount);
-                                            await Provider.of<DataProvider>(context, listen: false).addTransaction(
-                                              ExpenseTransaction(
-                                                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                                accountName: accountName,
-                                                amount: enteredAmount,
-                                                date: DateTime.now(),
-                                                category: category,
-                                                note: note,
-                                              ),
+                                            final enteredAmount = double.parse(amountController.text);
+                                            final updatedTx = ExpenseTransaction(
+                                              id: tx.id,
+                                              accountName: accountName,
+                                              amount: enteredAmount,
+                                              date: tx.date,
+                                              category: category,
+                                              note: noteController.text,
+                                              sourceType: sourceType,
                                             );
+                                            await Provider.of<DataProvider>(context, listen: false).updateTransaction(txIndex, updatedTx, tx.amount, tx.accountName);
                                             if (dialogContext.mounted) {
                                               Navigator.of(dialogContext).pop();
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
-                                                  content: const Text('Transaction added successfully!'),
+                                                  content: const Text('Transaction updated successfully!'),
                                                   backgroundColor: Colors.deepPurple,
                                                   behavior: SnackBarBehavior.floating,
                                                   margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                  duration: Duration(milliseconds: 1500),
+                                                  duration: const Duration(milliseconds: 1500),
                                                 ),
                                               );
                                             }
@@ -778,11 +449,11 @@ class TransactionsTab extends StatelessWidget {
                                             if (dialogContext.mounted) {
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
-                                                  content: Text('Error adding transaction: $e'),
+                                                  content: Text('Error updating transaction: $e'),
                                                   backgroundColor: Colors.red,
                                                   behavior: SnackBarBehavior.floating,
                                                   margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                  duration: Duration(milliseconds: 1500),
+                                                  duration: const Duration(milliseconds: 1500),
                                                 ),
                                               );
                                             }
@@ -794,7 +465,7 @@ class TransactionsTab extends StatelessWidget {
                                           height: 22,
                                           child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                                         )
-                                      : const Text('Add'),
+                                      : const Text('Save'),
                                 ),
                               ],
                             ),
@@ -809,6 +480,587 @@ class TransactionsTab extends StatelessWidget {
           },
         );
       },
+    );
+  }
+
+  void _showAddTransactionDialog(BuildContext context, List<Account> accounts) {
+    String accountName = accounts.isNotEmpty ? accounts[0].name : '';
+    String amount = '';
+    ExpenseCategory category = ExpenseCategory.food;
+    String note = '';
+    String? amountError;
+    bool isSubmitting = false;
+    TransactionSourceType sourceType = TransactionSourceType.bankAccount;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (stateContext, setState) => LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            reverse: true,
+            padding: EdgeInsets.only(
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: Center(
+              child: Card(
+                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                elevation: 12,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Add Transaction',
+                            style: Theme.of(stateContext).textTheme.titleLarge?.copyWith(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 28,
+                            ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.deepPurple, size: 28),
+                            onPressed: () => Navigator.of(dialogContext).pop(),
+                            tooltip: 'Close',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Expanded(
+                            child: Material(
+                              color: sourceType == TransactionSourceType.bankAccount
+                                  ? Colors.deepPurple
+                                  : Colors.grey[200],
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(16),
+                                bottomLeft: Radius.circular(16),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    sourceType = TransactionSourceType.bankAccount;
+                                    accountName = accounts.isNotEmpty ? accounts[0].name : '';
+                                    amountError = null;
+                                  });
+                                },
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  bottomLeft: Radius.circular(16),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.account_balance_wallet,
+                                        color: sourceType == TransactionSourceType.bankAccount
+                                            ? Colors.white
+                                            : Colors.grey[600],
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Account',
+                                        style: TextStyle(
+                                          color: sourceType == TransactionSourceType.bankAccount
+                                              ? Colors.white
+                                              : Colors.grey[800],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Material(
+                              color: sourceType == TransactionSourceType.creditCard
+                                  ? Colors.deepPurple
+                                  : Colors.grey[200],
+                              borderRadius: const BorderRadius.only(
+                                topRight: Radius.circular(16),
+                                bottomRight: Radius.circular(16),
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  final creditCards = Provider.of<DataProvider>(context, listen: false).creditCards;
+                                  setState(() {
+                                    sourceType = TransactionSourceType.creditCard;
+                                    accountName = creditCards.isNotEmpty ? creditCards[0].name : '';
+                                    amountError = null;
+                                  });
+                                },
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(16),
+                                  bottomRight: Radius.circular(16),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.credit_card,
+                                        color: sourceType == TransactionSourceType.creditCard
+                                            ? Colors.white
+                                            : Colors.grey[600],
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Credit Card',
+                                        style: TextStyle(
+                                          color: sourceType == TransactionSourceType.creditCard
+                                              ? Colors.white
+                                              : Colors.grey[800],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: accountName.isEmpty ? null : accountName,
+                        items: (sourceType == TransactionSourceType.bankAccount
+                                ? accounts.cast<dynamic>()
+                                : Provider.of<DataProvider>(context, listen: false).creditCards.cast<dynamic>())
+                            .map<DropdownMenuItem<String>>((a) => DropdownMenuItem<String>(
+                                  value: a.name,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        sourceType == TransactionSourceType.bankAccount
+                                            ? Icons.account_balance_wallet
+                                            : Icons.credit_card,
+                                        color: Colors.deepPurple.shade300,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        a.name,
+                                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                                      ),
+                                    ],
+                                  ),
+                                ))
+                            .toList(),
+                        onChanged: (v) => setState(() {
+                          accountName = v ?? '';
+                          amountError = null;
+                        }),
+                        decoration: InputDecoration(
+                          labelText: sourceType == TransactionSourceType.bankAccount ? 'Account' : 'Credit Card',
+                          prefixIcon: Icon(
+                            sourceType == TransactionSourceType.bankAccount
+                                ? Icons.account_balance_wallet
+                                : Icons.credit_card,
+                            color: Colors.deepPurple.shade300,
+                          ),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        dropdownColor: Colors.white,
+                        icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple.shade300),
+                      ),
+                      const SizedBox(height: 18),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: 'Amount',
+                          prefixIcon: Icon(Icons.currency_rupee, color: Colors.deepPurple.shade300),
+                          errorText: amountError,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (v) {
+                          setState(() {
+                            amount = v;
+                            amountError = null;
+                            if (amount.isEmpty) {
+                              amountError = 'Amount is required';
+                            } else if (double.tryParse(amount) == null || double.parse(amount) <= 0) {
+                              amountError = 'Enter a valid amount';
+                            } else if (sourceType == TransactionSourceType.bankAccount) {
+                              final selectedAccount = accounts.firstWhere(
+                                (a) => a.name == accountName,
+                                orElse: () => Account(name: '', balance: 0, balanceDate: DateTime.now()),
+                              );
+                              if (double.parse(amount) > selectedAccount.balance) {
+                                amountError = 'Amount exceeds account balance';
+                              }
+                            } else {
+                              final selectedCard = Provider.of<DataProvider>(context, listen: false)
+                                  .creditCards
+                                  .firstWhere(
+                                    (c) => c.name == accountName,
+                                    orElse: () => CreditCard(
+                                      name: '',
+                                      limit: 0,
+                                      dueDate: 1,
+                                      addedDate: DateTime.now(),
+                                    ),
+                                  );
+                              if (double.parse(amount) > selectedCard.availableBalance) {
+                                amountError = 'Amount exceeds available credit limit';
+                              }
+                            }
+                          });
+                        },
+                        style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 18),
+                      DropdownButtonFormField<ExpenseCategory>(
+                        initialValue: category,
+                        items: ExpenseCategory.values
+                            .map((c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.category, color: Colors.deepPurple.shade300),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        c.name[0].toUpperCase() + c.name.substring(1),
+                                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                                      ),
+                                    ],
+                                  ),
+                                ))
+                            .toList(),
+                        onChanged: (v) => setState(() => category = v ?? ExpenseCategory.food),
+                        decoration: InputDecoration(
+                          labelText: 'Category',
+                          prefixIcon: Icon(Icons.category, color: Colors.deepPurple.shade300),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        dropdownColor: Colors.white,
+                        icon: Icon(Icons.arrow_drop_down, color: Colors.deepPurple.shade300),
+                      ),
+                      const SizedBox(height: 18),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: 'Note',
+                          prefixIcon: Icon(Icons.note, color: Colors.deepPurple.shade300),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        onChanged: (v) => setState(() => note = v),
+                        style: const TextStyle(color: Colors.black87, fontSize: 16),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 28),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.deepPurple,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                              textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                          FloatingActionButton.extended(
+                            heroTag: 'addTxFab',
+                            backgroundColor: Colors.deepPurple,
+                            foregroundColor: Colors.white,
+                            elevation: 2,
+                            onPressed: (accountName.isEmpty || amountError != null || amount.isEmpty || isSubmitting)
+                                ? null
+                                : () async {
+                                    setState(() => isSubmitting = true);
+                                    try {
+                                      final enteredAmount = double.parse(amount);
+                                      await Provider.of<DataProvider>(context, listen: false).addTransaction(
+                                        ExpenseTransaction(
+                                          id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                          accountName: accountName,
+                                          amount: enteredAmount,
+                                          date: DateTime.now(),
+                                          category: category,
+                                          note: note,
+                                          sourceType: sourceType,
+                                        ),
+                                      );
+                                      if (dialogContext.mounted) {
+                                        Navigator.of(dialogContext).pop();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(
+                                            content: Text('Transaction added successfully!'),
+                                            backgroundColor: Colors.deepPurple,
+                                            behavior: SnackBarBehavior.floating,
+                                            margin: EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                            duration: Duration(milliseconds: 1500),
+                                          ),
+                                        );
+                                      }
+                                    } catch (e) {
+                                      setState(() => isSubmitting = false);
+                                      if (dialogContext.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error adding transaction: $e'),
+                                            backgroundColor: Colors.red,
+                                            behavior: SnackBarBehavior.floating,
+                                            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                            duration: const Duration(milliseconds: 1500),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                            label: isSubmitting
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                                  )
+                                : const Text('Add'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: Selector<DataProvider, List<ExpenseTransaction>>(
+            selector: (_, provider) => provider.transactions,
+            builder: (context, transactions, _) {
+              if (transactions.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No transactions yet',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return ListView.builder(
+                itemCount: transactions.length,
+                padding: const EdgeInsets.only(top: 8),
+                itemBuilder: (context, index) {
+                  final tx = transactions[index];
+                  return Dismissible(
+                    key: Key(tx.id),
+                    background: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.only(right: 24),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    direction: DismissDirection.endToStart,
+                    confirmDismiss: (_) => _confirmDelete(context, 'transaction'),
+                    onDismissed: (_) {
+                      Provider.of<DataProvider>(context, listen: false).deleteTransaction(index);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Transaction deleted'),
+                          backgroundColor: Colors.red,
+                          behavior: SnackBarBehavior.floating,
+                          margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                          duration: const Duration(milliseconds: 1500),
+                        ),
+                      );
+                    },
+                    child: Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onLongPress: () async {
+                          if (await _confirmDelete(context, 'transaction')) {
+                            if (context.mounted) {
+                              Provider.of<DataProvider>(context, listen: false).deleteTransaction(index);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Transaction deleted'),
+                                  backgroundColor: Colors.red,
+                                  behavior: SnackBarBehavior.floating,
+                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                  duration: const Duration(milliseconds: 1500),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        onTap: () {
+                          final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
+                          _showEditTransactionDialog(context, accounts, tx, index);
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // Account and category info
+                                  Expanded(
+                                    flex: 2,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              tx.sourceType == TransactionSourceType.bankAccount
+                                                  ? Icons.account_balance_wallet
+                                                  : Icons.credit_card,
+                                              size: 16,
+                                              color: Colors.grey[600],
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              tx.accountName,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Amount and date (right aligned)
+                                  Expanded(
+                                    flex: 2,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          child: Text(
+                                            formatIndianAmount(tx.amount),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.red,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _formatDate(tx.date),
+                                          textAlign: TextAlign.right,
+                                          style: TextStyle(
+                                            color: Colors.grey[600],
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (tx.note.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    tx.note,
+                                    style: TextStyle(
+                                      fontStyle: FontStyle.italic,
+                                      color: Colors.grey[700],
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.all(16.0),
+          child: Consumer<DataProvider>(
+            builder: (context, provider, _) {
+              final bool hasAccounts = provider.accounts.isNotEmpty;
+              final bool hasCreditCards = provider.creditCards.isNotEmpty;
+              final bool canAddTransaction = hasAccounts || hasCreditCards;
+              
+              return ElevatedButton.icon(
+                icon: const Icon(Icons.add),
+                label: const Text(
+                  'Add Transaction',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onPressed: canAddTransaction ? () => _showAddTransactionDialog(context, provider.accounts) : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 52),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 4,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

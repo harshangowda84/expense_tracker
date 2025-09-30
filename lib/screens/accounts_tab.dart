@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/account.dart';
 import '../providers/data_provider.dart';
-import '../models/transaction.dart';
 import 'account_transactions_page.dart';
 
 class AccountsTab extends StatelessWidget {
@@ -26,7 +25,7 @@ class AccountsTab extends StatelessWidget {
       if (first.isNotEmpty) firstParts.insert(0, first);
       num = firstParts.join(',') + ',' + last;
     }
-    return '₹$sign$num.$dec';
+        return '₹$sign$num.$dec';
   }
 
   void _showAddAccountDialog(BuildContext context) {

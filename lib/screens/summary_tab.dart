@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/account.dart';
 import '../models/transaction.dart';
 import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
@@ -23,7 +22,7 @@ String formatIndianAmount(double amount) {
     if (first.isNotEmpty) firstParts.insert(0, first);
     num = firstParts.join(',') + ',' + last;
   }
-  return '₹$sign$num.$dec';
+      return '₹$sign$num.$dec';
 }
 
 class SummaryTab extends StatelessWidget {
@@ -76,7 +75,7 @@ class SummaryTab extends StatelessWidget {
               backDrawRodData: BackgroundBarChartRodData(
                 show: true,
                 toY: maxAmount > 0 ? maxAmount : 100,
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withValues(alpha: 0.1),
               ),
             ),
           ],
@@ -131,7 +130,7 @@ class SummaryTab extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [color.withOpacity(0.8), color.withOpacity(0.6)],
+            colors: [color.withValues(alpha: 0.8), color.withValues(alpha: 0.6)],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),

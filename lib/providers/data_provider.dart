@@ -99,6 +99,18 @@ class DataProvider extends ChangeNotifier {
 
   Future<void> addTransaction(ExpenseTransaction tx) async {
     try {
+      // Validate account/card exists and has sufficient balance/limit
+      if (!canAddTransactionToAccount(tx.accountName, tx.sourceType)) {
+        throw Exception('Selected account/card does not exist');
+      }
+
+      if (!hasSufficientBalance(tx.accountName, tx.sourceType, tx.amount)) {
+        final message = tx.sourceType == TransactionSourceType.bankAccount 
+            ? 'Insufficient balance in bank account'
+            : 'Amount exceeds available credit limit';
+        throw Exception(message);
+      }
+
       _transactions.add(tx);
       _transactions.sort((a, b) => b.date.compareTo(a.date));
       await _saveTransactions();
@@ -268,6 +280,101 @@ class DataProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error updating credit card: $e');
       rethrow;
+    }
+  }
+
+  // Reset credit card balance - paid manually (no account deduction)
+  Future<void> resetCreditCardBalance(int index) async {
+    try {
+      if (index >= 0 && index < _creditCards.length) {
+        final card = _creditCards[index];
+        final resetCard = CreditCard(
+          name: card.name,
+          limit: card.limit,
+          dueDate: card.dueDate,
+          addedDate: card.addedDate,
+          usedAmount: 0.0,
+        );
+        _creditCards[index] = resetCard;
+        await _saveCreditCards();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error resetting credit card balance: $e');
+      rethrow;
+    }
+  }
+
+  // Reset credit card balance by paying from bank account
+  Future<void> resetCreditCardBalanceWithBankAccount(int cardIndex, String bankAccountName) async {
+    try {
+      if (cardIndex >= 0 && cardIndex < _creditCards.length) {
+        final card = _creditCards[cardIndex];
+        final paymentAmount = card.usedBalance;
+
+        // Find the bank account
+        final accountIndex = _accounts.indexWhere((a) => a.name == bankAccountName);
+        if (accountIndex == -1) {
+          throw Exception('Bank account not found');
+        }
+
+        // Check if account has sufficient balance
+        if (_accounts[accountIndex].balance < paymentAmount) {
+          throw Exception('Insufficient balance in bank account');
+        }
+
+        // Deduct amount from bank account
+        final updatedAccount = Account(
+          name: _accounts[accountIndex].name,
+          balance: _accounts[accountIndex].balance - paymentAmount,
+          balanceDate: DateTime.now(),
+        );
+        _accounts[accountIndex] = updatedAccount;
+
+        // Reset credit card balance
+        final resetCard = CreditCard(
+          name: card.name,
+          limit: card.limit,
+          dueDate: card.dueDate,
+          addedDate: card.addedDate,
+          usedAmount: 0.0,
+        );
+        _creditCards[cardIndex] = resetCard;
+
+        // Save both updates
+        await _saveAccounts();
+        await _saveCreditCards();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error resetting credit card balance with bank account: $e');
+      rethrow;
+    }
+  }
+
+  // Get available accounts/cards for transaction
+  bool canAddTransactionToAccount(String accountName, TransactionSourceType sourceType) {
+    if (sourceType == TransactionSourceType.bankAccount) {
+      return _accounts.any((a) => a.name == accountName);
+    } else {
+      return _creditCards.any((c) => c.name == accountName);
+    }
+  }
+
+  // Check if account/card has sufficient balance/limit
+  bool hasSufficientBalance(String accountName, TransactionSourceType sourceType, double amount) {
+    if (sourceType == TransactionSourceType.bankAccount) {
+      final account = _accounts.firstWhere(
+        (a) => a.name == accountName,
+        orElse: () => Account(name: '', balance: 0, balanceDate: DateTime.now()),
+      );
+      return account.balance >= amount;
+    } else {
+      final card = _creditCards.firstWhere(
+        (c) => c.name == accountName,
+        orElse: () => CreditCard(name: '', limit: 0, dueDate: 1, addedDate: DateTime.now()),
+      );
+      return card.availableBalance >= amount;
     }
   }
 }

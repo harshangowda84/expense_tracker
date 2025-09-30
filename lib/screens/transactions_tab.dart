@@ -642,24 +642,64 @@ class TransactionsTab extends StatelessWidget {
                         items: (sourceType == TransactionSourceType.bankAccount
                                 ? accounts.cast<dynamic>()
                                 : Provider.of<DataProvider>(context, listen: false).creditCards.cast<dynamic>())
-                            .map<DropdownMenuItem<String>>((a) => DropdownMenuItem<String>(
-                                  value: a.name,
+                            .map<DropdownMenuItem<String>>((a) {
+                              final isAvailable = Provider.of<DataProvider>(context, listen: false)
+                                  .canAddTransactionToAccount(a.name, sourceType);
+                              double availableAmount = 0;
+                              if (sourceType == TransactionSourceType.bankAccount) {
+                                availableAmount = (a as Account).balance;
+                              } else {
+                                availableAmount = (a as CreditCard).availableBalance;
+                              }
+                              
+                              return DropdownMenuItem<String>(
+                                value: a.name,
+                                enabled: isAvailable,
+                                child: Opacity(
+                                  opacity: isAvailable ? 1.0 : 0.5,
                                   child: Row(
                                     children: [
                                       Icon(
                                         sourceType == TransactionSourceType.bankAccount
                                             ? Icons.account_balance_wallet
                                             : Icons.credit_card,
-                                        color: Colors.deepPurple.shade300,
+                                        color: isAvailable 
+                                            ? Colors.deepPurple.shade300
+                                            : Colors.grey.shade400,
                                       ),
                                       const SizedBox(width: 8),
-                                      Text(
-                                        a.name,
-                                        style: const TextStyle(fontSize: 16, color: Colors.black87),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              a.name,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: isAvailable ? Colors.black87 : Colors.grey,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            Text(
+                                              sourceType == TransactionSourceType.bankAccount
+                                                  ? '₹${availableAmount.toStringAsFixed(2)} available'
+                                                  : '₹${availableAmount.toStringAsFixed(2)} credit available',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: isAvailable 
+                                                    ? (availableAmount > 0 ? Colors.green : Colors.red)
+                                                    : Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ),
-                                ))
+                                ),
+                              );
+                            })
                             .toList(),
                         onChanged: (v) => setState(() {
                           accountName = v ?? '';
@@ -785,7 +825,21 @@ class TransactionsTab extends StatelessWidget {
                                     setState(() => isSubmitting = true);
                                     try {
                                       final enteredAmount = double.parse(amount);
-                                      await Provider.of<DataProvider>(context, listen: false).addTransaction(
+                                      
+                                      // Validate if account/card exists and has sufficient balance
+                                      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+                                      if (!dataProvider.canAddTransactionToAccount(accountName, sourceType)) {
+                                        throw Exception('Selected ${sourceType == TransactionSourceType.bankAccount ? 'account' : 'credit card'} does not exist');
+                                      }
+                                      
+                                      if (!dataProvider.hasSufficientBalance(accountName, sourceType, enteredAmount)) {
+                                        final message = sourceType == TransactionSourceType.bankAccount 
+                                            ? 'Insufficient balance in bank account'
+                                            : 'Amount exceeds available credit limit';
+                                        throw Exception(message);
+                                      }
+                                      
+                                      await dataProvider.addTransaction(
                                         ExpenseTransaction(
                                           id: DateTime.now().millisecondsSinceEpoch.toString(),
                                           accountName: accountName,

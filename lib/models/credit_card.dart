@@ -30,6 +30,8 @@ class CreditCard {
   }
 
   double get availableBalance => limit - (usedAmount ?? 0);
+  double get usedBalance => usedAmount ?? 0;
+  double get utilizationPercentage => limit > 0 ? ((usedAmount ?? 0) / limit) * 100 : 0;
 
   Map<String, dynamic> toMap() {
     return {

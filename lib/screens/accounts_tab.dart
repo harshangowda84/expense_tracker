@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/account.dart';
 import '../models/transaction.dart';
 import '../providers/data_provider.dart';
@@ -77,9 +78,9 @@ class AccountsTab extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
+              Text(
                 'Add Account',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 24,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -183,9 +184,9 @@ class AccountsTab extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'Edit Account',
-                  style: TextStyle(
+                  style: GoogleFonts.inter(
                     fontSize: 24,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -499,8 +500,22 @@ class AccountsTab extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                           onTap: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => AccountTransactionsPage(accountName: account.name),
+                              PageRouteBuilder(
+                                pageBuilder: (context, animation, secondaryAnimation) =>
+                                    AccountTransactionsPage(accountName: account.name),
+                                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                  return SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(1.0, 0.0),
+                                      end: Offset.zero,
+                                    ).animate(CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.easeInOut,
+                                    )),
+                                    child: child,
+                                  );
+                                },
+                                transitionDuration: const Duration(milliseconds: 300),
                               ),
                             );
                           },
@@ -520,7 +535,7 @@ class AccountsTab extends StatelessWidget {
                                         children: [
                                           Text(
                                             account.name,
-                                            style: const TextStyle(
+                                            style: GoogleFonts.inter(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
                                             ),
@@ -756,9 +771,9 @@ class AccountsTab extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton.icon(
               icon: const Icon(Icons.add),
-              label: const Text(
+              label: Text(
                 'Add Account',
-                style: TextStyle(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

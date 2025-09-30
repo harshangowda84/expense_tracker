@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'screens/accounts_tab.dart';
 import 'screens/transactions_tab.dart';
 import 'screens/summary_tab.dart';
@@ -25,16 +26,22 @@ class ExpenseTrackerApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
           useMaterial3: true,
+          textTheme: GoogleFonts.interTextTheme(),
           cardTheme: CardThemeData(
             color: Colors.white,
             elevation: 4,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
-          appBarTheme: const AppBarTheme(
+          appBarTheme: AppBarTheme(
             backgroundColor: Colors.deepPurple,
             foregroundColor: Colors.white,
             elevation: 0,
             centerTitle: true,
+            titleTextStyle: GoogleFonts.inter(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
           ),
         ),
         home: const HomeScreen(),
@@ -67,22 +74,47 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Expense Tracker'),
       ),
       body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 400),
+        switchInCurve: Curves.easeInOut,
+        switchOutCurve: Curves.easeInOut,
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0.3, 0),
+              end: Offset.zero,
+            ).animate(animation),
+            child: FadeTransition(
+              opacity: animation,
+              child: child,
+            ),
+          );
+        },
         child: _tabs[_selectedIndex],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Summary'),
-          BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Transactions'),
-          BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Accounts'),
-          BottomNavigationBarItem(icon: Icon(Icons.credit_card), label: 'Credit Card'),
-        ],
-        selectedItemColor: Colors.deepPurple,
-        unselectedItemColor: Colors.grey,
-        showUnselectedLabels: true,
-        type: BottomNavigationBarType.fixed,
+      bottomNavigationBar: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        child: BottomNavigationBar(
+          currentIndex: _selectedIndex,
+          onTap: (index) => setState(() => _selectedIndex = index),
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Summary'),
+            BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Transactions'),
+            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Accounts'),
+            BottomNavigationBarItem(icon: Icon(Icons.credit_card), label: 'Credit Card'),
+          ],
+          selectedItemColor: Colors.deepPurple,
+          unselectedItemColor: Colors.grey,
+          showUnselectedLabels: true,
+          type: BottomNavigationBarType.fixed,
+          selectedLabelStyle: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
       ),
     );
   }

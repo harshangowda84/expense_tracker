@@ -54,4 +54,24 @@ class ExpenseTransaction {
           : TransactionSourceType.bankAccount,
     );
   }
+
+  ExpenseTransaction copyWith({
+    String? id,
+    String? accountName,
+    double? amount,
+    DateTime? date,
+    ExpenseCategory? category,
+    String? note,
+    TransactionSourceType? sourceType,
+  }) {
+    return ExpenseTransaction(
+      id: id ?? this.id,
+      accountName: accountName ?? this.accountName,
+      amount: amount ?? this.amount,
+      date: date ?? this.date,
+      category: category ?? this.category,
+      note: note ?? this.note,
+      sourceType: sourceType ?? this.sourceType,
+    );
+  }
 }

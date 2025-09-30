@@ -954,10 +954,6 @@ class TransactionsTab extends StatelessWidget {
                             }
                           }
                         },
-                        onTap: () {
-                          final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
-                          _showEditTransactionDialog(context, accounts, tx, index);
-                        },
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -968,7 +964,7 @@ class TransactionsTab extends StatelessWidget {
                                 children: [
                                   // Account and category info
                                   Expanded(
-                                    flex: 2,
+                                    flex: 3,
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
@@ -1002,7 +998,7 @@ class TransactionsTab extends StatelessWidget {
                                       ],
                                     ),
                                   ),
-                                  // Amount and date (right aligned)
+                                  // Amount and date (center)
                                   Expanded(
                                     flex: 2,
                                     child: Column(
@@ -1030,6 +1026,52 @@ class TransactionsTab extends StatelessWidget {
                                         ),
                                       ],
                                     ),
+                                  ),
+                                  // Edit and Delete icons
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, size: 20),
+                                        color: Colors.deepPurple,
+                                        tooltip: 'Edit Transaction',
+                                        padding: const EdgeInsets.all(8),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 40,
+                                          minHeight: 40,
+                                        ),
+                                        onPressed: () {
+                                          final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
+                                          _showEditTransactionDialog(context, accounts, tx, index);
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline, size: 20),
+                                        color: Colors.red,
+                                        tooltip: 'Delete Transaction',
+                                        padding: const EdgeInsets.all(8),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 40,
+                                          minHeight: 40,
+                                        ),
+                                        onPressed: () async {
+                                          if (await _confirmDelete(context, 'transaction')) {
+                                            if (context.mounted) {
+                                              Provider.of<DataProvider>(context, listen: false).deleteTransaction(index);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: const Text('Transaction deleted'),
+                                                  backgroundColor: Colors.red,
+                                                  behavior: SnackBarBehavior.floating,
+                                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                                  duration: const Duration(milliseconds: 1500),
+                                                ),
+                                              );
+                                            }
+                                          }
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

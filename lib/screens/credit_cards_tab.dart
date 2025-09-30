@@ -48,6 +48,7 @@ class CreditCardsTab extends StatelessWidget {
                     ElevatedButton.icon(
                       onPressed: () async {
                         try {
+                          final originalUsedAmount = card.usedAmount ?? 0.0;
                           await Provider.of<DataProvider>(context, listen: false)
                               .resetCreditCardBalance(index);
                           if (context.mounted) {
@@ -58,6 +59,23 @@ class CreditCardsTab extends StatelessWidget {
                                 backgroundColor: Colors.green,
                                 behavior: SnackBarBehavior.floating,
                                 margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                duration: const Duration(seconds: 5),
+                                action: SnackBarAction(
+                                  label: 'UNDO',
+                                  textColor: Colors.white,
+                                  onPressed: () {
+                                    // Restore the original used amount
+                                    final restoredCard = CreditCard(
+                                      name: card.name,
+                                      limit: card.limit,
+                                      dueDate: card.dueDate,
+                                      addedDate: card.addedDate,
+                                      usedAmount: originalUsedAmount,
+                                    );
+                                    Provider.of<DataProvider>(context, listen: false)
+                                        .updateCreditCard(index, restoredCard);
+                                  },
+                                ),
                               ),
                             );
                           }
@@ -186,6 +204,8 @@ class CreditCardsTab extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: canPay ? () async {
                         try {
+                          final originalUsedAmount = card.usedAmount ?? 0.0;
+                          final originalAccountBalance = account.balance;
                           await dataProvider.resetCreditCardBalanceWithBankAccount(
                             cardIndex, 
                             account.name
@@ -199,6 +219,23 @@ class CreditCardsTab extends StatelessWidget {
                                 backgroundColor: Colors.green,
                                 behavior: SnackBarBehavior.floating,
                                 margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                duration: const Duration(seconds: 5),
+                                action: SnackBarAction(
+                                  label: 'UNDO',
+                                  textColor: Colors.white,
+                                  onPressed: () {
+                                    // Restore credit card balance and account balance
+                                    final restoredCard = CreditCard(
+                                      name: card.name,
+                                      limit: card.limit,
+                                      dueDate: card.dueDate,
+                                      addedDate: card.addedDate,
+                                      usedAmount: originalUsedAmount,
+                                    );
+                                    dataProvider.updateCreditCard(cardIndex, restoredCard);
+                                    dataProvider.setAccountBalance(account.name, originalAccountBalance);
+                                  },
+                                ),
                               ),
                             );
                           }
@@ -348,6 +385,8 @@ class CreditCardsTab extends StatelessWidget {
         ),
       ),
     )) {
+      final deletedCard = card;
+      final deletedIndex = index;
       Provider.of<DataProvider>(context, listen: false).deleteCreditCard(index);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -356,7 +395,15 @@ class CreditCardsTab extends StatelessWidget {
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-            duration: const Duration(milliseconds: 1500),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'UNDO',
+              textColor: Colors.white,
+              onPressed: () {
+                // Re-insert the credit card at the same position
+                Provider.of<DataProvider>(context, listen: false).insertCreditCardAt(deletedIndex, deletedCard);
+              },
+            ),
           ),
         );
       }
@@ -576,6 +623,7 @@ class CreditCardsTab extends StatelessWidget {
                           label: const Text('Save'),
                           onPressed: () async {
                             if (cardNameController.text.isNotEmpty && cardLimitController.text.isNotEmpty) {
+                              final originalCard = card; // Store original card for undo
                               final updatedCard = CreditCard(
                                 name: cardNameController.text,
                                 limit: double.parse(cardLimitController.text),
@@ -592,7 +640,16 @@ class CreditCardsTab extends StatelessWidget {
                                     backgroundColor: Colors.deepPurple,
                                     behavior: SnackBarBehavior.floating,
                                     margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                    duration: Duration(milliseconds: 1500),
+                                    duration: const Duration(seconds: 5),
+                                    action: SnackBarAction(
+                                      label: 'UNDO',
+                                      textColor: Colors.white,
+                                      onPressed: () {
+                                        // Restore the original card
+                                        Provider.of<DataProvider>(context, listen: false)
+                                            .updateCreditCard(index, originalCard);
+                                      },
+                                    ),
                                   ),
                                 );
                               }
@@ -997,6 +1054,8 @@ class CreditCardsTab extends StatelessWidget {
                         );
                       },
                       onDismissed: (_) {
+                        final deletedCard = card;
+                        final deletedIndex = index;
                         Provider.of<DataProvider>(context, listen: false).deleteCreditCard(index);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -1004,7 +1063,14 @@ class CreditCardsTab extends StatelessWidget {
                             backgroundColor: Colors.red,
                             behavior: SnackBarBehavior.floating,
                             margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                            duration: Duration(milliseconds: 1500),
+                            duration: const Duration(seconds: 5),
+                            action: SnackBarAction(
+                              label: 'UNDO',
+                              textColor: Colors.white,
+                              onPressed: () {
+                                Provider.of<DataProvider>(context, listen: false).insertCreditCardAt(deletedIndex, deletedCard);
+                              },
+                            ),
                           ),
                         );
                       },

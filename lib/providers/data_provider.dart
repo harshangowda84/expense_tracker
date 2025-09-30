@@ -226,6 +226,44 @@ class DataProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> updateAccount(int index, Account updatedAccount) async {
+    try {
+      if (index >= 0 && index < _accounts.length) {
+        final oldAccountName = _accounts[index].name;
+        _accounts[index] = updatedAccount;
+        await _saveAccounts();
+
+        // Update transaction account names if name changed
+        if (oldAccountName != updatedAccount.name) {
+          for (int i = 0; i < _transactions.length; i++) {
+            if (_transactions[i].accountName == oldAccountName) {
+              _transactions[i] = _transactions[i].copyWith(accountName: updatedAccount.name);
+            }
+          }
+          await _saveTransactions();
+        }
+
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error updating account: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> insertAccountAt(int index, Account account) async {
+    try {
+      if (index >= 0 && index <= _accounts.length) {
+        _accounts.insert(index, account);
+        await _saveAccounts();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error inserting account: $e');
+      rethrow;
+    }
+  }
+
   Future<void> _saveAccounts() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('accounts',
@@ -260,6 +298,19 @@ class DataProvider extends ChangeNotifier {
       }
     } catch (e) {
       debugPrint('Error deleting credit card: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> insertCreditCardAt(int index, CreditCard card) async {
+    try {
+      if (index >= 0 && index <= _creditCards.length) {
+        _creditCards.insert(index, card);
+        await _saveCreditCards();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error inserting credit card: $e');
       rethrow;
     }
   }

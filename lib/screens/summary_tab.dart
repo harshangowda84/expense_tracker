@@ -897,22 +897,28 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                                           showTitles: true,
                                           reservedSize: 30,
                                           getTitlesWidget: (value, meta) {
-                                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-                                            if (value.toInt() < months.length) {
-                                              return Padding(
-                                                padding: const EdgeInsets.only(top: 8),
-                                                child: Text(
-                                                  months[value.toInt()],
-                                                  style: GoogleFonts.inter(
-                                                    fontSize: 11,
-                                                    color: Colors.grey[600],
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
+                                          final now = DateTime.now();
+                                          final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                          
+                                          // Calculate which month this bar represents (last 6 months)
+                                          final monthDate = DateTime(now.year, now.month - (5 - value.toInt()), 1);
+                                          final monthIndex = monthDate.month - 1; // Convert to 0-based index
+                                          
+                                          if (value.toInt() < 6 && monthIndex >= 0 && monthIndex < 12) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(top: 8),
+                                              child: Text(
+                                                monthNames[monthIndex],
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 11,
+                                                  color: Colors.grey[600],
+                                                  fontWeight: FontWeight.w500,
                                                 ),
-                                              );
-                                            }
-                                            return const Text('');
-                                          },
+                                              ),
+                                            );
+                                          }
+                                          return const Text('');
+                                        },
                                         ),
                                       ),
                                     ),

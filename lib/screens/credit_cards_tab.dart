@@ -1243,56 +1243,146 @@ class CreditCardsTab extends StatelessWidget {
                               ),
                               const SizedBox(height: 12),
                               // Action buttons
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: () => _showEditCreditCardDialog(context, card, index),
-                                      icon: const Icon(Icons.edit, size: 16),
-                                      label: const Text('Edit'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.deepPurple,
-                                        side: const BorderSide(color: Colors.deepPurple),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                              LayoutBuilder(
+                                builder: (context, constraints) {
+                                  // Calculate button width based on available space
+                                  final buttonWidth = (constraints.maxWidth - 16) / 3; // 3 buttons with 2 gaps of 8px
+                                  final useVerticalLayout = buttonWidth < 80; // Switch to vertical if too narrow
+                                  
+                                  if (useVerticalLayout) {
+                                    return Column(
+                                      children: [
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: OutlinedButton.icon(
+                                            onPressed: () => _showEditCreditCardDialog(context, card, index),
+                                            icon: const Icon(Icons.edit, size: 16),
+                                            label: const Text('Edit'),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: const Color(0xFF6366F1),
+                                              side: const BorderSide(color: Color(0xFF6366F1)),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: ElevatedButton.icon(
-                                      onPressed: card.usedBalance > 0 
-                                          ? () => _showResetCreditCardDialog(context, card, index)
-                                          : null,
-                                      icon: const Icon(Icons.refresh, size: 16),
-                                      label: const Text('Reset'),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: card.usedBalance > 0 ? Colors.orange : Colors.grey.shade300,
-                                        foregroundColor: card.usedBalance > 0 ? Colors.white : Colors.grey,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                        const SizedBox(height: 8),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: ElevatedButton.icon(
+                                            onPressed: card.usedBalance > 0 
+                                                ? () => _showResetCreditCardDialog(context, card, index)
+                                                : null,
+                                            icon: const Icon(Icons.refresh, size: 16),
+                                            label: const Text('Reset'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: card.usedBalance > 0 ? const Color(0xFFF59E0B) : Colors.grey.shade300,
+                                              foregroundColor: card.usedBalance > 0 ? Colors.white : Colors.grey,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: OutlinedButton.icon(
-                                      onPressed: () => _showDeleteConfirmationDialog(context, index),
-                                      icon: const Icon(Icons.delete_outline, size: 16),
-                                      label: const Text('Delete'),
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                        side: const BorderSide(color: Colors.red),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(8),
+                                        const SizedBox(height: 8),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          child: OutlinedButton.icon(
+                                            onPressed: () => _showDeleteConfirmationDialog(context, index),
+                                            icon: const Icon(Icons.delete_outline, size: 16),
+                                            label: const Text('Delete'),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: const Color(0xFFEF4444),
+                                              side: const BorderSide(color: Color(0xFFEF4444)),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                                      ],
+                                    );
+                                  } else {
+                                    return Row(
+                                      children: [
+                                        Flexible(
+                                          flex: 1,
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              onPressed: () => _showEditCreditCardDialog(context, card, index),
+                                              icon: const Icon(Icons.edit, size: 16),
+                                              label: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: const Text('Edit'),
+                                              ),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: const Color(0xFF6366F1),
+                                                side: const BorderSide(color: Color(0xFF6366F1)),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          flex: 1,
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: ElevatedButton.icon(
+                                              onPressed: card.usedBalance > 0 
+                                                  ? () => _showResetCreditCardDialog(context, card, index)
+                                                  : null,
+                                              icon: const Icon(Icons.refresh, size: 16),
+                                              label: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: const Text('Reset'),
+                                              ),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: card.usedBalance > 0 ? const Color(0xFFF59E0B) : Colors.grey.shade300,
+                                                foregroundColor: card.usedBalance > 0 ? Colors.white : Colors.grey,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Flexible(
+                                          flex: 1,
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              onPressed: () => _showDeleteConfirmationDialog(context, index),
+                                              icon: const Icon(Icons.delete_outline, size: 16),
+                                              label: FittedBox(
+                                                fit: BoxFit.scaleDown,
+                                                child: const Text('Delete'),
+                                              ),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: const Color(0xFFEF4444),
+                                                side: const BorderSide(color: Color(0xFFEF4444)),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }
+                                },
                               ),
                             ],
                           ),

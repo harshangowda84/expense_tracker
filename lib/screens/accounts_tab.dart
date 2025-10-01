@@ -682,79 +682,192 @@ class AccountsTab extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 12),
                                 // Action buttons
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: () => _showEditAccountDialog(context, account, index),
-                                        icon: const Icon(Icons.edit, size: 16),
-                                        label: const Text('Edit'),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: Colors.blue,
-                                          side: const BorderSide(color: Colors.blue),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: ElevatedButton.icon(
-                                        onPressed: () => _showEditBalanceDialog(context, account),
-                                        icon: const Icon(Icons.account_balance_wallet, size: 16),
-                                        label: const Text('Balance'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.green,
-                                          foregroundColor: Colors.white,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: () async {
-                                          if (await _confirmDelete(context, account.name)) {
-                                            if (context.mounted) {
-                                              final deletedAccount = account;
-                                              final deletedIndex = index;
-                                              Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
-                                              
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text('${account.name} deleted'),
-                                                  backgroundColor: Colors.red,
-                                                  behavior: SnackBarBehavior.floating,
-                                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                  duration: const Duration(seconds: 5),
-                                                  action: SnackBarAction(
-                                                    label: 'UNDO',
-                                                    textColor: Colors.white,
-                                                    onPressed: () {
-                                                      Provider.of<DataProvider>(context, listen: false).insertAccountAt(deletedIndex, deletedAccount);
-                                                    },
-                                                  ),
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    // Calculate button width based on available space
+                                    final buttonWidth = (constraints.maxWidth - 16) / 3; // 3 buttons with 2 gaps of 8px
+                                    final useVerticalLayout = buttonWidth < 80; // Switch to vertical if too narrow
+                                    
+                                    if (useVerticalLayout) {
+                                      return Column(
+                                        children: [
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              onPressed: () => _showEditAccountDialog(context, account, index),
+                                              icon: const Icon(Icons.edit, size: 16),
+                                              label: const Text('Edit'),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: const Color(0xFF6366F1),
+                                                side: const BorderSide(color: Color(0xFF6366F1)),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8),
                                                 ),
-                                              );
-                                            }
-                                          }
-                                        },
-                                        icon: const Icon(Icons.delete_outline, size: 16),
-                                        label: const Text('Delete'),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: Colors.red,
-                                          side: const BorderSide(color: Colors.red),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                          const SizedBox(height: 8),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => _showEditBalanceDialog(context, account),
+                                              icon: const Icon(Icons.account_balance_wallet, size: 16),
+                                              label: const Text('Balance'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF10B981),
+                                                foregroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          SizedBox(
+                                            width: double.infinity,
+                                            child: OutlinedButton.icon(
+                                              onPressed: () async {
+                                                if (await _confirmDelete(context, account.name)) {
+                                                  if (context.mounted) {
+                                                    final deletedAccount = account;
+                                                    final deletedIndex = index;
+                                                    Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
+                                                    
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('${account.name} deleted'),
+                                                        backgroundColor: const Color(0xFFEF4444),
+                                                        behavior: SnackBarBehavior.floating,
+                                                        margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                                        duration: const Duration(seconds: 5),
+                                                        action: SnackBarAction(
+                                                          label: 'UNDO',
+                                                          textColor: Colors.white,
+                                                          onPressed: () {
+                                                            Provider.of<DataProvider>(context, listen: false).insertAccountAt(deletedIndex, deletedAccount);
+                                                          },
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                              icon: const Icon(Icons.delete_outline, size: 16),
+                                              label: const Text('Delete'),
+                                              style: OutlinedButton.styleFrom(
+                                                foregroundColor: const Color(0xFFEF4444),
+                                                side: const BorderSide(color: Color(0xFFEF4444)),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(8),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    } else {
+                                      return Row(
+                                        children: [
+                                          Flexible(
+                                            flex: 1,
+                                            child: SizedBox(
+                                              width: double.infinity,
+                                              child: OutlinedButton.icon(
+                                                onPressed: () => _showEditAccountDialog(context, account, index),
+                                                icon: const Icon(Icons.edit, size: 16),
+                                                label: FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: const Text('Edit'),
+                                                ),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: const Color(0xFF6366F1),
+                                                  side: const BorderSide(color: Color(0xFF6366F1)),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            flex: 1,
+                                            child: SizedBox(
+                                              width: double.infinity,
+                                              child: ElevatedButton.icon(
+                                                onPressed: () => _showEditBalanceDialog(context, account),
+                                                icon: const Icon(Icons.account_balance_wallet, size: 16),
+                                                label: FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: const Text('Balance'),
+                                                ),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(0xFF10B981),
+                                                  foregroundColor: Colors.white,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Flexible(
+                                            flex: 1,
+                                            child: SizedBox(
+                                              width: double.infinity,
+                                              child: OutlinedButton.icon(
+                                                onPressed: () async {
+                                                  if (await _confirmDelete(context, account.name)) {
+                                                    if (context.mounted) {
+                                                      final deletedAccount = account;
+                                                      final deletedIndex = index;
+                                                      Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
+                                                      
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text('${account.name} deleted'),
+                                                          backgroundColor: const Color(0xFFEF4444),
+                                                          behavior: SnackBarBehavior.floating,
+                                                          margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                                          duration: const Duration(seconds: 5),
+                                                          action: SnackBarAction(
+                                                            label: 'UNDO',
+                                                            textColor: Colors.white,
+                                                            onPressed: () {
+                                                              Provider.of<DataProvider>(context, listen: false).insertAccountAt(deletedIndex, deletedAccount);
+                                                            },
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                  }
+                                                },
+                                                icon: const Icon(Icons.delete_outline, size: 16),
+                                                label: FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: const Text('Delete'),
+                                                ),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: const Color(0xFFEF4444),
+                                                  side: const BorderSide(color: Color(0xFFEF4444)),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }
+                                  },
                                 ),
                               ],
                             ),

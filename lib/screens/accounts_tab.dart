@@ -172,7 +172,8 @@ class AccountsTab extends StatelessWidget {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
-            padding: const EdgeInsets.all(32),
+            width: MediaQuery.of(context).size.width * 0.85, // Constrain width
+            padding: const EdgeInsets.all(20), // Reduced padding from 32
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Modern indigo to purple
@@ -187,21 +188,22 @@ class AccountsTab extends StatelessWidget {
                 Text(
                   'Edit Account',
                   style: GoogleFonts.inter(
-                    fontSize: 24,
+                    fontSize: 22, // Reduced from 24
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20), // Reduced from 24
                 TextField(
                   controller: nameController,
                   decoration: const InputDecoration(
                     labelText: 'Account Name',
                     filled: true,
                     fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10), // Reduced padding
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14), // Reduced from 16
                 TextField(
                   controller: balanceController,
                   keyboardType: TextInputType.number,
@@ -209,9 +211,10 @@ class AccountsTab extends StatelessWidget {
                     labelText: 'Balance',
                     filled: true,
                     fillColor: Colors.white,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10), // Reduced padding
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20), // Reduced from 24
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -222,15 +225,15 @@ class AccountsTab extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), // Reduced padding
                       ),
-                      icon: const Icon(Icons.close),
-                      label: const Text('Cancel'),
+                      icon: const Icon(Icons.close, size: 18), // Smaller icon
+                      label: const Text('Cancel', style: TextStyle(fontSize: 14)), // Smaller font
                       onPressed: () {
                         Navigator.of(context).pop();
                       },
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12), // Reduced from 16
                     ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -238,10 +241,10 @@ class AccountsTab extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), // Reduced padding
                       ),
-                      icon: const Icon(Icons.save),
-                      label: const Text('Save'),
+                      icon: const Icon(Icons.save, size: 18), // Smaller icon
+                      label: const Text('Save', style: TextStyle(fontSize: 14)), // Smaller font
                       onPressed: () async {
                         if (nameController.text.isNotEmpty && balanceController.text.isNotEmpty) {
                           final originalAccount = account; // Store original for undo

@@ -16,10 +16,11 @@ class CreditCardsTab extends StatelessWidget {
         return Dialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
-            padding: const EdgeInsets.all(24),
+            width: MediaQuery.of(context).size.width * 0.85, // Constrain width
+            padding: const EdgeInsets.all(20), // Reduced padding
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFF59E0B), Color(0xFFEAB308)], // Modern amber gradient
+                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Consistent modern blue to purple
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -33,15 +34,15 @@ class CreditCardsTab extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 24,
+                    fontSize: 22, // Slightly smaller font
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12), // Reduced spacing
                 Text(
                   'Choose payment method for ${card.name}',
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 15, // Slightly smaller font
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -55,10 +56,10 @@ class CreditCardsTab extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 20), // Reduced spacing
                 Column(
                   children: [
-                    ElevatedButton.icon(
+                    ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
                         _showCustomPaymentDialog(context, card, index, PaymentMethod.other);
@@ -66,19 +67,25 @@ class CreditCardsTab extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.orange,
-                        minimumSize: const Size(double.infinity, 48),
+                        minimumSize: const Size(double.infinity, 44), // Reduced height
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      icon: const Icon(Icons.payment),
-                      label: const Text(
-                        'Paid by Other',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.payment, size: 20), // Smaller icon
+                          SizedBox(width: 8),
+                          Text(
+                            'Paid by Other',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold), // Smaller font
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    ElevatedButton.icon(
+                    const SizedBox(height: 10), // Reduced spacing
+                    ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
                         _showCustomPaymentDialog(context, card, index, PaymentMethod.bankAccount);
@@ -86,27 +93,33 @@ class CreditCardsTab extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.orange,
-                        minimumSize: const Size(double.infinity, 48),
+                        minimumSize: const Size(double.infinity, 44), // Reduced height
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      icon: const Icon(Icons.account_balance),
-                      label: const Text(
-                        'Paid by Bank Account',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.account_balance, size: 20), // Smaller icon
+                          SizedBox(width: 8),
+                          Text(
+                            'Paid by Bank Account',
+                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold), // Smaller font
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8), // Reduced spacing
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Reduced padding
                       ),
                       child: const Text(
                         'Cancel',
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(fontSize: 15), // Smaller font
                       ),
                     ),
                   ],
@@ -148,16 +161,14 @@ class CreditCardsTab extends StatelessWidget {
       context: context,
       builder: (dialogContext) {
         return StatefulBuilder(
-          builder: (context, setState) {
+          builder: (builderContext, setState) {
             return Dialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: paymentMethod == PaymentMethod.bankAccount 
-                        ? [const Color(0xFF6366F1), const Color(0xFF8B5CF6)]
-                        : [const Color(0xFFF59E0B), const Color(0xFFEAB308)],
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Consistent modern blue to purple
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -349,9 +360,7 @@ class CreditCardsTab extends StatelessWidget {
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              foregroundColor: paymentMethod == PaymentMethod.bankAccount 
-                                  ? const Color(0xFF6366F1) 
-                                  : const Color(0xFFF59E0B),
+                              foregroundColor: const Color(0xFF6366F1), // Consistent blue color
                               minimumSize: const Size(double.infinity, 48),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),

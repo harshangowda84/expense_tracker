@@ -57,8 +57,13 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
+  late List<AnimationController> _animationControllers;
+  late List<AnimationController> _pulseControllers;
+  late List<Animation<double>> _scaleAnimations;
+  late List<Animation<double>> _rotationAnimations;
+  late List<Animation<double>> _pulseAnimations;
 
   static const List<Widget> _tabs = [
     SummaryTab(),
@@ -66,6 +71,126 @@ class _HomeScreenState extends State<HomeScreen> {
     AccountsTab(),
     CreditCardsTab(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Initialize main animation controllers
+    _animationControllers = List.generate(
+      4,
+      (index) => AnimationController(
+        duration: const Duration(milliseconds: 400),
+        vsync: this,
+      ),
+    );
+    
+    // Initialize pulse controllers for continuous pulse effect
+    _pulseControllers = List.generate(
+      4,
+      (index) => AnimationController(
+        duration: const Duration(milliseconds: 1200),
+        vsync: this,
+      ),
+    );
+    
+    // Initialize scale animations with bounce
+    _scaleAnimations = _animationControllers.map((controller) {
+      return Tween<double>(begin: 1.0, end: 1.3).animate(
+        CurvedAnimation(parent: controller, curve: Curves.elasticOut),
+      );
+    }).toList();
+    
+    // Initialize rotation animations
+    _rotationAnimations = _animationControllers.map((controller) {
+      return Tween<double>(begin: 0.0, end: 0.1).animate(
+        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+      );
+    }).toList();
+    
+    // Initialize pulse animations
+    _pulseAnimations = _pulseControllers.map((controller) {
+      return Tween<double>(begin: 1.0, end: 1.1).animate(
+        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+      );
+    }).toList();
+    
+    // Start animation for initially selected tab
+    _animationControllers[_selectedIndex].forward();
+    _pulseControllers[_selectedIndex].repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _animationControllers) {
+      controller.dispose();
+    }
+    for (var controller in _pulseControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _onTabTapped(int index) {
+    if (index != _selectedIndex) {
+      // Stop previous tab animations
+      _animationControllers[_selectedIndex].reverse();
+      _pulseControllers[_selectedIndex].stop();
+      
+      setState(() => _selectedIndex = index);
+      
+      // Start new tab animations
+      _animationControllers[index].forward();
+      _pulseControllers[index].repeat(reverse: true);
+    } else {
+      // Create a strong bounce effect for same tab
+      _animationControllers[index].reverse().then((_) {
+        _animationControllers[index].forward();
+      });
+    }
+  }
+
+  Widget _buildAnimatedIcon(IconData iconData, int index) {
+    return AnimatedBuilder(
+      animation: Listenable.merge([
+        _scaleAnimations[index],
+        _rotationAnimations[index],
+        _pulseAnimations[index],
+      ]),
+      builder: (context, child) {
+        final isSelected = _selectedIndex == index;
+        final scale = isSelected 
+            ? _scaleAnimations[index].value * _pulseAnimations[index].value
+            : 1.0;
+        final rotation = isSelected ? _rotationAnimations[index].value : 0.0;
+        
+        return Container(
+          decoration: isSelected ? BoxDecoration(
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF6366F1).withOpacity(0.3),
+                blurRadius: 8,
+                spreadRadius: 2,
+              ),
+            ],
+          ) : null,
+          child: Transform.rotate(
+            angle: rotation,
+            child: Transform.scale(
+              scale: scale,
+              child: Icon(
+                iconData,
+                color: isSelected 
+                    ? const Color(0xFF6366F1) 
+                    : Colors.grey,
+                size: 24,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,12 +220,24 @@ class _HomeScreenState extends State<HomeScreen> {
         duration: const Duration(milliseconds: 200),
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
-          onTap: (index) => setState(() => _selectedIndex = index),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Summary'),
-            BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'Transactions'),
-            BottomNavigationBarItem(icon: Icon(Icons.account_balance_wallet), label: 'Accounts'),
-            BottomNavigationBarItem(icon: Icon(Icons.credit_card), label: 'Credit Card'),
+          onTap: _onTabTapped,
+          items: [
+            BottomNavigationBarItem(
+              icon: _buildAnimatedIcon(Icons.bar_chart, 0), 
+              label: 'Summary'
+            ),
+            BottomNavigationBarItem(
+              icon: _buildAnimatedIcon(Icons.list_alt, 1), 
+              label: 'Transactions'
+            ),
+            BottomNavigationBarItem(
+              icon: _buildAnimatedIcon(Icons.account_balance_wallet, 2), 
+              label: 'Accounts'
+            ),
+            BottomNavigationBarItem(
+              icon: _buildAnimatedIcon(Icons.credit_card, 3), 
+              label: 'Credit Card'
+            ),
           ],
           selectedItemColor: const Color(0xFF6366F1), // Modern indigo
           unselectedItemColor: Colors.grey,

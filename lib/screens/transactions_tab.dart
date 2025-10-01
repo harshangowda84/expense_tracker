@@ -6,8 +6,810 @@ import '../models/account.dart';
 import '../models/credit_card.dart';
 import '../providers/data_provider.dart';
 
-class TransactionsTab extends StatelessWidget {
+enum DateFilterType {
+  all,
+  today,
+  yesterday,
+  thisWeek,
+  thisMonth,
+  last30Days,
+  custom,
+}
+
+class TransactionsTab extends StatefulWidget {
   const TransactionsTab({super.key});
+
+  @override
+  State<TransactionsTab> createState() => _TransactionsTabState();
+}
+
+class _TransactionsTabState extends State<TransactionsTab> {
+  String _searchQuery = '';
+  ExpenseCategory? _selectedCategory;
+  DateFilterType _selectedDateFilter = DateFilterType.all;
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<ExpenseTransaction> _filterTransactions(List<ExpenseTransaction> transactions) {
+    var filtered = transactions.where((tx) {
+      // Search filter
+      final matchesSearch = _searchQuery.isEmpty ||
+          tx.note.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          tx.accountName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          tx.amount.toString().contains(_searchQuery);
+      
+      // Category filter
+      final matchesCategory = _selectedCategory == null || tx.category == _selectedCategory;
+      
+      // Date filter
+      final matchesDate = _matchesDateFilter(tx.date);
+      
+      return matchesSearch && matchesCategory && matchesDate;
+    }).toList();
+    
+    // Sort by date (newest first)
+    filtered.sort((a, b) => b.date.compareTo(a.date));
+    return filtered;
+  }
+
+  bool _matchesDateFilter(DateTime transactionDate) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final weekStart = today.subtract(Duration(days: now.weekday - 1));
+    final monthStart = DateTime(now.year, now.month, 1);
+    final last30Days = today.subtract(const Duration(days: 30));
+    
+    final txDate = DateTime(transactionDate.year, transactionDate.month, transactionDate.day);
+    
+    switch (_selectedDateFilter) {
+      case DateFilterType.all:
+        return true;
+      case DateFilterType.today:
+        return txDate.isAtSameMomentAs(today);
+      case DateFilterType.yesterday:
+        return txDate.isAtSameMomentAs(yesterday);
+      case DateFilterType.thisWeek:
+        return txDate.isAfter(weekStart.subtract(const Duration(days: 1))) && txDate.isBefore(today.add(const Duration(days: 1)));
+      case DateFilterType.thisMonth:
+        return txDate.isAfter(monthStart.subtract(const Duration(days: 1))) && txDate.isBefore(today.add(const Duration(days: 1)));
+      case DateFilterType.last30Days:
+        return txDate.isAfter(last30Days.subtract(const Duration(days: 1))) && txDate.isBefore(today.add(const Duration(days: 1)));
+      case DateFilterType.custom:
+        if (_customStartDate == null || _customEndDate == null) return true;
+        final startDate = DateTime(_customStartDate!.year, _customStartDate!.month, _customStartDate!.day);
+        final endDate = DateTime(_customEndDate!.year, _customEndDate!.month, _customEndDate!.day);
+        return txDate.isAfter(startDate.subtract(const Duration(days: 1))) && 
+               txDate.isBefore(endDate.add(const Duration(days: 1)));
+    }
+  }
+
+  Map<String, List<ExpenseTransaction>> _groupTransactionsByDate(List<ExpenseTransaction> transactions) {
+    final Map<String, List<ExpenseTransaction>> grouped = {};
+    final now = DateTime.now();
+    
+    for (var tx in transactions) {
+      String dateKey;
+      final difference = now.difference(tx.date).inDays;
+      
+      if (difference == 0) {
+        dateKey = 'Today';
+      } else if (difference == 1) {
+        dateKey = 'Yesterday';
+      } else if (difference < 7) {
+        dateKey = '${difference} days ago';
+      } else {
+        dateKey = '${tx.date.day}/${tx.date.month}/${tx.date.year}';
+      }
+      
+      grouped[dateKey] ??= [];
+      grouped[dateKey]!.add(tx);
+    }
+    
+    return grouped;
+  }
+
+  Widget _buildSearchAndFilters() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          // Search Bar
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey[300]!),
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _searchQuery = value),
+                decoration: InputDecoration(
+                  hintText: 'Search transactions...',
+                  prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: Icon(Icons.clear, color: Colors.grey[600]),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Filter Button
+          Container(
+            decoration: BoxDecoration(
+              color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all) 
+                  ? const Color(0xFF6366F1) : Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all) 
+                    ? const Color(0xFF6366F1) : Colors.grey[300]!,
+              ),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(12),
+                onTap: _showFilterModal,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.filter_list,
+                        color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all) 
+                            ? Colors.white : Colors.grey[600],
+                        size: 20,
+                      ),
+                      const SizedBox(width: 4),
+                      if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all) ...[
+                        if (_selectedCategory != null) ...[
+                          Icon(
+                            _getCategoryIcon(_selectedCategory!),
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        if (_selectedDateFilter != DateFilterType.all) ...[
+                          Icon(
+                            Icons.calendar_today,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                        ],
+                        Text(
+                          _getFilterDisplayText(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ] else ...[
+                        Text(
+                          'Filter',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFilterModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.75,
+          ),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 4),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Filter',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6366F1),
+                      ),
+                    ),
+                    if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _selectedCategory = null;
+                            _selectedDateFilter = DateFilterType.all;
+                            _customStartDate = null;
+                            _customEndDate = null;
+                          });
+                          Navigator.pop(context);
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          minimumSize: Size.zero,
+                        ),
+                        child: const Text('Clear', style: TextStyle(fontSize: 14)),
+                      ),
+                  ],
+                ),
+              ),
+              
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Quick Date Filters (Horizontal)
+                      const Text(
+                        'Date Range',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _buildCompactDateChip('All', DateFilterType.all, setModalState),
+                            const SizedBox(width: 8),
+                            _buildCompactDateChip('Today', DateFilterType.today, setModalState),
+                            const SizedBox(width: 8),
+                            _buildCompactDateChip('Week', DateFilterType.thisWeek, setModalState),
+                            const SizedBox(width: 8),
+                            _buildCompactDateChip('Month', DateFilterType.thisMonth, setModalState),
+                            const SizedBox(width: 8),
+                            _buildCompactDateChip('30 Days', DateFilterType.last30Days, setModalState),
+                            const SizedBox(width: 8),
+                            _buildCompactDateChip('Custom', DateFilterType.custom, setModalState),
+                          ],
+                        ),
+                      ),
+                      
+                      // Custom Date Range Picker
+                      if (_selectedDateFilter == DateFilterType.custom) ...[
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildCompactDatePickerButton(
+                                'Start',
+                                _customStartDate,
+                                (date) => setModalState(() => _customStartDate = date),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildCompactDatePickerButton(
+                                'End',
+                                _customEndDate,
+                                (date) => setModalState(() => _customEndDate = date),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Category Filter Section (Compact Grid)
+                      const Text(
+                        'Category',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      GridView.count(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 6,
+                        mainAxisSpacing: 6,
+                        childAspectRatio: 3.2,
+                        children: [
+                          _buildCompactCategoryCard(null, 'All', Icons.grid_view, Colors.grey[600]!),
+                          ...ExpenseCategory.values.map((category) =>
+                            _buildCompactCategoryCard(
+                              category,
+                              category.name.toUpperCase(),
+                              _getCategoryIcon(category),
+                              _getCategoryColor(category),
+                            )),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getFilterDisplayText() {
+    List<String> parts = [];
+    
+    if (_selectedCategory != null) {
+      parts.add(_selectedCategory!.name.toUpperCase());
+    }
+    
+    if (_selectedDateFilter != DateFilterType.all) {
+      switch (_selectedDateFilter) {
+        case DateFilterType.today:
+          parts.add('TODAY');
+          break;
+        case DateFilterType.yesterday:
+          parts.add('YESTERDAY');
+          break;
+        case DateFilterType.thisWeek:
+          parts.add('THIS WEEK');
+          break;
+        case DateFilterType.thisMonth:
+          parts.add('THIS MONTH');
+          break;
+        case DateFilterType.last30Days:
+          parts.add('LAST 30 DAYS');
+          break;
+        case DateFilterType.custom:
+          parts.add('CUSTOM');
+          break;
+        case DateFilterType.all:
+          break;
+      }
+    }
+    
+    return parts.join(' • ');
+  }
+
+  Widget _buildDateFilterChip(String label, DateFilterType filterType, StateSetter setModalState) {
+    final isSelected = _selectedDateFilter == filterType;
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF6366F1) : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? const Color(0xFF6366F1) : Colors.grey[200]!,
+          width: 2,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            setModalState(() {
+              _selectedDateFilter = filterType;
+              if (filterType != DateFilterType.custom) {
+                _customStartDate = null;
+                _customEndDate = null;
+              }
+            });
+            setState(() {
+              _selectedDateFilter = filterType;
+              if (filterType != DateFilterType.custom) {
+                _customStartDate = null;
+                _customEndDate = null;
+              }
+            });
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white.withOpacity(0.2) : const Color(0xFF6366F1).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    Icons.calendar_today,
+                    size: 16,
+                    color: isSelected ? Colors.white : const Color(0xFF6366F1),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.grey[800],
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+                if (isSelected) ...[
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDatePickerButton(String label, DateTime? selectedDate, Function(DateTime) onDateSelected) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: selectedDate ?? DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime.now(),
+            );
+            if (date != null) {
+              onDateSelected(date);
+              setState(() {});
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Text(
+                      selectedDate != null
+                          ? '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'
+                          : 'Select Date',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: selectedDate != null ? Colors.black : Colors.grey[500],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterCategoryCard(ExpenseCategory? category, String label, IconData icon, Color color) {
+    final isSelected = _selectedCategory == category;
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF6366F1) : Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? const Color(0xFF6366F1) : Colors.grey[200]!,
+          width: 2,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            setState(() => _selectedCategory = category);
+            Navigator.pop(context);
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white.withOpacity(0.2) : color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 20,
+                    color: isSelected ? Colors.white : color,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.grey[800],
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(
+                    Icons.check_circle,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactDateChip(String label, DateFilterType filterType, StateSetter setModalState) {
+    final isSelected = _selectedDateFilter == filterType;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF6366F1) : Colors.grey[100],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isSelected ? const Color(0xFF6366F1) : Colors.grey[300]!,
+          width: 1,
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          setModalState(() {
+            _selectedDateFilter = filterType;
+            if (filterType != DateFilterType.custom) {
+              _customStartDate = null;
+              _customEndDate = null;
+            }
+          });
+          setState(() {
+            _selectedDateFilter = filterType;
+            if (filterType != DateFilterType.custom) {
+              _customStartDate = null;
+              _customEndDate = null;
+            }
+          });
+        },
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[700],
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactDatePickerButton(String label, DateTime? selectedDate, Function(DateTime) onDateSelected) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: selectedDate ?? DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime.now(),
+            );
+            if (date != null) {
+              onDateSelected(date);
+              setState(() {});
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 12, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        selectedDate != null
+                            ? '${selectedDate.day}/${selectedDate.month}'
+                            : 'Select',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: selectedDate != null ? Colors.black87 : Colors.grey[500],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactCategoryCard(ExpenseCategory? category, String label, IconData icon, Color color) {
+    final isSelected = _selectedCategory == category;
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF6366F1) : Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isSelected ? const Color(0xFF6366F1) : Colors.grey[200]!,
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            setState(() => _selectedCategory = category);
+            Navigator.pop(context);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 12,
+                  color: isSelected ? Colors.white : color,
+                ),
+                const SizedBox(height: 1),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.grey[700],
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontSize: 8,
+                      height: 1.0,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  IconData _getCategoryIcon(ExpenseCategory category) {
+    switch (category) {
+      case ExpenseCategory.office:
+        return Icons.work;
+      case ExpenseCategory.food:
+        return Icons.restaurant;
+      case ExpenseCategory.travel:
+        return Icons.directions_car;
+      case ExpenseCategory.bills:
+        return Icons.receipt;
+      case ExpenseCategory.shopping:
+        return Icons.shopping_bag;
+      case ExpenseCategory.entertainment:
+        return Icons.movie;
+      case ExpenseCategory.other:
+        return Icons.category;
+    }
+  }
+
+  Color _getCategoryColor(ExpenseCategory category) {
+    switch (category) {
+      case ExpenseCategory.office:
+        return const Color(0xFF9B59B6);
+      case ExpenseCategory.food:
+        return const Color(0xFFFF6B6B);
+      case ExpenseCategory.travel:
+        return const Color(0xFF4ECDC4);
+      case ExpenseCategory.bills:
+        return const Color(0xFFFFE66D);
+      case ExpenseCategory.shopping:
+        return const Color(0xFF95E1D3);
+      case ExpenseCategory.entertainment:
+        return const Color(0xFFAB83A1);
+      case ExpenseCategory.other:
+        return const Color(0xFF6C7CE0);
+    }
+  }
 
   String formatIndianAmount(double amount) {
     String sign = amount < 0 ? '-' : '';
@@ -882,16 +1684,14 @@ class TransactionsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        _buildSearchAndFilters(),
         Expanded(
           child: Selector<DataProvider, List<ExpenseTransaction>>(
-            selector: (_, provider) {
-              // Sort transactions by date in descending order (newest first)
-              final sortedTransactions = List<ExpenseTransaction>.from(provider.transactions);
-              sortedTransactions.sort((a, b) => b.date.compareTo(a.date));
-              return sortedTransactions;
-            },
-            builder: (context, transactions, _) {
-              if (transactions.isEmpty) {
+            selector: (_, provider) => provider.transactions,
+            builder: (context, allTransactions, _) {
+              final filteredTransactions = _filterTransactions(allTransactions);
+              
+              if (filteredTransactions.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -899,27 +1699,83 @@ class TransactionsTab extends StatelessWidget {
                       Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
                       const SizedBox(height: 16),
                       Text(
-                        'No transactions yet',
+                        _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
+                            ? 'No transactions match your filters'
+                            : 'No transactions yet',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: Colors.grey[600],
                             ),
                       ),
+                      if (_searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all) ...[
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {
+                              _searchQuery = '';
+                              _selectedCategory = null;
+                              _selectedDateFilter = DateFilterType.all;
+                              _customStartDate = null;
+                              _customEndDate = null;
+                            });
+                          },
+                          child: const Text('Clear filters'),
+                        ),
+                      ],
                     ],
                   ),
                 );
               }
+
+              final groupedTransactions = _groupTransactionsByDate(filteredTransactions);
+              
               return ListView.builder(
-                itemCount: transactions.length,
-                padding: const EdgeInsets.only(top: 8),
+                itemCount: groupedTransactions.length,
+                padding: const EdgeInsets.only(top: 8, bottom: 80),
                 itemBuilder: (context, index) {
-                  final tx = transactions[index];
-                  return Dismissible(
-                    key: Key(tx.id),
-                    background: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(16),
+                  final dateKey = groupedTransactions.keys.elementAt(index);
+                  final dayTransactions = groupedTransactions[dateKey]!;
+                  final dayTotal = dayTransactions.fold<double>(0, (sum, tx) => sum + tx.amount);
+                  
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Date Header
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              dateKey,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF6366F1),
+                              ),
+                            ),
+                            Text(
+                              '₹${dayTotal.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Transactions for this date
+                      ...dayTransactions.asMap().entries.map((entry) {
+                        final txIndex = allTransactions.indexOf(entry.value);
+                        final tx = entry.value;
+                        return Dismissible(
+                          key: Key(tx.id),
+                          background: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(16),
                       ),
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.only(right: 24),
@@ -927,184 +1783,159 @@ class TransactionsTab extends StatelessWidget {
                     ),
                     direction: DismissDirection.endToStart,
                     confirmDismiss: (_) => _confirmDelete(context, 'transaction'),
-                    onDismissed: (_) {
-                      Provider.of<DataProvider>(context, listen: false).deleteTransaction(index);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Transaction deleted'),
-                          backgroundColor: Colors.red,
-                          behavior: SnackBarBehavior.floating,
-                          margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                          duration: const Duration(milliseconds: 1500),
-                        ),
-                      );
-                    },
-                    child: Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onLongPress: () async {
-                          if (await _confirmDelete(context, 'transaction')) {
-                            if (context.mounted) {
-                              Provider.of<DataProvider>(context, listen: false).deleteTransaction(index);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text('Transaction deleted'),
-                                  backgroundColor: Colors.red,
-                                  behavior: SnackBarBehavior.floating,
-                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                  duration: const Duration(milliseconds: 1500),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Account and category info
-                                  Expanded(
-                                    flex: 3,
-                                    child: Column(
+                          onDismissed: (_) {
+                            Provider.of<DataProvider>(context, listen: false).deleteTransaction(txIndex);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Transaction deleted'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                duration: const Duration(milliseconds: 1500),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onLongPress: () async {
+                                if (await _confirmDelete(context, 'transaction')) {
+                                  if (context.mounted) {
+                                    Provider.of<DataProvider>(context, listen: false).deleteTransaction(txIndex);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('Transaction deleted'),
+                                        backgroundColor: Colors.red,
+                                        behavior: SnackBarBehavior.floating,
+                                        margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                        duration: const Duration(milliseconds: 1500),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Row(
+                                        // Category icon
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: _getCategoryColor(tx.category).withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(
+                                            _getCategoryIcon(tx.category),
+                                            size: 20,
+                                            color: _getCategoryColor(tx.category),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        // Account and category info
+                                        Expanded(
+                                          flex: 3,
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    tx.sourceType == TransactionSourceType.bankAccount
+                                                        ? Icons.account_balance_wallet
+                                                        : Icons.credit_card,
+                                                    size: 16,
+                                                    color: Colors.grey[600],
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Text(
+                                                      tx.accountName,
+                                                      style: const TextStyle(
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 16,
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        // Amount and edit button
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
                                           children: [
-                                            Icon(
-                                              tx.sourceType == TransactionSourceType.bankAccount
-                                                  ? Icons.account_balance_wallet
-                                                  : Icons.credit_card,
-                                              size: 16,
-                                              color: Colors.grey[600],
-                                            ),
-                                            const SizedBox(width: 8),
                                             Text(
-                                              tx.accountName,
+                                              '₹${tx.amount.toStringAsFixed(2)}',
                                               style: const TextStyle(
                                                 fontWeight: FontWeight.bold,
-                                                fontSize: 16,
+                                                color: Colors.red,
+                                                fontSize: 18,
                                               ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            IconButton(
+                                              icon: const Icon(Icons.edit, size: 18),
+                                              color: const Color(0xFF6366F1),
+                                              tooltip: 'Edit Transaction',
+                                              padding: const EdgeInsets.all(4),
+                                              constraints: const BoxConstraints(
+                                                minWidth: 32,
+                                                minHeight: 32,
+                                              ),
+                                              onPressed: () {
+                                                final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
+                                                _showEditTransactionDialog(context, accounts, tx, txIndex);
+                                              },
                                             ),
                                           ],
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 14,
-                                          ),
-                                        ),
                                       ],
                                     ),
-                                  ),
-                                  // Amount and date (center)
-                                  Expanded(
-                                    flex: 2,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        FittedBox(
-                                          fit: BoxFit.scaleDown,
-                                          child: Text(
-                                            formatIndianAmount(tx.amount),
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.red,
-                                              fontSize: 18,
-                                            ),
-                                          ),
+                                    if (tx.note.isNotEmpty) ...[
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey[100],
+                                          borderRadius: BorderRadius.circular(8),
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _formatDate(tx.date),
-                                          textAlign: TextAlign.right,
+                                        child: Text(
+                                          tx.note,
                                           style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 12,
+                                            fontStyle: FontStyle.italic,
+                                            color: Colors.grey[700],
+                                            fontSize: 13,
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  // Edit and Delete icons
-                                  Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit, size: 20),
-                                        color: const Color(0xFF6366F1),
-                                        tooltip: 'Edit Transaction',
-                                        padding: const EdgeInsets.all(8),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 40,
-                                          minHeight: 40,
-                                        ),
-                                        onPressed: () {
-                                          final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
-                                          _showEditTransactionDialog(context, accounts, tx, index);
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.delete_outline, size: 20),
-                                        color: Colors.red,
-                                        tooltip: 'Delete Transaction',
-                                        padding: const EdgeInsets.all(8),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 40,
-                                          minHeight: 40,
-                                        ),
-                                        onPressed: () async {
-                                          if (await _confirmDelete(context, 'transaction')) {
-                                            if (context.mounted) {
-                                              Provider.of<DataProvider>(context, listen: false).deleteTransaction(index);
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: const Text('Transaction deleted'),
-                                                  backgroundColor: Colors.red,
-                                                  behavior: SnackBarBehavior.floating,
-                                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                  duration: const Duration(milliseconds: 1500),
-                                                ),
-                                              );
-                                            }
-                                          }
-                                        },
                                       ),
                                     ],
-                                  ),
-                                ],
-                              ),
-                              if (tx.note.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[100],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    tx.note,
-                                    style: TextStyle(
-                                      fontStyle: FontStyle.italic,
-                                      color: Colors.grey[700],
-                                      fontSize: 13,
-                                    ),
-                                  ),
+                                  ],
                                 ),
-                              ],
-                            ],
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
+                        );
+                      }).toList(),
+                      const SizedBox(height: 8),
+                    ],
                   );
                 },
               );

@@ -1,4 +1,5 @@
 enum ExpenseCategory {
+  office,
   food,
   travel,
   bills,

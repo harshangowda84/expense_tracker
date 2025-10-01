@@ -378,7 +378,7 @@ class TransactionsTab extends StatelessWidget {
                                   ],
                                 ),
                               )).toList(),
-                              onChanged: (v) => setState(() => category = v ?? ExpenseCategory.food),
+                              onChanged: (v) => setState(() => category = v ?? ExpenseCategory.office),
                               decoration: InputDecoration(
                                 labelText: 'Category',
                                 prefixIcon: Icon(Icons.category, color: const Color(0xFF8B5CF6)),
@@ -487,7 +487,7 @@ class TransactionsTab extends StatelessWidget {
   void _showAddTransactionDialog(BuildContext context, List<Account> accounts) {
     String accountName = accounts.isNotEmpty ? accounts[0].name : '';
     String amount = '';
-    ExpenseCategory category = ExpenseCategory.food;
+    ExpenseCategory category = ExpenseCategory.office;
     String note = '';
     String? amountError;
     bool isSubmitting = false;
@@ -761,7 +761,7 @@ class TransactionsTab extends StatelessWidget {
                                   ),
                                 ))
                             .toList(),
-                        onChanged: (v) => setState(() => category = v ?? ExpenseCategory.food),
+                        onChanged: (v) => setState(() => category = v ?? ExpenseCategory.office),
                         decoration: InputDecoration(
                           labelText: 'Category',
                           prefixIcon: Icon(Icons.category, color: const Color(0xFF8B5CF6)),

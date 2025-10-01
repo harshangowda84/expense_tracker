@@ -187,6 +187,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
       ExpenseCategory.bills: const Color(0xFFFFE66D),
       ExpenseCategory.shopping: const Color(0xFF95E1D3),
       ExpenseCategory.entertainment: const Color(0xFFAB83A1),
+      ExpenseCategory.office: const Color(0xFF9B59B6), // Purple color for office
       ExpenseCategory.other: const Color(0xFF6C7CE0),
     };
 

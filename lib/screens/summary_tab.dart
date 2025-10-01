@@ -236,18 +236,21 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 24),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 24),
                 ),
                 if (showTrend && trendValue != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
                       color: trendValue >= 0 ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -269,6 +272,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                           ),
                         ),
                       ],
+                    ),
                     ),
                   ),
               ],

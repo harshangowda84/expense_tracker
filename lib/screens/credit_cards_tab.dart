@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import '../models/credit_card.dart';
+import '../models/account.dart';
+
+enum PaymentMethod { other, bankAccount }
 
 class CreditCardsTab extends StatelessWidget {
   const CreditCardsTab({super.key});
@@ -35,10 +38,20 @@ class CreditCardsTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Reset ${card.name} balance of ₹${card.usedBalance.toStringAsFixed(2)}?',
+                  'Choose payment method for ${card.name}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Outstanding: ₹${card.usedBalance.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -46,52 +59,9 @@ class CreditCardsTab extends StatelessWidget {
                 Column(
                   children: [
                     ElevatedButton.icon(
-                      onPressed: () async {
-                        try {
-                          final originalUsedAmount = card.usedAmount ?? 0.0;
-                          await Provider.of<DataProvider>(context, listen: false)
-                              .resetCreditCardBalance(index);
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${card.name} balance reset successfully!'),
-                                backgroundColor: Colors.green,
-                                behavior: SnackBarBehavior.floating,
-                                margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                duration: const Duration(seconds: 5),
-                                action: SnackBarAction(
-                                  label: 'UNDO',
-                                  textColor: Colors.white,
-                                  onPressed: () {
-                                    // Restore the original used amount
-                                    final restoredCard = CreditCard(
-                                      name: card.name,
-                                      limit: card.limit,
-                                      dueDate: card.dueDate,
-                                      addedDate: card.addedDate,
-                                      usedAmount: originalUsedAmount,
-                                    );
-                                    Provider.of<DataProvider>(context, listen: false)
-                                        .updateCreditCard(index, restoredCard);
-                                  },
-                                ),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error: $e'),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                                margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                              ),
-                            );
-                          }
-                        }
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _showCustomPaymentDialog(context, card, index, PaymentMethod.other);
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -109,7 +79,10 @@ class CreditCardsTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
-                      onPressed: () => _showBankAccountSelectionDialog(context, card, index),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _showCustomPaymentDialog(context, card, index, PaymentMethod.bankAccount);
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         foregroundColor: Colors.orange,
@@ -146,12 +119,16 @@ class CreditCardsTab extends StatelessWidget {
     );
   }
 
-  void _showBankAccountSelectionDialog(BuildContext context, CreditCard card, int cardIndex) {
+  void _showCustomPaymentDialog(BuildContext context, CreditCard card, int cardIndex, PaymentMethod paymentMethod) {
+    final TextEditingController amountController = TextEditingController();
+    bool isPayingFull = true;
+    Account? selectedAccount;
+    
     final dataProvider = Provider.of<DataProvider>(context, listen: false);
     final accounts = dataProvider.accounts;
 
-    if (accounts.isEmpty) {
-      Navigator.of(context).pop();
+    // If paying by bank account and no accounts available, show error
+    if (paymentMethod == PaymentMethod.bankAccount && accounts.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('No bank accounts available'),
@@ -162,155 +139,390 @@ class CreditCardsTab extends StatelessWidget {
       return;
     }
 
+    // Set default selected account if paying by bank account
+    if (paymentMethod == PaymentMethod.bankAccount && accounts.isNotEmpty) {
+      selectedAccount = accounts.first;
+    }
+
     showDialog(
       context: context,
       builder: (dialogContext) {
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Modern indigo to purple
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Select Bank Account',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: paymentMethod == PaymentMethod.bankAccount 
+                        ? [const Color(0xFF6366F1), const Color(0xFF8B5CF6)]
+                        : [const Color(0xFFF59E0B), const Color(0xFFEAB308)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  'Pay ₹${card.usedBalance.toStringAsFixed(2)} from:',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...accounts.map((account) {
-                  final canPay = account.balance >= card.usedBalance;
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ElevatedButton(
-                      onPressed: canPay ? () async {
-                        try {
-                          final originalUsedAmount = card.usedAmount ?? 0.0;
-                          final originalAccountBalance = account.balance;
-                          await dataProvider.resetCreditCardBalanceWithBankAccount(
-                            cardIndex, 
-                            account.name
-                          );
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Payment successful! ${card.name} balance reset.'),
-                                backgroundColor: Colors.green,
-                                behavior: SnackBarBehavior.floating,
-                                margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                duration: const Duration(seconds: 5),
-                                action: SnackBarAction(
-                                  label: 'UNDO',
-                                  textColor: Colors.white,
-                                  onPressed: () {
-                                    // Restore credit card balance and account balance
-                                    final restoredCard = CreditCard(
-                                      name: card.name,
-                                      limit: card.limit,
-                                      dueDate: card.dueDate,
-                                      addedDate: card.addedDate,
-                                      usedAmount: originalUsedAmount,
-                                    );
-                                    dataProvider.updateCreditCard(cardIndex, restoredCard);
-                                    dataProvider.setAccountBalance(account.name, originalAccountBalance);
-                                  },
-                                ),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                            Navigator.of(context).pop();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Error: $e'),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                                margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                              ),
-                            );
-                          }
-                        }
-                      } : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: canPay ? Colors.white : Colors.grey.shade300,
-                        foregroundColor: canPay ? Colors.blue : Colors.grey,
-                        minimumSize: const Size(double.infinity, 48),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          paymentMethod == PaymentMethod.bankAccount 
+                              ? Icons.account_balance 
+                              : Icons.payment,
+                          color: Colors.white,
+                          size: 24,
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            paymentMethod == PaymentMethod.bankAccount 
+                                ? 'Pay from Bank Account' 
+                                : 'Pay by Other Method',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 20,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      '${card.name} - Outstanding: ₹${card.usedBalance.toStringAsFixed(2)}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Bank Account Selection (only for bank payment)
+                    if (paymentMethod == PaymentMethod.bankAccount) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<Account>(
+                            value: selectedAccount,
+                            isExpanded: true,
+                            dropdownColor: const Color(0xFF6366F1),
+                            style: const TextStyle(color: Colors.white, fontSize: 16),
+                            icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                            items: accounts.map((account) => DropdownMenuItem(
+                              value: account,
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.account_balance_wallet, 
+                                       color: Colors.white, size: 18),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      '${account.name} (₹${account.balance.toStringAsFixed(2)})',
+                                      style: const TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )).toList(),
+                            onChanged: (Account? account) {
+                              setState(() {
+                                selectedAccount = account;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    
+                    // Toggle for Pay Full/Custom Amount
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white.withOpacity(0.2)),
                       ),
                       child: Column(
                         children: [
-                          Text(
-                            account.name,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: canPay ? Colors.blue : Colors.grey,
-                            ),
+                          Row(
+                            children: [
+                              Switch(
+                                value: isPayingFull,
+                                onChanged: (value) {
+                                  setState(() {
+                                    isPayingFull = value;
+                                    if (value) {
+                                      amountController.clear();
+                                    }
+                                  });
+                                },
+                                activeColor: Colors.white,
+                                activeTrackColor: Colors.white.withOpacity(0.3),
+                                inactiveThumbColor: Colors.white.withOpacity(0.7),
+                                inactiveTrackColor: Colors.white.withOpacity(0.2),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  isPayingFull ? 'Pay Full Amount' : 'Pay Custom Amount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            '₹${account.balance.toStringAsFixed(2)}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: canPay ? Colors.blue.shade600 : Colors.grey,
-                            ),
-                          ),
-                          if (!canPay)
-                            Text(
-                              'Insufficient Balance',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.red.shade700,
-                                fontWeight: FontWeight.bold,
+                          if (!isPayingFull) ...[
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: amountController,
+                              keyboardType: TextInputType.number,
+                              style: const TextStyle(color: Colors.white, fontSize: 18),
+                              decoration: InputDecoration(
+                                hintText: 'Enter amount to pay',
+                                hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                                prefixIcon: Icon(Icons.currency_rupee, 
+                                               color: Colors.white.withOpacity(0.8)),
+                                filled: true,
+                                fillColor: Colors.white.withOpacity(0.1),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(color: Colors.white),
+                                ),
                               ),
                             ),
+                          ],
                         ],
                       ),
                     ),
-                  );
-                }).toList(),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                    const SizedBox(height: 24),
+                    
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton(
+                            onPressed: () => _processPayment(
+                              context, 
+                              card, 
+                              cardIndex, 
+                              paymentMethod, 
+                              isPayingFull, 
+                              amountController.text, 
+                              selectedAccount
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: paymentMethod == PaymentMethod.bankAccount 
+                                  ? const Color(0xFF6366F1) 
+                                  : const Color(0xFFF59E0B),
+                              minimumSize: const Size(double.infinity, 48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              isPayingFull ? 'Pay Full' : 'Pay Amount',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
+  }
+
+  void _processPayment(
+    BuildContext context,
+    CreditCard card,
+    int cardIndex,
+    PaymentMethod paymentMethod,
+    bool isPayingFull,
+    String customAmountText,
+    Account? selectedAccount,
+  ) async {
+    try {
+      double paymentAmount;
+      final originalUsedAmount = card.usedAmount ?? 0.0;
+      
+      if (isPayingFull) {
+        paymentAmount = card.usedBalance;
+      } else {
+        if (customAmountText.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter an amount'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+        
+        paymentAmount = double.tryParse(customAmountText) ?? 0.0;
+        if (paymentAmount <= 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Please enter a valid amount'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+        
+        if (paymentAmount > card.usedBalance) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Payment amount cannot exceed outstanding balance'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+      }
+
+      final dataProvider = Provider.of<DataProvider>(context, listen: false);
+      
+      if (paymentMethod == PaymentMethod.bankAccount && selectedAccount != null) {
+        // Check if bank account has sufficient balance
+        if (selectedAccount.balance < paymentAmount) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Insufficient balance in selected account'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          return;
+        }
+        
+        // Process bank account payment
+        await dataProvider.resetCreditCardBalanceWithBankAccount(
+          cardIndex, 
+          selectedAccount.name, 
+          paymentAmount
+        );
+      } else {
+        // Process other payment method
+        if (isPayingFull) {
+          await dataProvider.resetCreditCardBalance(cardIndex);
+        } else {
+          // Partial payment - reduce used amount
+          final newUsedAmount = (card.usedAmount ?? 0.0) - paymentAmount;
+          final updatedCard = CreditCard(
+            name: card.name,
+            limit: card.limit,
+            dueDate: card.dueDate,
+            addedDate: card.addedDate,
+            usedAmount: newUsedAmount,
+          );
+          await dataProvider.updateCreditCard(cardIndex, updatedCard);
+        }
+      }
+
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isPayingFull 
+                  ? '${card.name} balance reset successfully!' 
+                  : 'Payment of ₹${paymentAmount.toStringAsFixed(2)} successful!'
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'UNDO',
+              textColor: Colors.white,
+              onPressed: () {
+                // Restore the original state
+                final restoredCard = CreditCard(
+                  name: card.name,
+                  limit: card.limit,
+                  dueDate: card.dueDate,
+                  addedDate: card.addedDate,
+                  usedAmount: originalUsedAmount,
+                );
+                dataProvider.updateCreditCard(cardIndex, restoredCard);
+                
+                // If paid by bank account, restore bank balance
+                if (paymentMethod == PaymentMethod.bankAccount && selectedAccount != null) {
+                  final accountIndex = dataProvider.accounts.indexWhere((acc) => acc.name == selectedAccount.name);
+                  if (accountIndex != -1) {
+                    final originalAccount = dataProvider.accounts[accountIndex];
+                    final restoredAccount = Account(
+                      name: originalAccount.name,
+                      balance: originalAccount.balance + paymentAmount,
+                      balanceDate: originalAccount.balanceDate,
+                    );
+                    dataProvider.updateAccount(accountIndex, restoredAccount);
+                  }
+                }
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+          ),
+        );
+      }
+    }
   }
 
   void _showDeleteConfirmationDialog(BuildContext context, int index) async {

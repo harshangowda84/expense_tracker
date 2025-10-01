@@ -357,11 +357,11 @@ class DataProvider extends ChangeNotifier {
   }
 
   // Reset credit card balance by paying from bank account
-  Future<void> resetCreditCardBalanceWithBankAccount(int cardIndex, String bankAccountName) async {
+  Future<void> resetCreditCardBalanceWithBankAccount(int cardIndex, String bankAccountName, [double? customAmount]) async {
     try {
       if (cardIndex >= 0 && cardIndex < _creditCards.length) {
         final card = _creditCards[cardIndex];
-        final paymentAmount = card.usedBalance;
+        final paymentAmount = customAmount ?? card.usedBalance;
 
         // Find the bank account
         final accountIndex = _accounts.indexWhere((a) => a.name == bankAccountName);
@@ -382,13 +382,14 @@ class DataProvider extends ChangeNotifier {
         );
         _accounts[accountIndex] = updatedAccount;
 
-        // Reset credit card balance
+        // Update credit card balance (partial or full payment)
+        final newUsedAmount = (card.usedAmount ?? 0.0) - paymentAmount;
         final resetCard = CreditCard(
           name: card.name,
           limit: card.limit,
           dueDate: card.dueDate,
           addedDate: card.addedDate,
-          usedAmount: 0.0,
+          usedAmount: newUsedAmount,
         );
         _creditCards[cardIndex] = resetCard;
 

@@ -884,7 +884,12 @@ class TransactionsTab extends StatelessWidget {
       children: [
         Expanded(
           child: Selector<DataProvider, List<ExpenseTransaction>>(
-            selector: (_, provider) => provider.transactions,
+            selector: (_, provider) {
+              // Sort transactions by date in descending order (newest first)
+              final sortedTransactions = List<ExpenseTransaction>.from(provider.transactions);
+              sortedTransactions.sort((a, b) => b.date.compareTo(a.date));
+              return sortedTransactions;
+            },
             builder: (context, transactions, _) {
               if (transactions.isEmpty) {
                 return Center(

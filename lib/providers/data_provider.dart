@@ -393,6 +393,21 @@ class DataProvider extends ChangeNotifier {
         );
         _creditCards[cardIndex] = resetCard;
 
+        // Create a transaction record for the credit card payment
+        final transaction = ExpenseTransaction(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          accountName: bankAccountName,
+          amount: paymentAmount,
+          date: DateTime.now(),
+          category: ExpenseCategory.bills, // Credit card payment is typically a bill
+          note: 'Credit card payment: ${card.name}',
+          sourceType: TransactionSourceType.bankAccount,
+        );
+        
+        // Add the transaction
+        _transactions.add(transaction);
+        await _saveTransactions();
+
         // Save both updates
         await _saveAccounts();
         await _saveCreditCards();

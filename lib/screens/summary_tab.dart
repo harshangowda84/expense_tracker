@@ -156,16 +156,15 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
               ),
-              width: 22,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+              width: 18, // Reduced width for better spacing
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
               backDrawRodData: BackgroundBarChartRodData(
                 show: true,
                 toY: maxAmount > 0 ? maxAmount : 100,
-                color: Colors.grey.withValues(alpha: 0.1),
+                color: Colors.grey.withOpacity(0.08),
               ),
             ),
           ],
-          showingTooltipIndicators: [0],
         ),
       );
     }
@@ -247,33 +246,42 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                   ),
                 ),
                 if (showTrend && trendValue != null)
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                      color: trendValue >= 0 ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          trendValue >= 0 ? Icons.trending_up : Icons.trending_down,
-                          color: Colors.white,
-                          size: 16,
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Only show trend if there's enough space
+                      if (constraints.maxWidth < 60) {
+                        return const SizedBox.shrink(); // Hide trend on very small screens
+                      }
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: trendValue >= 0 ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${trendValue >= 0 ? '+' : ''}${trendValue.toStringAsFixed(1)}%',
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                trendValue >= 0 ? Icons.trending_up : Icons.trending_down,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                              const SizedBox(width: 2),
+                              Text(
+                                '${trendValue >= 0 ? '+' : ''}${trendValue.toStringAsFixed(0)}%',
+                                style: GoogleFonts.inter(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                    ),
+                      );
+                    },
                   ),
               ],
             ),
@@ -320,6 +328,13 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withOpacity(0.2), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -332,23 +347,30 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
             child: Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              title,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -555,45 +577,105 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Quick stats row
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildQuickStatsCard(
-                          'Transactions',
-                          totalTransactions.toString(),
-                          Icons.receipt_long,
-                          const Color(0xFF3B82F6),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickStatsCard(
-                          'Avg. Amount',
-                          formatIndianAmount(avgTransactionAmount),
-                          Icons.calculate,
-                          const Color(0xFF8B5CF6),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickStatsCard(
-                          'Accounts',
-                          accounts.length.toString(),
-                          Icons.account_balance,
-                          const Color(0xFF10B981),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildQuickStatsCard(
-                          'Cards',
-                          creditCards.length.toString(),
-                          Icons.credit_card,
-                          const Color(0xFFEF4444),
-                        ),
-                      ),
-                    ],
+                  // Quick stats - responsive layout
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Determine if we should use 2x2 grid or 1x4 row layout
+                      final screenWidth = constraints.maxWidth;
+                      final useGridLayout = screenWidth < 600; // Switch to grid on smaller screens
+                      
+                      if (useGridLayout) {
+                        // 2x2 Grid layout for mobile screens
+                        return Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildQuickStatsCard(
+                                    'Transactions',
+                                    totalTransactions.toString(),
+                                    Icons.receipt_long,
+                                    const Color(0xFF3B82F6),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildQuickStatsCard(
+                                    'Avg. Amount',
+                                    formatIndianAmount(avgTransactionAmount),
+                                    Icons.calculate,
+                                    const Color(0xFF8B5CF6),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildQuickStatsCard(
+                                    'Accounts',
+                                    accounts.length.toString(),
+                                    Icons.account_balance,
+                                    const Color(0xFF10B981),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildQuickStatsCard(
+                                    'Cards',
+                                    creditCards.length.toString(),
+                                    Icons.credit_card,
+                                    const Color(0xFFEF4444),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        );
+                      } else {
+                        // Single row layout for larger screens
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: _buildQuickStatsCard(
+                                'Transactions',
+                                totalTransactions.toString(),
+                                Icons.receipt_long,
+                                const Color(0xFF3B82F6),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildQuickStatsCard(
+                                'Avg. Amount',
+                                formatIndianAmount(avgTransactionAmount),
+                                Icons.calculate,
+                                const Color(0xFF8B5CF6),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildQuickStatsCard(
+                                'Accounts',
+                                accounts.length.toString(),
+                                Icons.account_balance,
+                                const Color(0xFF10B981),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildQuickStatsCard(
+                                'Cards',
+                                creditCards.length.toString(),
+                                Icons.credit_card,
+                                const Color(0xFFEF4444),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                    },
                   ),
                   const SizedBox(height: 24),
                   
@@ -755,7 +837,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                     shadowColor: Colors.black12,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                     child: Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -774,72 +856,89 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                                 ),
                               ),
                               const SizedBox(width: 12),
-                              Text(
-                                'Monthly Spending Trend',
-                                style: GoogleFonts.inter(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF1E293B),
+                              Expanded(
+                                child: Text(
+                                  'Monthly Spending Trend',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: const Color(0xFF1E293B),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            height: 300,
-                            child: BarChart(
-                              BarChartData(
-                                barGroups: _buildMonthlyBarData(allTransactions),
-                                gridData: FlGridData(
-                                  show: true,
-                                  drawHorizontalLine: true,
-                                  drawVerticalLine: false,
-                                  horizontalInterval: 1000,
-                                  getDrawingHorizontalLine: (value) => FlLine(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    strokeWidth: 1,
-                                  ),
-                                ),
-                                titlesData: FlTitlesData(
-                                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                  bottomTitles: AxisTitles(
-                                    sideTitles: SideTitles(
-                                      showTitles: true,
-                                      getTitlesWidget: (value, meta) {
-                                        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-                                        if (value.toInt() < months.length) {
-                                          return Text(
-                                            months[value.toInt()],
-                                            style: GoogleFonts.inter(
+                          const SizedBox(height: 20),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              return SizedBox(
+                                height: 280,
+                                width: constraints.maxWidth,
+                                child: BarChart(
+                                  BarChartData(
+                                    barGroups: _buildMonthlyBarData(allTransactions),
+                                    gridData: FlGridData(
+                                      show: true,
+                                      drawHorizontalLine: true,
+                                      drawVerticalLine: false,
+                                      horizontalInterval: 1000,
+                                      getDrawingHorizontalLine: (value) => FlLine(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        strokeWidth: 1,
+                                      ),
+                                    ),
+                                    titlesData: FlTitlesData(
+                                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                                      bottomTitles: AxisTitles(
+                                        sideTitles: SideTitles(
+                                          showTitles: true,
+                                          reservedSize: 30,
+                                          getTitlesWidget: (value, meta) {
+                                            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                                            if (value.toInt() < months.length) {
+                                              return Padding(
+                                                padding: const EdgeInsets.only(top: 8),
+                                                child: Text(
+                                                  months[value.toInt()],
+                                                  style: GoogleFonts.inter(
+                                                    fontSize: 11,
+                                                    color: Colors.grey[600],
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              );
+                                            }
+                                            return const Text('');
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                    borderData: FlBorderData(show: false),
+                                    barTouchData: BarTouchData(
+                                      touchTooltipData: BarTouchTooltipData(
+                                        tooltipBgColor: const Color(0xFF6366F1),
+                                        tooltipRoundedRadius: 8,
+                                        tooltipPadding: const EdgeInsets.all(8),
+                                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                                          return BarTooltipItem(
+                                            formatIndianAmount(rod.toY),
+                                            GoogleFonts.inter(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
                                               fontSize: 12,
-                                              color: Colors.grey[600],
                                             ),
                                           );
-                                        }
-                                        return const Text('');
-                                      },
+                                        },
+                                      ),
                                     ),
+                                    maxY: null, // Let the chart auto-scale
+                                    alignment: BarChartAlignment.center,
                                   ),
                                 ),
-                                borderData: FlBorderData(show: false),
-                                barTouchData: BarTouchData(
-                                  touchTooltipData: BarTouchTooltipData(
-                                    tooltipBgColor: const Color(0xFF6366F1),
-                                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                                      return BarTooltipItem(
-                                        formatIndianAmount(rod.toY),
-                                        GoogleFonts.inter(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ),
-                            ),
+                              );
+                            },
                           ),
                         ],
                       ),

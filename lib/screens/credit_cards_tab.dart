@@ -502,7 +502,7 @@ class CreditCardsTab extends StatelessWidget {
                 );
                 dataProvider.updateCreditCard(cardIndex, restoredCard);
                 
-                // If paid by bank account, restore bank balance
+                // If paid by bank account, restore bank balance and remove the payment transaction
                 if (paymentMethod == PaymentMethod.bankAccount && selectedAccount != null) {
                   final accountIndex = dataProvider.accounts.indexWhere((acc) => acc.name == selectedAccount.name);
                   if (accountIndex != -1) {
@@ -513,6 +513,22 @@ class CreditCardsTab extends StatelessWidget {
                       balanceDate: originalAccount.balanceDate,
                     );
                     dataProvider.updateAccount(accountIndex, restoredAccount);
+                    
+                    // Remove the payment transaction that was created
+                    final transactionToRemove = dataProvider.transactions.where((t) =>
+                      t.accountName == selectedAccount.name &&
+                      t.amount == paymentAmount &&
+                      t.category == ExpenseCategory.bills &&
+                      t.note == 'Credit card payment: ${card.name}' &&
+                      t.sourceType == TransactionSourceType.bankAccount
+                    ).toList();
+                    
+                    // Remove the most recent matching transaction (last one added)
+                    if (transactionToRemove.isNotEmpty) {
+                      // Sort by date descending and take the first (most recent)
+                      transactionToRemove.sort((a, b) => b.date.compareTo(a.date));
+                      dataProvider.deleteTransaction(transactionToRemove.first.id);
+                    }
                   }
                 }
               },

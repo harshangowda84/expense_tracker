@@ -177,10 +177,10 @@ class _SplashScreenState extends State<SplashScreen>
                           opacity: _fadeInAnimation.value,
                           child: Text(
                             'Spendly',
-                            style: GoogleFonts.montserrat(
+                            style: GoogleFonts.bagelFatOne(
                               fontSize: 56, // Slightly larger for better scaling effect
                               color: Colors.white,
-                              fontWeight: FontWeight.w700,
+                              fontWeight: FontWeight.w400,
                               letterSpacing: 0.2,
                               shadows: [
                                 Shadow(

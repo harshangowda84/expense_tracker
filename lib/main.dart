@@ -223,9 +223,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       appBar: AppBar(
         title: Text(
           'Spendly',
-          style: GoogleFonts.montserrat(
+          style: GoogleFonts.bagelFatOne(
             fontSize: 28,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w400,
             color: Colors.white,
             letterSpacing: 0.2,
           ),

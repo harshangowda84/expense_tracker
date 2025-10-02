@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
+import '../models/income_transaction.dart';
 import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -58,6 +59,30 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
   }
 
   List<ExpenseTransaction> _getFilteredTransactions(List<ExpenseTransaction> transactions) {
+    final now = DateTime.now();
+    DateTime startDate;
+    
+    switch (selectedPeriod) {
+      case 'This Week':
+        startDate = now.subtract(Duration(days: now.weekday - 1));
+        break;
+      case 'This Month':
+        startDate = DateTime(now.year, now.month, 1);
+        break;
+      case 'Last 3 Months':
+        startDate = DateTime(now.year, now.month - 2, 1);
+        break;
+      case 'This Year':
+        startDate = DateTime(now.year, 1, 1);
+        break;
+      default:
+        startDate = DateTime(now.year, now.month, 1);
+    }
+    
+    return transactions.where((tx) => tx.date.isAfter(startDate) || tx.date.isAtSameMomentAs(startDate)).toList();
+  }
+
+  List<IncomeTransaction> _getFilteredIncomeTransactions(List<IncomeTransaction> transactions) {
     final now = DateTime.now();
     DateTime startDate;
     
@@ -787,7 +812,9 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
     return Consumer<DataProvider>(
       builder: (context, data, _) {
         final allTransactions = data.transactions;
+        final allIncomeTransactions = data.incomeTransactions;
         final filteredTransactions = _getFilteredTransactions(allTransactions);
+        final filteredIncomeTransactions = _getFilteredIncomeTransactions(allIncomeTransactions);
         final accounts = data.accounts;
         final creditCards = data.creditCards;
         
@@ -796,8 +823,12 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
         final totalCreditLimit = creditCards.fold(0.0, (sum, cc) => sum + cc.limit);
         final totalCreditUsed = creditCards.fold(0.0, (sum, cc) => sum + (cc.usedAmount ?? 0.0));
         final totalSpent = filteredTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
+        final totalIncome = filteredIncomeTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
+        final netAmount = totalIncome - totalSpent;
         final totalTransactions = filteredTransactions.length;
+        final totalIncomeTransactions = filteredIncomeTransactions.length;
         final avgTransactionAmount = totalTransactions > 0 ? totalSpent / totalTransactions : 0.0;
+        final avgIncomeAmount = totalIncomeTransactions > 0 ? totalIncome / totalIncomeTransactions : 0.0;
         
         // Calculate category breakdown
         final Map<ExpenseCategory, double> categoryTotals = {};
@@ -912,10 +943,10 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                     children: [
                       Expanded(
                         child: _buildModernSummaryCard(
-                          'Total Balance',
-                          formatIndianAmount(totalBalance),
-                          'Available in accounts',
-                          Icons.account_balance_wallet,
+                          'Total Income',
+                          formatIndianAmount(totalIncome),
+                          selectedPeriod.toLowerCase(),
+                          Icons.trending_up,
                           const Color(0xFF10B981),
                           const Color(0xFF065F46),
                         ),
@@ -931,6 +962,34 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                           const Color(0xFF991B1B),
                           showTrend: true,
                           trendValue: spendingTrend,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Second row with balance and net amount
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildModernSummaryCard(
+                          'Total Balance',
+                          formatIndianAmount(totalBalance),
+                          'Available in accounts',
+                          Icons.account_balance_wallet,
+                          const Color(0xFF3B82F6),
+                          const Color(0xFF1E40AF),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildModernSummaryCard(
+                          'Net Amount',
+                          formatIndianAmount(netAmount),
+                          'Income - Expenses',
+                          netAmount >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
+                          netAmount >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                          netAmount >= 0 ? const Color(0xFF065F46) : const Color(0xFF991B1B),
                         ),
                       ),
                     ],

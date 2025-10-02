@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/account.dart';
 import '../models/transaction.dart';
 import '../models/credit_card.dart';
+import '../models/income_transaction.dart';
 
 class DataProvider extends ChangeNotifier {
   Future<void> updateTransaction(int index, ExpenseTransaction updatedTx, double oldAmount, String oldAccountName) async {
@@ -58,11 +59,13 @@ class DataProvider extends ChangeNotifier {
   List<Account> _accounts = [];
   List<ExpenseTransaction> _transactions = [];
   List<CreditCard> _creditCards = [];
+  List<IncomeTransaction> _incomeTransactions = [];
   bool _initialized = false;
 
   List<Account> get accounts => List.unmodifiable(_accounts);
   List<ExpenseTransaction> get transactions => List.unmodifiable(_transactions);
   List<CreditCard> get creditCards => List.unmodifiable(_creditCards);
+  List<IncomeTransaction> get incomeTransactions => List.unmodifiable(_incomeTransactions);
   bool get initialized => _initialized;
 
   DataProvider() {
@@ -75,6 +78,7 @@ class DataProvider extends ChangeNotifier {
       final accountList = prefs.getStringList('accounts') ?? [];
       final txList = prefs.getStringList('transactions') ?? [];
       final creditCardList = prefs.getStringList('creditCards') ?? [];
+      final incomeList = prefs.getStringList('incomeTransactions') ?? [];
 
       _accounts = accountList
           .map((e) => Account.fromMap(Map<String, dynamic>.from(Uri.splitQueryString(e))))
@@ -87,6 +91,11 @@ class DataProvider extends ChangeNotifier {
     _creditCards = creditCardList
       .map((e) => CreditCard.fromMap(Map<String, dynamic>.from(Uri.splitQueryString(e))))
       .toList();
+
+    _incomeTransactions = incomeList
+      .map((e) => IncomeTransaction.fromMap(Map<String, dynamic>.from(Uri.splitQueryString(e))))
+      .toList();
+    _incomeTransactions.sort((a, b) => b.date.compareTo(a.date));
 
       _initialized = true;
       notifyListeners();
@@ -274,6 +283,96 @@ class DataProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('transactions',
         _transactions.map((t) => Uri(queryParameters: t.toMap()).query).toList());
+  }
+
+  Future<void> _saveIncomeTransactions() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('incomeTransactions',
+        _incomeTransactions.map((t) => Uri(queryParameters: t.toMap()).query).toList());
+  }
+
+  // Income Transaction CRUD Operations
+  Future<void> addIncomeTransaction(IncomeTransaction tx) async {
+    try {
+      // Validate account exists
+      if (!_accounts.any((account) => account.name == tx.accountName)) {
+        throw Exception('Account "${tx.accountName}" does not exist.');
+      }
+
+      // Add transaction
+      _incomeTransactions.add(tx);
+      _incomeTransactions.sort((a, b) => b.date.compareTo(a.date));
+      await _saveIncomeTransactions();
+      
+      // Add money to account
+      final accountIndex = _accounts.indexWhere((a) => a.name == tx.accountName);
+      if (accountIndex != -1) {
+        final updatedAccount = _accounts[accountIndex].copyWith(
+          balance: _accounts[accountIndex].balance + tx.amount,
+          balanceDate: DateTime.now(),
+        );
+        _accounts[accountIndex] = updatedAccount;
+        await _saveAccounts();
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error adding income transaction: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> deleteIncomeTransaction(int index) async {
+    try {
+      if (index >= 0 && index < _incomeTransactions.length) {
+        final tx = _incomeTransactions[index];
+        
+        // Remove money from account
+        final accountIndex = _accounts.indexWhere((a) => a.name == tx.accountName);
+        if (accountIndex != -1) {
+          final updatedAccount = _accounts[accountIndex].copyWith(
+            balance: _accounts[accountIndex].balance - tx.amount,
+            balanceDate: DateTime.now(),
+          );
+          _accounts[accountIndex] = updatedAccount;
+          await _saveAccounts();
+        }
+        
+        _incomeTransactions.removeAt(index);
+        await _saveIncomeTransactions();
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error deleting income transaction: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> updateIncomeTransaction(int index, IncomeTransaction updatedTx, double oldAmount, String oldAccountName) async {
+    if (index < 0 || index >= _incomeTransactions.length) return;
+    
+    _incomeTransactions[index] = updatedTx;
+    _incomeTransactions.sort((a, b) => b.date.compareTo(a.date));
+    await _saveIncomeTransactions();
+
+    // Remove old amount from old account
+    final oldAccountIdx = _accounts.indexWhere((a) => a.name == oldAccountName);
+    if (oldAccountIdx != -1) {
+      _accounts[oldAccountIdx] = _accounts[oldAccountIdx].copyWith(
+        balance: _accounts[oldAccountIdx].balance - oldAmount,
+        balanceDate: DateTime.now(),
+      );
+    }
+    // Add new amount to new account
+    final newAccountIdx = _accounts.indexWhere((a) => a.name == updatedTx.accountName);
+    if (newAccountIdx != -1) {
+      _accounts[newAccountIdx] = _accounts[newAccountIdx].copyWith(
+        balance: _accounts[newAccountIdx].balance + updatedTx.amount,
+        balanceDate: DateTime.now(),
+      );
+    }
+    await _saveAccounts();
+    notifyListeners();
   }
 
   Future<void> addCreditCard(CreditCard card) async {

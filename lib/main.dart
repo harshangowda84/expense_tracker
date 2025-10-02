@@ -7,6 +7,7 @@ import 'screens/summary_tab.dart';
 import 'screens/splash_screen.dart';
 import 'providers/data_provider.dart';
 import 'screens/credit_cards_tab.dart';
+import 'screens/income_tab.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -109,6 +110,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   static const List<Widget> _tabs = [
     SummaryTab(),
     TransactionsTab(),
+    IncomeTab(),
     AccountsTab(),
     CreditCardsTab(),
   ];
@@ -119,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     
     // Initialize main animation controllers
     _animationControllers = List.generate(
-      4,
+      5,
       (index) => AnimationController(
         duration: const Duration(milliseconds: 400),
         vsync: this,
@@ -128,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     
     // Initialize pulse controllers for continuous pulse effect
     _pulseControllers = List.generate(
-      4,
+      5,
       (index) => AnimationController(
         duration: const Duration(milliseconds: 1200),
         vsync: this,
@@ -296,11 +298,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               label: 'Transactions'
             ),
             BottomNavigationBarItem(
-              icon: _buildAnimatedIcon(Icons.account_balance_wallet, 2), 
+              icon: _buildAnimatedIcon(Icons.trending_up, 2), 
+              label: 'Income'
+            ),
+            BottomNavigationBarItem(
+              icon: _buildAnimatedIcon(Icons.account_balance_wallet, 3), 
               label: 'Accounts'
             ),
             BottomNavigationBarItem(
-              icon: _buildAnimatedIcon(Icons.credit_card, 3), 
+              icon: _buildAnimatedIcon(Icons.credit_card, 4), 
               label: 'Credit Card'
             ),
           ],

@@ -36,13 +36,16 @@ class _TransactionsTabState extends State<TransactionsTab> {
     super.dispose();
   }
 
+  String? _selectedSourceFilter;
+
   List<ExpenseTransaction> _filterTransactions(List<ExpenseTransaction> transactions) {
     var filtered = transactions.where((tx) {
       // Search filter
       final matchesSearch = _searchQuery.isEmpty ||
           tx.note.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           tx.accountName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          tx.amount.toString().contains(_searchQuery);
+          tx.amount.toString().contains(_searchQuery) ||
+          tx.category.name.toLowerCase().contains(_searchQuery.toLowerCase());
       
       // Category filter
       final matchesCategory = _selectedCategory == null || tx.category == _selectedCategory;
@@ -50,7 +53,10 @@ class _TransactionsTabState extends State<TransactionsTab> {
       // Date filter
       final matchesDate = _matchesDateFilter(tx.date);
       
-      return matchesSearch && matchesCategory && matchesDate;
+      // Source filter (specific account or card)
+      final matchesSource = _selectedSourceFilter == null || tx.accountName == _selectedSourceFilter;
+      
+      return matchesSearch && matchesCategory && matchesDate && matchesSource;
     }).toList();
     
     // Sort by date (newest first)
@@ -132,7 +138,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
                 decoration: InputDecoration(
-                  hintText: 'Search transactions...',
+                  hintText: 'Search by amount, account, note, or category...',
                   prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -153,11 +159,11 @@ class _TransactionsTabState extends State<TransactionsTab> {
           // Filter Button
           Container(
             decoration: BoxDecoration(
-              color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all) 
+              color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) 
                   ? const Color(0xFF6366F1) : Colors.grey[100],
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all) 
+                color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) 
                     ? const Color(0xFF6366F1) : Colors.grey[300]!,
               ),
             ),
@@ -173,12 +179,12 @@ class _TransactionsTabState extends State<TransactionsTab> {
                     children: [
                       Icon(
                         Icons.filter_list,
-                        color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all) 
+                        color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) 
                             ? Colors.white : Colors.grey[600],
                         size: 20,
                       ),
                       const SizedBox(width: 4),
-                      if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all) ...[
+                      if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) ...[
                         if (_selectedCategory != null) ...[
                           Icon(
                             _getCategoryIcon(_selectedCategory!),
@@ -265,12 +271,13 @@ class _TransactionsTabState extends State<TransactionsTab> {
                         color: Color(0xFF6366F1),
                       ),
                     ),
-                    if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all)
+                    if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
                       TextButton(
                         onPressed: () {
                           setState(() {
                             _selectedCategory = null;
                             _selectedDateFilter = DateFilterType.all;
+                            _selectedSourceFilter = null;
                             _customStartDate = null;
                             _customEndDate = null;
                           });
@@ -292,6 +299,29 @@ class _TransactionsTabState extends State<TransactionsTab> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Quick Preset Filters
+                      const Text(
+                        'Quick Presets',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: [
+                          _buildPresetChip('Today\'s Food', ExpenseCategory.food, DateFilterType.today, setModalState),
+                          _buildPresetChip('This Week\'s Bills', ExpenseCategory.bills, DateFilterType.thisWeek, setModalState),
+                          _buildPresetChip('Monthly Shopping', ExpenseCategory.shopping, DateFilterType.thisMonth, setModalState),
+                          _buildPresetChip('Recent Travel', ExpenseCategory.travel, DateFilterType.last30Days, setModalState),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
                       // Quick Date Filters (Horizontal)
                       const Text(
                         'Date Range',
@@ -347,6 +377,153 @@ class _TransactionsTabState extends State<TransactionsTab> {
                       
                       const SizedBox(height: 16),
                       
+                      // Amount Range Filter Section
+                      const Text(
+                        'Amount Range',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.grey[300]!),
+                                    ),
+                                    child: const Text(
+                                      '₹0 - ₹100',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.grey[300]!),
+                                    ),
+                                    child: const Text(
+                                      '₹100 - ₹500',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: Colors.grey[300]!),
+                                    ),
+                                    child: const Text(
+                                      '₹500+',
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Source Filter Section
+                      const Text(
+                        'Source Type',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Consumer<DataProvider>(
+                        builder: (context, provider, _) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Bank Accounts Section
+                              if (provider.accounts.isNotEmpty) ...[
+                                const Text(
+                                  'Bank Accounts',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: provider.accounts.map((account) {
+                                    return _buildSourceFilterChip(
+                                      account.name,
+                                      Icons.account_balance_wallet,
+                                      Colors.orange,
+                                      setModalState,
+                                    );
+                                  }).toList(),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                              // Credit Cards Section
+                              if (provider.creditCards.isNotEmpty) ...[
+                                const Text(
+                                  'Credit Cards',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: provider.creditCards.map((card) {
+                                    return _buildSourceFilterChip(
+                                      card.name,
+                                      Icons.credit_card,
+                                      Colors.purple,
+                                      setModalState,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ],
+                          );
+                        },
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
                       // Category Filter Section (Compact Grid)
                       const Text(
                         'Category',
@@ -392,6 +569,10 @@ class _TransactionsTabState extends State<TransactionsTab> {
     
     if (_selectedCategory != null) {
       parts.add(_selectedCategory!.name.toUpperCase());
+    }
+    
+    if (_selectedSourceFilter != null) {
+      parts.add(_selectedSourceFilter!.toUpperCase());
     }
     
     if (_selectedDateFilter != DateFilterType.all) {
@@ -610,6 +791,108 @@ class _TransactionsTabState extends State<TransactionsTab> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSourceFilterChip(String sourceName, IconData icon, MaterialColor color, StateSetter setModalState) {
+    final isSelected = _selectedSourceFilter == sourceName;
+    return InkWell(
+      onTap: () {
+        setModalState(() {
+          _selectedSourceFilter = isSelected ? null : sourceName;
+        });
+        setState(() {
+          _selectedSourceFilter = isSelected ? null : sourceName;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color.shade100 : color.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color.shade400 : color.shade200,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? color.shade700 : color.shade600,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              sourceName,
+              style: TextStyle(
+                color: isSelected ? color.shade700 : color.shade600,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 4),
+              Icon(
+                Icons.check_circle,
+                size: 12,
+                color: color.shade700,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPresetChip(String label, ExpenseCategory category, DateFilterType dateFilter, StateSetter setModalState) {
+    final isSelected = _selectedCategory == category && _selectedDateFilter == dateFilter;
+    return InkWell(
+      onTap: () {
+        setModalState(() {
+          _selectedCategory = category;
+          _selectedDateFilter = dateFilter;
+          _customStartDate = null;
+          _customEndDate = null;
+        });
+        setState(() {
+          _selectedCategory = category;
+          _selectedDateFilter = dateFilter;
+          _customStartDate = null;
+          _customEndDate = null;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6366F1) : Colors.grey[100],
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF6366F1) : Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _getCategoryIcon(category),
+              size: 14,
+              color: isSelected ? Colors.white : _getCategoryColor(category),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey[700],
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1705,7 +1988,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                               color: Colors.grey[600],
                             ),
                       ),
-                      if (_searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all) ...[
+                      if (_searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) ...[
                         const SizedBox(height: 8),
                         TextButton(
                           onPressed: () {
@@ -1714,6 +1997,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                               _searchQuery = '';
                               _selectedCategory = null;
                               _selectedDateFilter = DateFilterType.all;
+                              _selectedSourceFilter = null;
                               _customStartDate = null;
                               _customEndDate = null;
                             });

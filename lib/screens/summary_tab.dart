@@ -215,108 +215,302 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
     }).toList();
   }
 
-  Widget _buildModernSummaryCard(String title, String value, String subtitle, IconData icon, Color startColor, Color endColor, {bool showTrend = false, double? trendValue}) {
-    return Card(
-      elevation: 8,
-      shadowColor: startColor.withOpacity(0.3),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [startColor, endColor],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
+  Widget _buildEnhancedPeriodSelector() {
+    // Define icons for each period
+    final Map<String, IconData> periodIcons = {
+      'This Week': Icons.calendar_view_week_rounded,
+      'This Month': Icons.calendar_view_month_rounded,
+      'Last 3 Months': Icons.calendar_view_month_outlined,
+      'This Year': Icons.calendar_today_rounded,
+    };
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(icon, color: Colors.white, size: 24),
-                  ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withOpacity(0.25),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: selectedPeriod,
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              elevation: 8,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+              icon: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(6),
                 ),
-                if (showTrend && trendValue != null)
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Only show trend if there's enough space
-                      if (constraints.maxWidth < 60) {
-                        return const SizedBox.shrink(); // Hide trend on very small screens
-                      }
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                child: const Icon(
+                  Icons.expand_more_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              selectedItemBuilder: (BuildContext context) {
+                return periods.map((String period) {
+                  return Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
-                          color: trendValue >= 0 ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Row(
+                        child: Icon(
+                          periodIcons[period] ?? Icons.calendar_today,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        period,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList();
+              },
+              items: periods.map((period) {
+                final isSelected = period == selectedPeriod;
+                return DropdownMenuItem(
+                  value: period,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: isSelected 
+                        ? const Color(0xFF6366F1).withOpacity(0.1)
+                        : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: isSelected 
+                              ? const Color(0xFF6366F1).withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            periodIcons[period] ?? Icons.calendar_today,
+                            color: isSelected 
+                              ? const Color(0xFF6366F1)
+                              : Colors.grey[600],
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                trendValue >= 0 ? Icons.trending_up : Icons.trending_down,
-                                color: Colors.white,
-                                size: 12,
-                              ),
-                              const SizedBox(width: 2),
                               Text(
-                                '${trendValue >= 0 ? '+' : ''}${trendValue.toStringAsFixed(0)}%',
+                                period,
                                 style: GoogleFonts.inter(
-                                  color: Colors.white,
-                                  fontSize: 10,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
+                                  color: isSelected 
+                                    ? const Color(0xFF6366F1)
+                                    : const Color(0xFF1E293B),
+                                ),
+                              ),
+                              Text(
+                                _getPeriodDescription(period),
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: isSelected 
+                                    ? const Color(0xFF6366F1).withOpacity(0.7)
+                                    : Colors.grey[600],
+                                  fontWeight: FontWeight.w400,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      );
-                    },
+                        if (isSelected)
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 12,
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-              ],
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    selectedPeriod = value;
+                  });
+                }
+              },
             ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: GoogleFonts.inter(
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getPeriodDescription(String period) {
+    final now = DateTime.now();
+    switch (period) {
+      case 'This Week':
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        return '${startOfWeek.day}/${startOfWeek.month} - ${now.day}/${now.month}';
+      case 'This Month':
+        final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return '${monthNames[now.month - 1]} ${now.year}';
+      case 'Last 3 Months':
+        final threeMonthsAgo = DateTime(now.year, now.month - 2, 1);
+        final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                           'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        return '${monthNames[threeMonthsAgo.month - 1]} - ${monthNames[now.month - 1]}';
+      case 'This Year':
+        return '${now.year}';
+      default:
+        return '';
+    }
+  }
+
+  Widget _buildModernSummaryCard(String title, String value, String subtitle, IconData icon, Color startColor, Color endColor, {bool showTrend = false, double? trendValue}) {
+    return Card(
+      elevation: 8,
+      shadowColor: startColor.withOpacity(0.3),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: IntrinsicHeight(
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 200), // Further increased height for 2-line subtitle
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [startColor, endColor],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top row with icon and trend
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 20),
+                  ),
+                  // Always reserve space for trend, show it conditionally
+                  if (showTrend && trendValue != null)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: trendValue >= 0 ? Colors.green.withOpacity(0.2) : Colors.red.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            trendValue >= 0 ? Icons.trending_up : Icons.trending_down,
+                            color: Colors.white,
+                            size: 12,
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            '${trendValue >= 0 ? '+' : ''}${trendValue.toStringAsFixed(0)}%',
+                            style: GoogleFonts.inter(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-            ),
-            const SizedBox(height: 8),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
+              
+              const SizedBox(height: 16),
+              
+              // Content section
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
                 value,
                 style: GoogleFonts.inter(
-                  fontSize: 28,
+                  fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: GoogleFonts.inter(
-                color: Colors.white.withOpacity(0.8),
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
+              const SizedBox(height: 8),
+              
+              // Subtitle at bottom
+              Text(
+                subtitle,
+                style: GoogleFonts.inter(
+                  color: Colors.white.withOpacity(0.8),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                ),
+                maxLines: 2, // Allow 2 lines for longer text
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -503,36 +697,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.2)),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: selectedPeriod,
-                            items: periods.map((period) => DropdownMenuItem(
-                              value: period,
-                              child: Text(
-                                period,
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF6366F1),
-                                ),
-                              ),
-                            )).toList(),
-                            onChanged: (value) {
-                              setState(() {
-                                selectedPeriod = value!;
-                              });
-                            },
-                            icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF6366F1)),
-                          ),
-                        ),
-                      ),
+                      _buildEnhancedPeriodSelector(),
                     ],
                   ),
                   const SizedBox(height: 24),

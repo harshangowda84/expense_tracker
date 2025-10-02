@@ -204,41 +204,30 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [
-              Colors.white,
-              Color(0xFFF8FAFC),
-              Colors.white,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(bounds),
-          child: Text(
-            'Spendly',
-            style: GoogleFonts.montserrat(
-              fontSize: 32,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 2.0,
-              color: Colors.white,
-              shadows: [
-                Shadow(
-                  color: Colors.black38,
-                  offset: const Offset(0, 3),
-                  blurRadius: 6,
-                ),
-                Shadow(
-                  color: Colors.white24,
-                  offset: const Offset(0, -1),
-                  blurRadius: 2,
-                ),
-              ],
-            ),
+        title: Text(
+          'Spendly',
+          style: GoogleFonts.mogra(
+            fontSize: 28,
+            fontWeight: FontWeight.w400,
+            color: Colors.white,
+            letterSpacing: 1.0,
           ),
         ),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: const Color(0xFF6366F1),
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF667EEA), // Light purple-blue
+                Color(0xFF764BA2), // Deep purple
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        backgroundColor: Colors.transparent,
       ),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 400),

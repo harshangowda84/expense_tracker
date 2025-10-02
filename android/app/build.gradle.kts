@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.expense_tracker"
+    namespace = "com.spendly.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = "27.0.12077973" // Explicitly set to required version
 
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.expense_tracker"
+        applicationId = "com.spendly.app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

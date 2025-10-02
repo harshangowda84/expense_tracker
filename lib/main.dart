@@ -14,18 +14,18 @@ void main() async {
   // Enable high refresh rate for smooth animations on Android devices
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   
-  runApp(const ExpenseTrackerApp());
+  runApp(const SpendlyApp());
 }
 
-class ExpenseTrackerApp extends StatelessWidget {
-  const ExpenseTrackerApp({super.key});
+class SpendlyApp extends StatelessWidget {
+  const SpendlyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => DataProvider(),
       child: MaterialApp(
-        title: 'Expense Tracker',
+        title: 'Spendly',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF6366F1), // Modern indigo
@@ -44,10 +44,11 @@ class ExpenseTrackerApp extends StatelessWidget {
             foregroundColor: Colors.white,
             elevation: 0,
             centerTitle: true,
-            titleTextStyle: GoogleFonts.inter(
+            titleTextStyle: GoogleFonts.poppins(
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Colors.white,
+              letterSpacing: 0.5,
             ),
           ),
         ),
@@ -203,7 +204,41 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expense Tracker'),
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(
+            colors: [
+              Colors.white,
+              Color(0xFFF8FAFC),
+              Colors.white,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds),
+          child: Text(
+            'Spendly',
+            style: GoogleFonts.montserrat(
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2.0,
+              color: Colors.white,
+              shadows: [
+                Shadow(
+                  color: Colors.black38,
+                  offset: const Offset(0, 3),
+                  blurRadius: 6,
+                ),
+                Shadow(
+                  color: Colors.white24,
+                  offset: const Offset(0, -1),
+                  blurRadius: 2,
+                ),
+              ],
+            ),
+          ),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: const Color(0xFF6366F1),
       ),
       body: AnimatedSwitcher(
         duration: const Duration(milliseconds: 400),

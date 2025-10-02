@@ -411,6 +411,153 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
     }
   }
 
+  Widget _buildCompactPeriodSelector() {
+    // Better period names for compact display
+    final Map<String, String> shortPeriodNames = {
+      'This Week': 'Week',
+      'This Month': 'Month',
+      'Last 3 Months': '3 Months',
+      'This Year': 'Year',
+    };
+
+    final Map<String, IconData> periodIcons = {
+      'This Week': Icons.calendar_view_week_rounded,
+      'This Month': Icons.calendar_view_month_rounded,
+      'Last 3 Months': Icons.calendar_view_month_outlined,
+      'This Year': Icons.calendar_today_rounded,
+    };
+
+    return Container(
+      height: 40, // Increased height
+      constraints: const BoxConstraints(minWidth: 120, maxWidth: 180), // Much bigger
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6366F1).withOpacity(0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16), // Increased padding
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: selectedPeriod,
+              dropdownColor: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              elevation: 8,
+              isDense: false, // Allow more space
+              menuMaxHeight: 250,
+              style: GoogleFonts.inter(
+                fontSize: 13, // Larger font
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+              icon: const Padding(
+                padding: EdgeInsets.only(left: 4),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  color: Colors.white,
+                  size: 16,
+                ),
+              ),
+              selectedItemBuilder: (BuildContext context) {
+                return periods.map((String period) {
+                  return Container(
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          periodIcons[period] ?? Icons.calendar_today,
+                          color: Colors.white,
+                          size: 16, // Larger icon
+                        ),
+                        const SizedBox(width: 8), // More spacing
+                        Text(
+                          shortPeriodNames[period] ?? period,
+                          style: GoogleFonts.inter(
+                            fontSize: 13, // Larger font
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList();
+              },
+              items: periods.map((period) {
+                final isSelected = period == selectedPeriod;
+                return DropdownMenuItem(
+                  value: period,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: isSelected 
+                              ? const Color(0xFF6366F1).withOpacity(0.2)
+                              : Colors.grey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(
+                            periodIcons[period] ?? Icons.calendar_today,
+                            color: isSelected 
+                              ? const Color(0xFF6366F1)
+                              : Colors.grey[600],
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            period,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: isSelected 
+                                ? const Color(0xFF6366F1)
+                                : const Color(0xFF1E293B),
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          const Icon(
+                            Icons.check,
+                            color: Color(0xFF6366F1),
+                            size: 16,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    selectedPeriod = value;
+                  });
+                }
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildModernSummaryCard(String title, String value, String subtitle, IconData icon, Color startColor, Color endColor, {bool showTrend = false, double? trendValue}) {
     return Card(
       elevation: 8,
@@ -682,23 +829,82 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header with period selector
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Financial Overview',
-                          style: GoogleFonts.inter(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1E293B),
-                          ),
-                        ),
+                  // Stylish Header with period selector
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [
+                          Color(0xFFF8FAFC),
+                          Color(0xFFFFFFFF),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      const SizedBox(width: 12),
-                      _buildEnhancedPeriodSelector(),
-                    ],
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 15,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Welcome section
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.dashboard_rounded,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Welcome back!',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        // Main title and period selector row
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 3, // Give title most space but not all
+                              child: Text(
+                                'Financial Dashboard',
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1E293B),
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16), // More spacing
+                            // Compact period selector
+                            _buildCompactPeriodSelector(),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   

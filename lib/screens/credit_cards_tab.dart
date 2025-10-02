@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import '../models/credit_card.dart';
 import '../models/account.dart';
+import '../models/transaction.dart';
 import 'account_transactions_page.dart';
 
 enum PaymentMethod { other, bankAccount }
@@ -527,7 +528,10 @@ class CreditCardsTab extends StatelessWidget {
                     if (transactionToRemove.isNotEmpty) {
                       // Sort by date descending and take the first (most recent)
                       transactionToRemove.sort((a, b) => b.date.compareTo(a.date));
-                      dataProvider.deleteTransaction(transactionToRemove.first.id);
+                      final transactionIndex = dataProvider.transactions.indexOf(transactionToRemove.first);
+                      if (transactionIndex != -1) {
+                        dataProvider.deleteTransaction(transactionIndex);
+                      }
                     }
                   }
                 }

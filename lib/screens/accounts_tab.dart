@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../models/account.dart';
 import '../models/transaction.dart';
 import '../providers/data_provider.dart';
@@ -80,7 +79,7 @@ class AccountsTab extends StatelessWidget {
             children: [
               Text(
                 'Add Account',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 24,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -107,32 +106,39 @@ class AccountsTab extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.close),
-                    label: const Text('Cancel'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                      ),
+                      onPressed: () {
+                        Navigator.pop(dialogContext);
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.close, size: 16),
+                          SizedBox(width: 4),
+                          Text('Cancel', style: TextStyle(fontSize: 13)),
+                        ],
+                      ),
                     ),
-                    onPressed: () {
-                      Navigator.pop(dialogContext);
-                    },
                   ),
-                  const SizedBox(width: 16),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text('Add'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.blue,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                    onPressed: () async {
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                      ),
+                      onPressed: () async {
                       if (nameController.text.isNotEmpty && balanceController.text.isNotEmpty) {
                         await Provider.of<DataProvider>(context, listen: false)
                             .addAccount(Account(
@@ -152,7 +158,17 @@ class AccountsTab extends StatelessWidget {
                         );
                       }
                     },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.add, size: 16),
+                        SizedBox(width: 4),
+                        Text('Add', style: TextStyle(fontSize: 13)),
+                      ],
+                    ),
                   ),
+                ),
                 ],
               ),
             ],
@@ -187,7 +203,7 @@ class AccountsTab extends StatelessWidget {
               children: [
                 Text(
                   'Edit Account',
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 22, // Reduced from 24
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -216,36 +232,43 @@ class AccountsTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 20), // Reduced from 24
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), // Reduced padding
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), // Reduced padding
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.close, size: 18), // Smaller icon
+                            SizedBox(width: 6),
+                            Text('Cancel', style: TextStyle(fontSize: 14)), // Smaller font
+                          ],
+                        ),
                       ),
-                      icon: const Icon(Icons.close, size: 18), // Smaller icon
-                      label: const Text('Cancel', style: TextStyle(fontSize: 14)), // Smaller font
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
                     ),
-                    const SizedBox(width: 12), // Reduced from 16
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                    const SizedBox(width: 10), // Reduced from 16
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), // Reduced padding
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10), // Reduced padding
-                      ),
-                      icon: const Icon(Icons.save, size: 18), // Smaller icon
-                      label: const Text('Save', style: TextStyle(fontSize: 14)), // Smaller font
-                      onPressed: () async {
+                        onPressed: () async {
                         if (nameController.text.isNotEmpty && balanceController.text.isNotEmpty) {
                           final originalAccount = account; // Store original for undo
                           final updatedAccount = Account(
@@ -279,7 +302,17 @@ class AccountsTab extends StatelessWidget {
                           }
                         }
                       },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.save, size: 18), // Smaller icon
+                          SizedBox(width: 6),
+                          Text('Save', style: TextStyle(fontSize: 14)), // Smaller font
+                        ],
+                      ),
                     ),
+                  ),
                   ],
                 ),
               ],
@@ -538,7 +571,7 @@ class AccountsTab extends StatelessWidget {
                                         children: [
                                           Text(
                                             account.name,
-                                            style: GoogleFonts.inter(
+                                            style: TextStyle(fontFamily: 'Inter', 
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
                                             ),
@@ -889,7 +922,7 @@ class AccountsTab extends StatelessWidget {
               icon: const Icon(Icons.add),
               label: Text(
                 'Add Account',
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),

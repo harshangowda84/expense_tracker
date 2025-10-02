@@ -1086,36 +1086,43 @@ class CreditCardsTab extends StatelessWidget {
                     ),
                     const SizedBox(height: 24),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.purple,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.purple,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.close, size: 16),
+                                SizedBox(width: 4),
+                                Text('Cancel', style: TextStyle(fontSize: 13)),
+                              ],
+                            ),
                           ),
-                          icon: const Icon(Icons.close),
-                          label: const Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
                         ),
-                        const SizedBox(width: 16),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.purple,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.purple,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                             ),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          ),
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add'),
-                                          onPressed: () async {
+                            onPressed: () async {
                               if (cardNameController.text.isNotEmpty && cardLimitController.text.isNotEmpty) {
                                 final card = CreditCard(
                                   name: cardNameController.text,
@@ -1138,6 +1145,16 @@ class CreditCardsTab extends StatelessWidget {
                                 }
                               }
                             },
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.add, size: 16),
+                                SizedBox(width: 4),
+                                Text('Add', style: TextStyle(fontSize: 13)),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),

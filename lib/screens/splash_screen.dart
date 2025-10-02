@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback onAnimationComplete;
@@ -177,20 +176,21 @@ class _SplashScreenState extends State<SplashScreen>
                           opacity: _fadeInAnimation.value,
                           child: Text(
                             'Spendly',
-                            style: GoogleFonts.bagelFatOne(
+                            style: const TextStyle(
+                              fontFamily: 'BagelFatOne',
                               fontSize: 56, // Slightly larger for better scaling effect
                               color: Colors.white,
-                              fontWeight: FontWeight.w400,
+                              fontWeight: FontWeight.w900, // Use bold weight as fallback
                               letterSpacing: 0.2,
                               shadows: [
                                 Shadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  offset: const Offset(3, 3),
+                                  color: Colors.black26,
+                                  offset: Offset(3, 3),
                                   blurRadius: 8,
                                 ),
                                 Shadow(
-                                  color: Colors.white.withOpacity(0.2),
-                                  offset: const Offset(-2, -2),
+                                  color: Colors.white12,
+                                  offset: Offset(-2, -2),
                                   blurRadius: 4,
                                 ),
                               ],

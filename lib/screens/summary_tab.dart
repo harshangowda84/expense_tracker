@@ -3,7 +3,6 @@ import '../models/transaction.dart';
 import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 String formatIndianAmount(double amount) {
   String sign = amount < 0 ? '-' : '';
@@ -198,7 +197,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
         value: e.value,
         title: '${e.key.name.toUpperCase()}\n${percent.toStringAsFixed(1)}%',
         radius: 110,
-        titleStyle: GoogleFonts.inter(
+        titleStyle: TextStyle(fontFamily: 'Inter', 
           fontSize: 11,
           fontWeight: FontWeight.bold,
           color: Colors.white,
@@ -250,7 +249,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
               dropdownColor: Colors.white,
               borderRadius: BorderRadius.circular(12),
               elevation: 8,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -287,7 +286,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                       const SizedBox(width: 8),
                       Text(
                         period,
-                        style: GoogleFonts.inter(
+                        style: TextStyle(fontFamily: 'Inter', 
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
@@ -336,7 +335,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                             children: [
                               Text(
                                 period,
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: 'Inter', 
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: isSelected 
@@ -346,7 +345,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                               ),
                               Text(
                                 _getPeriodDescription(period),
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: 'Inter', 
                                   fontSize: 12,
                                   color: isSelected 
                                     ? const Color(0xFF6366F1).withOpacity(0.7)
@@ -457,7 +456,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
               elevation: 8,
               isDense: false, // Allow more space
               menuMaxHeight: 250,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 13, // Larger font
                 fontWeight: FontWeight.w600,
                 color: Colors.white,
@@ -485,7 +484,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                         const SizedBox(width: 8), // More spacing
                         Text(
                           shortPeriodNames[period] ?? period,
-                          style: GoogleFonts.inter(
+                          style: TextStyle(fontFamily: 'Inter', 
                             fontSize: 13, // Larger font
                             fontWeight: FontWeight.w600,
                             color: Colors.white,
@@ -524,7 +523,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                         Expanded(
                           child: Text(
                             period,
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'Inter', 
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
                               color: isSelected 
@@ -611,7 +610,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                           const SizedBox(width: 2),
                           Text(
                             '${trendValue >= 0 ? '+' : ''}${trendValue.toStringAsFixed(0)}%',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'Inter', 
                               color: Colors.white,
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
@@ -628,7 +627,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
               // Content section
               Text(
                 title,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   color: Colors.white.withOpacity(0.9),
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -637,7 +636,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
               const SizedBox(height: 8),
               Text(
                 value,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -648,7 +647,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
               // Subtitle at bottom
               Text(
                 subtitle,
-                style: GoogleFonts.inter(
+                style: TextStyle(fontFamily: 'Inter', 
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
@@ -693,7 +692,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
             fit: BoxFit.scaleDown,
             child: Text(
               value,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.black87,
@@ -706,7 +705,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
             fit: BoxFit.scaleDown,
             child: Text(
               title,
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 12,
                 color: Colors.grey[600],
                 fontWeight: FontWeight.w500,
@@ -745,7 +744,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
               children: [
                 Text(
                   category.name.toUpperCase(),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
@@ -754,7 +753,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                 const SizedBox(height: 4),
                 Text(
                   formatIndianAmount(amount),
-                  style: GoogleFonts.inter(
+                  style: TextStyle(fontFamily: 'Inter', 
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
@@ -771,7 +770,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
             ),
             child: Text(
               '${percentage.toStringAsFixed(1)}%',
-              style: GoogleFonts.inter(
+              style: TextStyle(fontFamily: 'Inter', 
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: color,
@@ -874,7 +873,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                             const SizedBox(width: 12),
                             Text(
                               'Welcome back!',
-                              style: GoogleFonts.inter(
+                              style: TextStyle(fontFamily: 'Inter', 
                                 fontSize: 14,
                                 fontWeight: FontWeight.w500,
                                 color: const Color(0xFF64748B),
@@ -890,7 +889,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                               flex: 3, // Give title most space but not all
                               child: Text(
                                 'Financial Dashboard',
-                                style: GoogleFonts.montserrat(
+                                style: TextStyle(fontFamily: 'Montserrat', 
                                   fontSize: 18,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF1E293B),
@@ -1078,7 +1077,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                               const SizedBox(width: 12),
                               Text(
                                 'Spending by Category',
-                                style: GoogleFonts.inter(
+                                style: TextStyle(fontFamily: 'Inter', 
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
                                   color: const Color(0xFF1E293B),
@@ -1109,7 +1108,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                                         const SizedBox(height: 16),
                                         Text(
                                           'No spending data available',
-                                          style: GoogleFonts.inter(
+                                          style: TextStyle(fontFamily: 'Inter', 
                                             color: Colors.grey[600],
                                             fontSize: 16,
                                             fontWeight: FontWeight.w500,
@@ -1118,7 +1117,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                                         const SizedBox(height: 8),
                                         Text(
                                           'for the selected period',
-                                          style: GoogleFonts.inter(
+                                          style: TextStyle(fontFamily: 'Inter', 
                                             color: Colors.grey[500],
                                             fontSize: 14,
                                           ),
@@ -1169,7 +1168,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                                 const SizedBox(width: 12),
                                 Text(
                                   'Category Insights',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: 'Inter', 
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     color: const Color(0xFF1E293B),
@@ -1231,7 +1230,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                               Expanded(
                                 child: Text(
                                   'Monthly Spending Trend',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: 'Inter', 
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: const Color(0xFF1E293B),
@@ -1280,7 +1279,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                                               padding: const EdgeInsets.only(top: 8),
                                               child: Text(
                                                 monthNames[monthIndex],
-                                                style: GoogleFonts.inter(
+                                                style: TextStyle(fontFamily: 'Inter', 
                                                   fontSize: 11,
                                                   color: Colors.grey[600],
                                                   fontWeight: FontWeight.w500,
@@ -1302,7 +1301,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                                         getTooltipItem: (group, groupIndex, rod, rodIndex) {
                                           return BarTooltipItem(
                                             formatIndianAmount(rod.toY),
-                                            GoogleFonts.inter(
+                                            TextStyle(fontFamily: 'Inter', 
                                               color: Colors.white,
                                               fontWeight: FontWeight.bold,
                                               fontSize: 12,

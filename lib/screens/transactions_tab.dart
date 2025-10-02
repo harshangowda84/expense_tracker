@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../models/transaction.dart';
 import '../models/account.dart';
 import '../models/credit_card.dart';
@@ -964,7 +963,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                               children: [
                                 Text(
                                   'Edit Transaction',
-                                  style: GoogleFonts.inter(
+                                  style: TextStyle(fontFamily: 'Inter', 
                                     color: const Color(0xFF6366F1),
                                     fontWeight: FontWeight.bold,
                                     fontSize: 28,
@@ -1325,7 +1324,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                         children: [
                           Text(
                             'Add Transaction',
-                            style: GoogleFonts.inter(
+                            style: TextStyle(fontFamily: 'Inter', 
                               color: const Color(0xFF6366F1), // Modern indigo
                               fontWeight: FontWeight.bold,
                               fontSize: 28,

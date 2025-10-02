@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'screens/accounts_tab.dart';
 import 'screens/transactions_tab.dart';
 import 'screens/summary_tab.dart';
@@ -48,7 +47,23 @@ class _SpendlyAppState extends State<SpendlyApp> {
           ),
           useMaterial3: true,
           visualDensity: VisualDensity.adaptivePlatformDensity, // Optimize for device refresh rate
-          textTheme: GoogleFonts.interTextTheme(),
+          textTheme: const TextTheme(
+            bodyLarge: TextStyle(fontFamily: 'Inter'),
+            bodyMedium: TextStyle(fontFamily: 'Inter'),
+            bodySmall: TextStyle(fontFamily: 'Inter'),
+            displayLarge: TextStyle(fontFamily: 'Inter'),
+            displayMedium: TextStyle(fontFamily: 'Inter'),
+            displaySmall: TextStyle(fontFamily: 'Inter'),
+            headlineLarge: TextStyle(fontFamily: 'Inter'),
+            headlineMedium: TextStyle(fontFamily: 'Inter'),
+            headlineSmall: TextStyle(fontFamily: 'Inter'),
+            titleLarge: TextStyle(fontFamily: 'Inter'),
+            titleMedium: TextStyle(fontFamily: 'Inter'),
+            titleSmall: TextStyle(fontFamily: 'Inter'),
+            labelLarge: TextStyle(fontFamily: 'Inter'),
+            labelMedium: TextStyle(fontFamily: 'Inter'),
+            labelSmall: TextStyle(fontFamily: 'Inter'),
+          ),
           cardTheme: CardThemeData(
             color: Colors.white,
             elevation: 4,
@@ -59,7 +74,8 @@ class _SpendlyAppState extends State<SpendlyApp> {
             foregroundColor: Colors.white,
             elevation: 0,
             centerTitle: true,
-            titleTextStyle: GoogleFonts.poppins(
+            titleTextStyle: const TextStyle(
+              fontFamily: 'Poppins',
               fontSize: 20,
               fontWeight: FontWeight.w600,
               color: Colors.white,
@@ -223,9 +239,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       appBar: AppBar(
         title: Text(
           'Spendly',
-          style: GoogleFonts.bagelFatOne(
+          style: const TextStyle(
+            fontFamily: 'BagelFatOne',
             fontSize: 28,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w900, // Use bold weight as fallback
             color: Colors.white,
             letterSpacing: 0.2,
           ),
@@ -291,11 +308,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           unselectedItemColor: Colors.grey,
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: GoogleFonts.inter(
+          selectedLabelStyle: const TextStyle(
+            fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
-          unselectedLabelStyle: GoogleFonts.inter(
+          unselectedLabelStyle: const TextStyle(
+            fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w400,
           ),

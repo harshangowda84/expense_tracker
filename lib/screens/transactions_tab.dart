@@ -1873,6 +1873,24 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                                   fontSize: 14,
                                                 ),
                                               ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons.access_time,
+                                                    size: 12,
+                                                    color: Colors.grey[500],
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    _formatDate(tx.date),
+                                                    style: TextStyle(
+                                                      color: Colors.grey[500],
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -1911,18 +1929,36 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                       const SizedBox(height: 12),
                                       Container(
                                         width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                         decoration: BoxDecoration(
-                                          color: Colors.grey[100],
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          tx.note,
-                                          style: TextStyle(
-                                            fontStyle: FontStyle.italic,
-                                            color: Colors.grey[700],
-                                            fontSize: 13,
+                                          color: Colors.blue.shade50,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: Colors.blue.shade100,
+                                            width: 1,
                                           ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.sticky_note_2_outlined,
+                                              size: 16,
+                                              color: Colors.blue.shade600,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                tx.note,
+                                                style: TextStyle(
+                                                  fontStyle: FontStyle.normal,
+                                                  color: Colors.grey[800],
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                  height: 1.3,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],

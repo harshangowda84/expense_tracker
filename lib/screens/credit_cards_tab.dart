@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import '../models/credit_card.dart';
 import '../models/account.dart';
+import 'account_transactions_page.dart';
 
 enum PaymentMethod { other, bankAccount }
 
@@ -1315,8 +1316,30 @@ class CreditCardsTab extends StatelessWidget {
                       child: Card(
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              PageRouteBuilder(
+                                pageBuilder: (context, animation, secondaryAnimation) =>
+                                    AccountTransactionsPage(accountName: card.name),
+                                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                                  return SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(1.0, 0.0),
+                                      end: Offset.zero,
+                                    ).animate(CurvedAnimation(
+                                      parent: animation,
+                                      curve: Curves.easeInOut,
+                                    )),
+                                    child: child,
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -1625,6 +1648,7 @@ class CreditCardsTab extends StatelessWidget {
                             ],
                           ),
                         ),
+                          ),
                       ),
                     );
                   },

@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'screens/accounts_tab.dart';
 import 'screens/transactions_tab.dart';
 import 'screens/summary_tab.dart';
+import 'screens/splash_screen.dart';
 import 'providers/data_provider.dart';
 import 'screens/credit_cards_tab.dart';
 
@@ -17,8 +18,21 @@ void main() async {
   runApp(const SpendlyApp());
 }
 
-class SpendlyApp extends StatelessWidget {
+class SpendlyApp extends StatefulWidget {
   const SpendlyApp({super.key});
+
+  @override
+  State<SpendlyApp> createState() => _SpendlyAppState();
+}
+
+class _SpendlyAppState extends State<SpendlyApp> {
+  bool _showSplash = true;
+
+  void _onSplashComplete() {
+    setState(() {
+      _showSplash = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,6 +40,7 @@ class SpendlyApp extends StatelessWidget {
       create: (_) => DataProvider(),
       child: MaterialApp(
         title: 'Spendly',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF6366F1), // Modern indigo
@@ -52,7 +67,9 @@ class SpendlyApp extends StatelessWidget {
             ),
           ),
         ),
-        home: const HomeScreen(),
+        home: _showSplash 
+            ? SplashScreen(onAnimationComplete: _onSplashComplete)
+            : const HomeScreen(),
       ),
     );
   }
@@ -206,11 +223,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       appBar: AppBar(
         title: Text(
           'Spendly',
-          style: GoogleFonts.mogra(
+          style: GoogleFonts.montserrat(
             fontSize: 28,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w700,
             color: Colors.white,
-            letterSpacing: 1.0,
+            letterSpacing: 0.2,
           ),
         ),
         centerTitle: true,

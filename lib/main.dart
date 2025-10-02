@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/accounts_tab.dart';
@@ -7,7 +8,12 @@ import 'screens/summary_tab.dart';
 import 'providers/data_provider.dart';
 import 'screens/credit_cards_tab.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Enable high refresh rate for smooth animations on Android devices
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  
   runApp(const ExpenseTrackerApp());
 }
 
@@ -26,6 +32,7 @@ class ExpenseTrackerApp extends StatelessWidget {
             brightness: Brightness.light,
           ),
           useMaterial3: true,
+          visualDensity: VisualDensity.adaptivePlatformDensity, // Optimize for device refresh rate
           textTheme: GoogleFonts.interTextTheme(),
           cardTheme: CardThemeData(
             color: Colors.white,

@@ -17,9 +17,17 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
+            <!-- Enable high refresh rate for smooth animations -->
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="flutter"/>
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme"/>
+            <!-- Support for 90Hz, 120Hz, 144Hz displays -->
+            <meta-data
+                android:name="android.max_aspect"
+                android:value="2.4"/>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>

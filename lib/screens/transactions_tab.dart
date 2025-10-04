@@ -4,6 +4,7 @@ import '../models/transaction.dart';
 import '../models/account.dart';
 import '../models/credit_card.dart';
 import '../providers/data_provider.dart';
+import '../utils/performance_utils.dart';
 
 enum DateFilterType {
   all,
@@ -2942,7 +2943,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
 
               final groupedTransactions = _groupTransactionsByDate(filteredTransactions);
               
-              return ListView.builder(
+              return PerformanceUtils.createOptimizedListView(
                 itemCount: groupedTransactions.length,
                 padding: const EdgeInsets.only(top: 8, bottom: 80),
                 itemBuilder: (context, index) {

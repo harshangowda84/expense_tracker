@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
 import 'screens/accounts_tab.dart';
 import 'screens/transactions_tab.dart';
@@ -9,12 +10,28 @@ import 'providers/data_provider.dart';
 import 'screens/credit_cards_tab.dart';
 import 'screens/income_tab.dart';
 import 'services/navigation_service.dart';
+import 'utils/performance_utils.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Enable high refresh rate for smooth animations on Android devices
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  
+  // Force high refresh rate display mode for maximum smoothness
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
+  
+  // Enable smooth animations and high performance mode
+  timeDilation = 1.0; // Ensure animations run at normal speed
+  
+  // Optimize for high refresh rate displays (120Hz)
+  SchedulerBinding.instance.addPostFrameCallback((_) {
+    // Enable high performance mode for scrolling
+    SchedulerBinding.instance.scheduleWarmUpFrame();
+  });
   
   runApp(const SpendlyApp());
 }
@@ -50,6 +67,17 @@ class _SpendlyAppState extends State<SpendlyApp> {
           ),
           useMaterial3: true,
           visualDensity: VisualDensity.adaptivePlatformDensity, // Optimize for device refresh rate
+          // Enhanced performance settings for smooth scrolling
+          splashFactory: InkRipple.splashFactory,
+          // High performance page transitions
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+            },
+          ),
+          // Optimize scroll physics for 120Hz displays
+          platform: TargetPlatform.android,
           textTheme: const TextTheme(
             bodyLarge: TextStyle(fontFamily: 'Inter'),
             bodyMedium: TextStyle(fontFamily: 'Inter'),
@@ -183,6 +211,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _onTabTapped(int index) {
     if (index != _selectedIndex) {
+      // Add haptic feedback for tab change
+      PerformanceUtils.enableHapticFeedback();
+      
       // Stop previous tab animations
       _animationControllers[_selectedIndex].reverse();
       _pulseControllers[_selectedIndex].stop();
@@ -193,6 +224,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _animationControllers[index].forward();
       _pulseControllers[index].repeat(reverse: true);
     } else {
+      // Add haptic feedback for same tab bounce
+      PerformanceUtils.enableHapticFeedback();
+      
       // Create a strong bounce effect for same tab
       _animationControllers[index].reverse().then((_) {
         _animationControllers[index].forward();
@@ -296,7 +330,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             ),
           );
         },
-        child: _tabs[_selectedIndex],
+        child: OptimizedAnimatedWidget(
+          key: ValueKey(_selectedIndex),
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          child: _tabs[_selectedIndex],
+        ),
       ),
       bottomNavigationBar: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

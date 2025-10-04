@@ -220,6 +220,15 @@ class _IncomeTabState extends State<IncomeTab> {
                             fontSize: 12,
                           ),
                         ),
+                      ] else ...[
+                        Text(
+                          'Filter',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                            fontSize: 14,
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -438,25 +447,75 @@ class _IncomeTabState extends State<IncomeTab> {
   }
 
   Future<bool> _confirmDelete(BuildContext context, String itemType) async {
-    return await showDialog<bool>(
+    return await showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Delete $itemType?'),
-          content: Text('Are you sure you want to delete this $itemType? This action cannot be undone.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
+      builder: (BuildContext context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFEF4444), Color(0xFFEC4899)], // Modern red to pink for delete
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Delete Income',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Are you sure you want to delete this $itemType?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      elevation: 2,
+                    ),
+                    child: const Text(
+                      'Delete',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     ) ?? false;
   }
 
@@ -581,7 +640,6 @@ class _IncomeTabState extends State<IncomeTab> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
-                              onTap: () => _editIncomeTransaction(context, tx, txIndex),
                               onLongPress: () async {
                                 if (await _confirmDelete(context, 'income')) {
                                   if (context.mounted) {
@@ -698,7 +756,7 @@ class _IncomeTabState extends State<IncomeTab> {
                                             ],
                                           ),
                                         ),
-                                        // Amount
+                                        // Amount with Edit Icon
                                         Column(
                                           crossAxisAlignment: CrossAxisAlignment.end,
                                           children: [
@@ -709,6 +767,18 @@ class _IncomeTabState extends State<IncomeTab> {
                                                 fontSize: 18,
                                                 color: Colors.green,
                                               ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            IconButton(
+                                              icon: const Icon(Icons.edit, size: 18),
+                                              color: const Color(0xFF6366F1),
+                                              tooltip: 'Edit Income',
+                                              padding: const EdgeInsets.all(4),
+                                              constraints: const BoxConstraints(
+                                                minWidth: 32,
+                                                minHeight: 32,
+                                              ),
+                                              onPressed: () => _editIncomeTransaction(context, tx, txIndex),
                                             ),
                                           ],
                                         ),

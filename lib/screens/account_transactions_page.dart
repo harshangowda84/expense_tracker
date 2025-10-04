@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
+import '../models/income_transaction.dart';
 import '../providers/data_provider.dart';
+import '../utils/income_category_utils.dart';
 
 class AccountTransactionsPage extends StatelessWidget {
   final String accountName;
@@ -25,7 +27,7 @@ class AccountTransactionsPage extends StatelessWidget {
       if (first.isNotEmpty) firstParts.insert(0, first);
       num = firstParts.join(',') + ',' + last;
     }
-        return '₹$sign$num.$dec';
+    return '₹$sign$num.$dec';
   }
 
   IconData _getCategoryIcon(ExpenseCategory category) {
@@ -99,14 +101,42 @@ class AccountTransactionsPage extends StatelessWidget {
             end: Alignment.bottomRight,
           ),
         ),
-        child: Selector<DataProvider, List<ExpenseTransaction>>(
-          selector: (_, provider) => provider.transactions,
-          builder: (context, transactions, _) {
-            final filtered = transactions.where((tx) => tx.accountName == accountName).toList();
-            // Sort by date (newest first)
-            filtered.sort((a, b) => b.date.compareTo(a.date));
+        child: Consumer<DataProvider>(
+          builder: (context, provider, _) {
+            // Combine expense and income transactions for this account
+            final expenseTransactions = provider.transactions
+                .where((tx) => tx.accountName == accountName)
+                .toList();
+                
+            final incomeTransactions = provider.incomeTransactions
+                .where((tx) => tx.accountName == accountName)
+                .toList();
             
-            if (filtered.isEmpty) {
+            // Create a combined list with transaction type info
+            final List<Map<String, dynamic>> allTransactions = [];
+            
+            // Add expense transactions
+            for (final tx in expenseTransactions) {
+              allTransactions.add({
+                'type': 'expense',
+                'transaction': tx,
+                'date': tx.date,
+              });
+            }
+            
+            // Add income transactions
+            for (final tx in incomeTransactions) {
+              allTransactions.add({
+                'type': 'income',
+                'transaction': tx,
+                'date': tx.date,
+              });
+            }
+            
+            // Sort by date (newest first)
+            allTransactions.sort((a, b) => b['date'].compareTo(a['date']));
+            
+            if (allTransactions.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -133,11 +163,23 @@ class AccountTransactionsPage extends StatelessWidget {
               );
             }
             
-            final totalAmount = filtered.fold<double>(0, (sum, tx) => sum + tx.amount);
+            // Calculate totals (without net balance)
+            final totalSpent = allTransactions
+                .where((item) => item['type'] == 'expense')
+                .fold<double>(0, (sum, item) => sum + (item['transaction'] as ExpenseTransaction).amount);
+                
+            final totalIncome = allTransactions
+                .where((item) => item['type'] == 'income')
+                .fold<double>(0, (sum, item) => sum + (item['transaction'] as IncomeTransaction).amount);
+            
+            final totalTransactions = allTransactions.length;
+            
+            // Check if this is a credit card or bank account
+            final isCreditCard = provider.creditCards.any((card) => card.name == accountName);
             
             return Column(
               children: [
-                // Summary Card
+                // Summary Card (without Net Balance)
                 Container(
                   margin: const EdgeInsets.all(16),
                   padding: const EdgeInsets.all(20),
@@ -149,165 +191,287 @@ class AccountTransactionsPage extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  child: isCreditCard 
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            'Total Spent',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            formatIndianAmount(totalAmount),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Transactions',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${filtered.length}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                // Transactions List
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: filtered.length,
-                    padding: const EdgeInsets.only(bottom: 16),
-                    itemBuilder: (context, index) {
-                      final tx = filtered[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Category Icon
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: _getCategoryColor(tx.category).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  _getCategoryIcon(tx.category),
-                                  size: 20,
-                                  color: _getCategoryColor(tx.category),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              // Transaction Details
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          tx.sourceType == TransactionSourceType.bankAccount
-                                              ? Icons.account_balance_wallet
-                                              : Icons.credit_card,
-                                          size: 16,
-                                          color: Colors.grey[600],
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (tx.note.isNotEmpty) ...[
-                                      const SizedBox(height: 6),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue.shade50,
-                                          borderRadius: BorderRadius.circular(6),
-                                          border: Border.all(
-                                            color: Colors.blue.shade100,
-                                            width: 0.5,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.sticky_note_2_outlined,
-                                              size: 14,
-                                              color: Colors.blue.shade600,
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: Text(
-                                                tx.note,
-                                                style: TextStyle(
-                                                  color: Colors.grey[800],
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w500,
-                                                  height: 1.2,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      _formatDate(tx.date),
-                                      style: TextStyle(
-                                        color: Colors.grey[500],
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Amount
                               Text(
-                                formatIndianAmount(tx.amount),
+                                'Total Spent',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                formatIndianAmount(totalSpent),
                                 style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red,
+                                  color: Colors.white,
                                   fontSize: 18,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      );
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'Total Transactions',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                totalTransactions.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Income',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  formatIndianAmount(totalIncome),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Total Spent',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  formatIndianAmount(totalSpent),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  'Transactions',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  totalTransactions.toString(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                ),
+                // Transactions List
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: allTransactions.length,
+                    padding: const EdgeInsets.only(bottom: 16),
+                    itemBuilder: (context, index) {
+                      final item = allTransactions[index];
+                      final isIncome = item['type'] == 'income';
+                      
+                      if (isIncome) {
+                        final tx = item['transaction'] as IncomeTransaction;
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: Colors.green.withOpacity(0.1),
+                              child: Icon(
+                                IncomeCategoryUtils.getCategoryIcon(tx.category),
+                                color: IncomeCategoryUtils.getCategoryColor(tx.category),
+                                size: 20,
+                              ),
+                            ),
+                            title: Row(
+                              children: [
+                                Text(
+                                  IncomeCategoryUtils.getCategoryName(tx.category),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'INCOME',
+                                    style: TextStyle(
+                                      color: Colors.green[700],
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (tx.source.isNotEmpty) 
+                                  Text(
+                                    tx.source,
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                if (tx.note.isNotEmpty) 
+                                  Text(
+                                    tx.note,
+                                    style: TextStyle(
+                                      color: Colors.grey[500],
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                Text(
+                                  _formatDate(tx.date),
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: Text(
+                              '+${formatIndianAmount(tx.amount)}',
+                              style: TextStyle(
+                                color: Colors.green[600],
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      } else {
+                        final tx = item['transaction'] as ExpenseTransaction;
+                        return Card(
+                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: _getCategoryColor(tx.category).withOpacity(0.1),
+                              child: Icon(
+                                _getCategoryIcon(tx.category),
+                                color: _getCategoryColor(tx.category),
+                                size: 20,
+                              ),
+                            ),
+                            title: Row(
+                              children: [
+                                Text(
+                                  tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    'EXPENSE',
+                                    style: TextStyle(
+                                      color: Colors.red[700],
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (tx.note.isNotEmpty) 
+                                  Text(
+                                    tx.note,
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                Text(
+                                  _formatDate(tx.date),
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            trailing: Text(
+                              '-${formatIndianAmount(tx.amount)}',
+                              style: TextStyle(
+                                color: Colors.red[600],
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
                     },
                   ),
                 ),

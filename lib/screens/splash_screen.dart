@@ -76,7 +76,7 @@ class _SplashScreenState extends State<SplashScreen>
     // Slide animation from center to AppBar position
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0),
-      end: const Offset(0, -4.4), // Move much higher to reach exact AppBar position
+      end: const Offset(0, -4.3), // Moved down slightly (2mm) from -4.4
     ).animate(CurvedAnimation(
       parent: _moveController,
       curve: Curves.easeInOutCubic,

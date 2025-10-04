@@ -824,11 +824,8 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
         final totalCreditUsed = creditCards.fold(0.0, (sum, cc) => sum + (cc.usedAmount ?? 0.0));
         final totalSpent = filteredTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
         final totalIncome = filteredIncomeTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
-        final netAmount = totalIncome - totalSpent;
         final totalTransactions = filteredTransactions.length;
         final totalIncomeTransactions = filteredIncomeTransactions.length;
-        final avgTransactionAmount = totalTransactions > 0 ? totalSpent / totalTransactions : 0.0;
-        final avgIncomeAmount = totalIncomeTransactions > 0 ? totalIncome / totalIncomeTransactions : 0.0;
         
         // Calculate category breakdown
         final Map<ExpenseCategory, double> categoryTotals = {};
@@ -968,31 +965,14 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 16),
                   
-                  // Second row with balance and net amount
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildModernSummaryCard(
-                          'Total Balance',
-                          formatIndianAmount(totalBalance),
-                          'Available in accounts',
-                          Icons.account_balance_wallet,
-                          const Color(0xFF3B82F6),
-                          const Color(0xFF1E40AF),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildModernSummaryCard(
-                          'Net Amount',
-                          formatIndianAmount(netAmount),
-                          'Income - Expenses',
-                          netAmount >= 0 ? Icons.arrow_upward : Icons.arrow_downward,
-                          netAmount >= 0 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                          netAmount >= 0 ? const Color(0xFF065F46) : const Color(0xFF991B1B),
-                        ),
-                      ),
-                    ],
+                  // Balance card - full width
+                  _buildModernSummaryCard(
+                    'Total Balance',
+                    formatIndianAmount(totalBalance),
+                    'Available in accounts',
+                    Icons.account_balance_wallet,
+                    const Color(0xFF3B82F6),
+                    const Color(0xFF1E40AF),
                   ),
                   const SizedBox(height: 16),
                   
@@ -1015,56 +995,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                       final useGridLayout = screenWidth < 600; // Switch to grid on smaller screens
                       
                       if (useGridLayout) {
-                        // 2x2 Grid layout for mobile screens
-                        return Column(
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildQuickStatsCard(
-                                    'Transactions',
-                                    totalTransactions.toString(),
-                                    Icons.receipt_long,
-                                    const Color(0xFF3B82F6),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildQuickStatsCard(
-                                    'Avg. Amount',
-                                    formatIndianAmount(avgTransactionAmount),
-                                    Icons.calculate,
-                                    const Color(0xFF8B5CF6),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _buildQuickStatsCard(
-                                    'Accounts',
-                                    accounts.length.toString(),
-                                    Icons.account_balance,
-                                    const Color(0xFF10B981),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: _buildQuickStatsCard(
-                                    'Cards',
-                                    creditCards.length.toString(),
-                                    Icons.credit_card,
-                                    const Color(0xFFEF4444),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      } else {
-                        // Single row layout for larger screens
+                        // Single row layout for mobile screens (3 cards)
                         return Row(
                           children: [
                             Expanded(
@@ -1075,13 +1006,36 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                                 const Color(0xFF3B82F6),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: _buildQuickStatsCard(
-                                'Avg. Amount',
-                                formatIndianAmount(avgTransactionAmount),
-                                Icons.calculate,
-                                const Color(0xFF8B5CF6),
+                                'Accounts',
+                                accounts.length.toString(),
+                                Icons.account_balance,
+                                const Color(0xFF10B981),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: _buildQuickStatsCard(
+                                'Cards',
+                                creditCards.length.toString(),
+                                Icons.credit_card,
+                                const Color(0xFFEF4444),
+                              ),
+                            ),
+                          ],
+                        );
+                      } else {
+                        // Single row layout for larger screens (3 cards)
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: _buildQuickStatsCard(
+                                'Transactions',
+                                totalTransactions.toString(),
+                                Icons.receipt_long,
+                                const Color(0xFF3B82F6),
                               ),
                             ),
                             const SizedBox(width: 12),

@@ -261,46 +261,73 @@ class _IncomeTabState extends State<IncomeTab> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Text(
-                    'Filter Income',
+                    'Filter',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
+                        TextButton(
+                          onPressed: () {
+                            setModalState(() {
+                              _selectedCategory = null;
+                              _selectedDateFilter = DateFilterType.all;
+                              _selectedSourceFilter = null;
+                              _customStartDate = null;
+                              _customEndDate = null;
+                            });
+                            setState(() {
+                              _selectedCategory = null;
+                              _selectedDateFilter = DateFilterType.all;
+                              _selectedSourceFilter = null;
+                              _customStartDate = null;
+                              _customEndDate = null;
+                            });
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            minimumSize: Size.zero,
+                          ),
+                          child: const Text('Clear All', style: TextStyle(fontSize: 14)),
+                        ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
                   ),
                 ],
               ),
               const SizedBox(height: 20),
               
-              // Category Filter
+              // Category Filter Section (Compact Grid)
               const Text(
                 'Category',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 4,
+              GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 3,
+                crossAxisSpacing: 6,
+                mainAxisSpacing: 6,
+                childAspectRatio: 3.2,
                 children: [
-                  FilterChip(
-                    label: const Text('All'),
-                    selected: _selectedCategory == null,
-                    onSelected: (selected) {
-                      setModalState(() => _selectedCategory = null);
-                      setState(() => _selectedCategory = null);
-                    },
-                  ),
-                  ...IncomeCategoryUtils.getAllCategories().map((category) {
-                    return FilterChip(
-                      label: Text(IncomeCategoryUtils.getCategoryName(category)),
-                      selected: _selectedCategory == category,
-                      onSelected: (selected) {
-                        final newCategory = selected ? category : null;
-                        setModalState(() => _selectedCategory = newCategory);
-                        setState(() => _selectedCategory = newCategory);
-                      },
-                    );
-                  }),
+                  _buildCompactCategoryCard(null, 'All', Icons.grid_view, Colors.grey[600]!, setModalState),
+                  ...IncomeCategoryUtils.getAllCategories().map((category) =>
+                    _buildCompactCategoryCard(
+                      category,
+                      IncomeCategoryUtils.getCategoryName(category).toUpperCase(),
+                      IncomeCategoryUtils.getCategoryIcon(category),
+                      IncomeCategoryUtils.getCategoryColor(category),
+                      setModalState,
+                    )),
                 ],
               ),
               const SizedBox(height: 20),
@@ -330,51 +357,39 @@ class _IncomeTabState extends State<IncomeTab> {
                 ),
               ),
               
-              // Custom Date Range
-              FilterChip(
-                label: Text(_selectedDateFilter == DateFilterType.custom && _customStartDate != null && _customEndDate != null
-                    ? '${_customStartDate!.day}/${_customStartDate!.month} - ${_customEndDate!.day}/${_customEndDate!.month}'
-                    : 'Custom Range'),
-                selected: _selectedDateFilter == DateFilterType.custom,
-                onSelected: (selected) async {
-                  if (selected) {
-                    final picked = await showDateRangePicker(
-                      context: context,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) {
-                      setModalState(() {
-                        _selectedDateFilter = DateFilterType.custom;
-                        _customStartDate = picked.start;
-                        _customEndDate = picked.end;
-                      });
-                      setState(() {
-                        _selectedDateFilter = DateFilterType.custom;
-                        _customStartDate = picked.start;
-                        _customEndDate = picked.end;
-                      });
-                    }
-                  } else {
-                    setModalState(() {
-                      _selectedDateFilter = DateFilterType.all;
-                      _customStartDate = null;
-                      _customEndDate = null;
-                    });
-                    setState(() {
-                      _selectedDateFilter = DateFilterType.all;
-                      _customStartDate = null;
-                      _customEndDate = null;
-                    });
-                  }
-                },
-              ),
+              // Custom Date Range Picker
+              if (_selectedDateFilter == DateFilterType.custom) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildCompactDatePickerButton(
+                        'Start',
+                        _customStartDate,
+                        (date) => setModalState(() => _customStartDate = date),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildCompactDatePickerButton(
+                        'End',
+                        _customEndDate,
+                        (date) => setModalState(() => _customEndDate = date),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
               const SizedBox(height: 20),
 
               // Source Filter
               const Text(
                 'Source',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(height: 8),
               Consumer<DataProvider>(
@@ -386,58 +401,36 @@ class _IncomeTabState extends State<IncomeTab> {
                       .toList()
                     ..sort();
 
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 4,
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      FilterChip(
-                        label: const Text('All Sources'),
-                        selected: _selectedSourceFilter == null,
-                        onSelected: (selected) {
-                          setModalState(() => _selectedSourceFilter = null);
-                          setState(() => _selectedSourceFilter = null);
-                        },
+                      // All Sources chip
+                      _buildSourceFilterChip(
+                        'All Sources',
+                        Icons.all_inclusive,
+                        Colors.grey,
+                        setModalState,
                       ),
-                      ...sources.map((source) {
-                        return FilterChip(
-                          label: Text(source),
-                          selected: _selectedSourceFilter == source,
-                          onSelected: (selected) {
-                            final newSource = selected ? source : null;
-                            setModalState(() => _selectedSourceFilter = newSource);
-                            setState(() => _selectedSourceFilter = newSource);
-                          },
-                        );
-                      }),
+                      const SizedBox(height: 6),
+                      // Individual source chips
+                      if (sources.isNotEmpty) 
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: sources.map((source) {
+                            return _buildSourceFilterChip(
+                              source,
+                              Icons.monetization_on,
+                              Colors.green,
+                              setModalState,
+                            );
+                          }).toList(),
+                        ),
                     ],
                   );
                 },
               ),
               const SizedBox(height: 20),
-
-              // Clear All Button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {
-                    setModalState(() {
-                      _selectedCategory = null;
-                      _selectedDateFilter = DateFilterType.all;
-                      _selectedSourceFilter = null;
-                      _customStartDate = null;
-                      _customEndDate = null;
-                    });
-                    setState(() {
-                      _selectedCategory = null;
-                      _selectedDateFilter = DateFilterType.all;
-                      _selectedSourceFilter = null;
-                      _customStartDate = null;
-                      _customEndDate = null;
-                    });
-                  },
-                  child: const Text('Clear All Filters'),
-                ),
-              ),
               SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
             ],
           ),
@@ -1449,6 +1442,174 @@ class _IncomeTabState extends State<IncomeTab> {
             color: isSelected ? Colors.white : Colors.grey[700],
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             fontSize: 12,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactDatePickerButton(String label, DateTime? selectedDate, Function(DateTime) onDateSelected) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey[300]!),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () async {
+            final date = await showDatePicker(
+              context: context,
+              initialDate: selectedDate ?? DateTime.now(),
+              firstDate: DateTime(2020),
+              lastDate: DateTime.now(),
+            );
+            if (date != null) {
+              onDateSelected(date);
+              setState(() {});
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 12, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        selectedDate != null
+                            ? '${selectedDate.day}/${selectedDate.month}'
+                            : 'Select',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: selectedDate != null ? Colors.black87 : Colors.grey[500],
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSourceFilterChip(String sourceName, IconData icon, MaterialColor color, StateSetter setModalState) {
+    final isSelected = _selectedSourceFilter == sourceName || (sourceName == 'All Sources' && _selectedSourceFilter == null);
+    return InkWell(
+      onTap: () {
+        setModalState(() {
+          _selectedSourceFilter = (sourceName == 'All Sources') ? null : (isSelected ? null : sourceName);
+        });
+        setState(() {
+          _selectedSourceFilter = (sourceName == 'All Sources') ? null : (isSelected ? null : sourceName);
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? color.shade100 : color.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? color.shade400 : color.shade200,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? color.shade700 : color.shade600,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              sourceName,
+              style: TextStyle(
+                color: isSelected ? color.shade700 : color.shade600,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 4),
+              Icon(
+                Icons.check_circle,
+                size: 12,
+                color: color.shade700,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactCategoryCard(IncomeCategory? category, String label, IconData icon, Color color, StateSetter setModalState) {
+    final isSelected = _selectedCategory == category;
+    return Container(
+      decoration: BoxDecoration(
+        color: isSelected ? const Color(0xFF6366F1) : Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: isSelected ? const Color(0xFF6366F1) : Colors.grey[200]!,
+          width: 1,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () {
+            setModalState(() => _selectedCategory = category);
+            setState(() => _selectedCategory = category);
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 12,
+                  color: isSelected ? Colors.white : color,
+                ),
+                const SizedBox(height: 1),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.grey[700],
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontSize: 8,
+                      height: 1.0,
+                    ),
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

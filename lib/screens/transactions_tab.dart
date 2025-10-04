@@ -273,24 +273,39 @@ class _TransactionsTabState extends State<TransactionsTab> {
                         color: Color(0xFF6366F1),
                       ),
                     ),
-                    if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _selectedCategory = null;
-                            _selectedDateFilter = DateFilterType.all;
-                            _selectedSourceFilter = null;
-                            _customStartDate = null;
-                            _customEndDate = null;
-                          });
-                          Navigator.pop(context);
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                          minimumSize: Size.zero,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
+                          TextButton(
+                            onPressed: () {
+                              setModalState(() {
+                                _selectedCategory = null;
+                                _selectedDateFilter = DateFilterType.all;
+                                _selectedSourceFilter = null;
+                                _customStartDate = null;
+                                _customEndDate = null;
+                              });
+                              setState(() {
+                                _selectedCategory = null;
+                                _selectedDateFilter = DateFilterType.all;
+                                _selectedSourceFilter = null;
+                                _customStartDate = null;
+                                _customEndDate = null;
+                              });
+                            },
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                              minimumSize: Size.zero,
+                            ),
+                            child: const Text('Clear All', style: TextStyle(fontSize: 14)),
+                          ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.close),
                         ),
-                        child: const Text('Clear', style: TextStyle(fontSize: 14)),
-                      ),
+                      ],
+                    ),
                   ],
                 ),
               ),

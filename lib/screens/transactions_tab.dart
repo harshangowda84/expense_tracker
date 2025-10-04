@@ -1322,8 +1322,6 @@ class _TransactionsTabState extends State<TransactionsTab> {
     bool isSubmitting = false;
     bool isReceivable = tx.isReceivable;
     String receivableAmount = tx.receivableAmount > 0 ? tx.receivableAmount.toString() : '';
-    final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
-    final noteController = TextEditingController(text: tx.note);
     TransactionSourceType sourceType = tx.sourceType;
 
     showModalBottomSheet(
@@ -1331,6 +1329,11 @@ class _TransactionsTabState extends State<TransactionsTab> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (dialogContext) {
+        // Create controllers inside the builder so they're tied to the dialog lifecycle
+        final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
+        final noteController = TextEditingController(text: tx.note);
+        final receivableAmountController = TextEditingController(text: receivableAmount);
+        
         return StatefulBuilder(
           builder: (stateContext, setState) {
             return LayoutBuilder(
@@ -1653,7 +1656,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                     children: [
                                       Checkbox(
                                         value: isReceivable,
-                                        onChanged: (value) {
+                                        onChanged: tx.receivableAmountPaid > 0 ? null : (value) {
                                           setState(() {
                                             isReceivable = value ?? false;
                                             if (!isReceivable) {
@@ -1668,7 +1671,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                         child: Text(
                                           'I paid for friends and expect reimbursement',
                                           style: TextStyle(
-                                            color: Colors.grey[700],
+                                            color: tx.receivableAmountPaid > 0 ? Colors.grey[400] : Colors.grey[700],
                                             fontSize: 14,
                                           ),
                                         ),
@@ -1678,18 +1681,28 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                   if (isReceivable) ...[
                                     const SizedBox(height: 12),
                                     TextField(
+                                      enabled: tx.receivableAmountPaid == 0,
                                       decoration: InputDecoration(
-                                        labelText: 'Receivable Amount',
-                                        prefixIcon: Icon(Icons.currency_rupee, color: const Color(0xFF8B5CF6)),
+                                        labelText: tx.receivableAmountPaid > 0 
+                                            ? 'Receivable Amount (Locked - Payments Made)'
+                                            : 'Receivable Amount',
+                                        prefixIcon: Icon(
+                                          Icons.currency_rupee, 
+                                          color: tx.receivableAmountPaid > 0 
+                                              ? Colors.grey[400] 
+                                              : const Color(0xFF8B5CF6)
+                                        ),
                                         errorText: receivableAmountError,
                                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                                         filled: true,
-                                        fillColor: Colors.white,
-                                        hintText: 'Amount friends will pay back',
+                                        fillColor: tx.receivableAmountPaid > 0 ? Colors.grey[100] : Colors.white,
+                                        hintText: tx.receivableAmountPaid > 0 
+                                            ? 'Cannot edit - payments already received'
+                                            : 'Amount friends will pay back',
                                       ),
                                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      controller: TextEditingController(text: receivableAmount),
-                                      onChanged: (v) {
+                                      controller: receivableAmountController,
+                                      onChanged: tx.receivableAmountPaid > 0 ? null : (v) {
                                         setState(() {
                                           receivableAmount = v;
                                           receivableAmountError = null;
@@ -1704,8 +1717,57 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                           }
                                         });
                                       },
-                                      style: const TextStyle(color: Colors.black87, fontSize: 16),
+                                      style: TextStyle(
+                                        color: tx.receivableAmountPaid > 0 ? Colors.grey[500] : Colors.black87, 
+                                        fontSize: 16
+                                      ),
                                     ),
+                                    // Payment status indicator
+                                    if (tx.receivableAmountPaid > 0) ...[
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: tx.receivableAmountPaid >= tx.receivableAmount 
+                                              ? Colors.green.shade50 
+                                              : Colors.blue.shade50,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(
+                                            color: tx.receivableAmountPaid >= tx.receivableAmount 
+                                                ? Colors.green.shade200 
+                                                : Colors.blue.shade200
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              tx.receivableAmountPaid >= tx.receivableAmount 
+                                                  ? Icons.check_circle_outline 
+                                                  : Icons.payments_outlined, 
+                                              color: tx.receivableAmountPaid >= tx.receivableAmount 
+                                                  ? Colors.green.shade600 
+                                                  : Colors.blue.shade600, 
+                                              size: 16
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                tx.receivableAmountPaid >= tx.receivableAmount 
+                                                    ? 'Fully Paid: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}'
+                                                    : 'Partially Paid: ₹${tx.receivableAmountPaid.toStringAsFixed(2)} of ₹${tx.receivableAmount.toStringAsFixed(2)}',
+                                                style: TextStyle(
+                                                  color: tx.receivableAmountPaid >= tx.receivableAmount 
+                                                      ? Colors.green.shade700 
+                                                      : Colors.blue.shade700,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                     if (_showActualExpense && amountController.text.isNotEmpty && receivableAmount.isNotEmpty) ...[
                                       const SizedBox(height: 8),
                                       Container(
@@ -1772,6 +1834,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                               sourceType: sourceType,
                                               isReceivable: isReceivable,
                                               receivableAmount: isReceivable ? double.parse(receivableAmount) : 0.0,
+                                              receivableAmountPaid: tx.receivableAmountPaid, // Preserve existing paid amount
                                             );
                                             await Provider.of<DataProvider>(context, listen: false).updateTransaction(txIndex, updatedTx, tx.amount, tx.accountName);
                                             if (dialogContext.mounted) {
@@ -1822,6 +1885,356 @@ class _TransactionsTabState extends State<TransactionsTab> {
           },
         );
       },
+    );
+  }
+
+  void _showReceivablePaymentDialog(BuildContext context, ExpenseTransaction tx, int txIndex) {
+    final TextEditingController amountController = TextEditingController();
+    final double remainingAmount = tx.receivableAmount - tx.receivableAmountPaid;
+    
+    // Pre-fill with remaining amount but without .00
+    amountController.text = remainingAmount.toInt().toString();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: SingleChildScrollView(
+          child: Container(
+            margin: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.payments,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Record Payment',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'From ${tx.accountName}',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                
+                // Amount info
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total Receivable:',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            '₹${tx.receivableAmount.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (tx.receivableAmountPaid > 0) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Already Paid:',
+                              style: TextStyle(
+                                color: Colors.green.shade200,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Text(
+                              '₹${tx.receivableAmountPaid.toStringAsFixed(2)}',
+                              style: TextStyle(
+                                color: Colors.green.shade200,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      const Divider(color: Colors.white24, height: 1),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Remaining:',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            '₹${remainingAmount.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Custom amount input
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    controller: amountController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Amount Received',
+                      hintText: 'Enter amount',
+                      prefixIcon: Container(
+                        margin: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.currency_rupee,
+                          color: Color(0xFF8B5CF6),
+                          size: 20,
+                        ),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      labelStyle: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                      hintStyle: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                
+                // Action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white.withOpacity(0.8),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final double? amount = double.tryParse(amountController.text);
+                          if (amount != null && amount > 0 && amount <= remainingAmount) {
+                            final newTotalPaid = tx.receivableAmountPaid + amount;
+                            Provider.of<DataProvider>(context, listen: false)
+                                .updateReceivablePayment(tx.id, newTotalPaid);
+                            Navigator.of(context).pop();
+                            _showPaymentConfirmationInTransactions(context, amount, false);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Please enter a valid amount between ₹1 and ₹${remainingAmount.toStringAsFixed(2)}'),
+                                backgroundColor: Colors.red,
+                                behavior: SnackBarBehavior.floating,
+                                margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF8B5CF6),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Record Payment',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                
+                // Full payment button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Provider.of<DataProvider>(context, listen: false)
+                          .updateReceivablePayment(tx.id, tx.receivableAmount);
+                      Navigator.of(context).pop();
+                      _showPaymentConfirmationInTransactions(context, remainingAmount, true);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      'Mark as Fully Paid (₹${remainingAmount.toStringAsFixed(2)})',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showPaymentConfirmationInTransactions(BuildContext context, double amount, bool isFullPayment) {
+    final provider = Provider.of<DataProvider>(context, listen: false);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              Icons.check_circle,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                '${isFullPayment ? 'Marked as fully paid' : 'Payment of ₹${amount.toStringAsFixed(2)} recorded'}',
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+        duration: const Duration(seconds: 3),
+        action: provider.canUndoReceivablePayment
+            ? SnackBarAction(
+                label: 'UNDO',
+                textColor: Colors.white,
+                onPressed: () {
+                  provider.undoLastReceivablePayment();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Payment undone'),
+                      backgroundColor: Colors.blue,
+                      behavior: SnackBarBehavior.floating,
+                      margin: EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+              )
+            : null,
+      ),
     );
   }
 
@@ -2158,18 +2571,38 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                     Text(
                                       'Show actual',
                                       style: TextStyle(
-                                        color: Colors.grey[600],
+                                        color: () {
+                                          // Check if receivable amount equals total amount
+                                          if (isReceivable && receivableAmount.isNotEmpty && amount.isNotEmpty) {
+                                            final receivableVal = double.tryParse(receivableAmount);
+                                            final totalAmount = double.tryParse(amount);
+                                            if (receivableVal != null && totalAmount != null && receivableVal >= totalAmount) {
+                                              return Colors.grey[400]; // Grey out when full payment
+                                            }
+                                          }
+                                          return Colors.grey[600];
+                                        }(),
                                         fontSize: 12,
                                       ),
                                     ),
                                     const SizedBox(width: 4),
                                     Switch(
                                       value: _showActualExpense,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _showActualExpense = value;
-                                        });
-                                      },
+                                      onChanged: () {
+                                        // Check if receivable amount equals total amount
+                                        if (isReceivable && receivableAmount.isNotEmpty && amount.isNotEmpty) {
+                                          final receivableVal = double.tryParse(receivableAmount);
+                                          final totalAmount = double.tryParse(amount);
+                                          if (receivableVal != null && totalAmount != null && receivableVal >= totalAmount) {
+                                            return null; // Disable when full payment
+                                          }
+                                        }
+                                        return (value) {
+                                          setState(() {
+                                            _showActualExpense = value;
+                                          });
+                                        };
+                                      }(),
                                       activeColor: const Color(0xFF8B5CF6),
                                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                                     ),
@@ -2226,15 +2659,15 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                       final totalAmount = double.tryParse(amount);
                                       if (receivableVal == null || receivableVal <= 0) {
                                         receivableAmountError = 'Enter a valid receivable amount';
-                                      } else if (totalAmount != null && receivableVal >= totalAmount) {
-                                        receivableAmountError = 'Receivable amount must be less than total amount';
+                                      } else if (totalAmount != null && receivableVal > totalAmount) {
+                                        receivableAmountError = 'Receivable amount cannot exceed total amount';
                                       }
                                     }
                                   });
                                 },
                                 style: const TextStyle(color: Colors.black87, fontSize: 16),
                               ),
-                              if (_showActualExpense && amount.isNotEmpty && receivableAmount.isNotEmpty) ...[
+                              if (_showActualExpense && amount.isNotEmpty && receivableAmount.isNotEmpty && (double.tryParse(receivableAmount) ?? 0) < (double.tryParse(amount) ?? 0)) ...[
                                 const SizedBox(height: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -2651,65 +3084,130 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                     ],
                                     if (tx.isReceivable && tx.receivableAmount > 0) ...[
                                       const SizedBox(height: 12),
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                        decoration: BoxDecoration(
-                                          color: Colors.purple.shade50,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(
-                                            color: Colors.purple.shade200,
-                                            width: 1,
+                                      GestureDetector(
+                                        onTap: () {
+                                          // Prevent payment dialog for fully paid transactions
+                                          if (tx.receivableAmountPaid >= tx.receivableAmount) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: const Text('This transaction is already fully paid'),
+                                                backgroundColor: Colors.green,
+                                                behavior: SnackBarBehavior.floating,
+                                                margin: const EdgeInsets.all(16),
+                                                duration: const Duration(milliseconds: 2000),
+                                              ),
+                                            );
+                                            return;
+                                          }
+                                          _showReceivablePaymentDialog(context, tx, txIndex);
+                                        },
+                                        child: Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                          decoration: BoxDecoration(
+                                            color: tx.isReceivablePaid 
+                                                ? Colors.green.shade50 
+                                                : Colors.purple.shade50,
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(
+                                              color: tx.isReceivablePaid 
+                                                  ? Colors.green.shade200 
+                                                  : Colors.purple.shade200,
+                                              width: 1,
+                                            ),
                                           ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.people,
-                                              size: 16,
-                                              color: Colors.purple.shade600,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Split Bill: ₹${tx.receivableAmount.toStringAsFixed(2)} receivable',
-                                                    style: TextStyle(
-                                                      color: Colors.purple.shade700,
-                                                      fontSize: 14,
-                                                      fontWeight: FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    'Your actual expense: ₹${(tx.amount - tx.receivableAmount).toStringAsFixed(2)}',
-                                                    style: TextStyle(
-                                                      color: Colors.grey[700],
-                                                      fontSize: 12,
-                                                      fontWeight: FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ],
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                tx.isReceivablePaid ? Icons.check_circle : Icons.people,
+                                                size: 16,
+                                                color: tx.isReceivablePaid 
+                                                    ? Colors.green.shade600 
+                                                    : Colors.purple.shade600,
                                               ),
-                                            ),
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                              decoration: BoxDecoration(
-                                                color: Colors.orange.shade100,
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                'PENDING',
-                                                style: TextStyle(
-                                                  color: Colors.orange.shade700,
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.bold,
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            tx.isReceivablePaid 
+                                                                ? 'Received: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}'
+                                                                : 'Split Bill: ₹${tx.receivableAmount.toStringAsFixed(2)} receivable',
+                                                            style: TextStyle(
+                                                              color: tx.isReceivablePaid 
+                                                                  ? Colors.green.shade700 
+                                                                  : Colors.purple.shade700,
+                                                              fontSize: 14,
+                                                              fontWeight: FontWeight.w600,
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 8),
+                                                        Container(
+                                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                          decoration: BoxDecoration(
+                                                            color: tx.isReceivablePaid 
+                                                                ? Colors.green.shade100 
+                                                                : Colors.orange.shade100,
+                                                            borderRadius: BorderRadius.circular(12),
+                                                          ),
+                                                          child: Text(
+                                                            tx.isReceivablePaid ? 'PAID' : 'PENDING',
+                                                            style: TextStyle(
+                                                              color: tx.isReceivablePaid 
+                                                                  ? Colors.green.shade700 
+                                                                  : Colors.orange.shade700,
+                                                              fontSize: 10,
+                                                              fontWeight: FontWeight.bold,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    const SizedBox(height: 2),
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            'Your actual expense: ₹${(tx.amount - tx.receivableAmount).toStringAsFixed(2)}',
+                                                            style: TextStyle(
+                                                              color: Colors.grey[700],
+                                                              fontSize: 12,
+                                                              fontWeight: FontWeight.w500,
+                                                            ),
+                                                            overflow: TextOverflow.ellipsis,
+                                                            maxLines: 1,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 8),
+                                                        if (!tx.isReceivablePaid && tx.receivableAmountPaid > 0)
+                                                          Text(
+                                                            'Partial: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}',
+                                                            style: TextStyle(
+                                                              color: Colors.blue.shade600,
+                                                              fontSize: 11,
+                                                              fontWeight: FontWeight.w500,
+                                                            ),
+                                                          ),
+                                                        const SizedBox(width: 4),
+                                                        Icon(
+                                                          Icons.touch_app,
+                                                          size: 12,
+                                                          color: Colors.grey[500],
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ],

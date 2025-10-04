@@ -32,6 +32,87 @@ class DataProvider extends ChangeNotifier {
     await _saveAccounts();
     notifyListeners();
   }
+
+  Future<void> toggleReceivablePaymentStatus(String transactionId) async {
+    try {
+      final index = _transactions.indexWhere((tx) => tx.id == transactionId);
+      if (index != -1) {
+        final tx = _transactions[index];
+        if (tx.isReceivable) {
+          final updatedTx = tx.copyWith(isReceivablePaid: !tx.isReceivablePaid);
+          _transactions[index] = updatedTx;
+          await _saveTransactions();
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error toggling receivable payment status: $e');
+      rethrow;
+    }
+  }
+
+  // Undo functionality
+  ExpenseTransaction? _lastUpdatedTransaction;
+  double? _lastPaidAmount;
+  
+  Future<void> updateReceivablePayment(String transactionId, double paidAmount) async {
+    try {
+      final index = _transactions.indexWhere((tx) => tx.id == transactionId);
+      if (index != -1) {
+        final tx = _transactions[index];
+        if (tx.isReceivable) {
+          // Store the current state for undo
+          _lastUpdatedTransaction = tx;
+          _lastPaidAmount = tx.receivableAmountPaid;
+          
+          // Add the new payment to existing paid amount (cumulative)
+          final newTotalPaid = tx.receivableAmountPaid + paidAmount;
+          final clampedAmount = newTotalPaid.clamp(0.0, tx.receivableAmount);
+          final isFullyPaid = clampedAmount >= tx.receivableAmount;
+          
+          final updatedTx = tx.copyWith(
+            receivableAmountPaid: clampedAmount,
+            isReceivablePaid: isFullyPaid,
+          );
+          _transactions[index] = updatedTx;
+          await _saveTransactions();
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error updating receivable payment: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> undoLastReceivablePayment() async {
+    if (_lastUpdatedTransaction != null) {
+      try {
+        final index = _transactions.indexWhere((tx) => tx.id == _lastUpdatedTransaction!.id);
+        if (index != -1) {
+          final originalPaidAmount = _lastPaidAmount ?? 0.0;
+          final isFullyPaid = originalPaidAmount >= _lastUpdatedTransaction!.receivableAmount;
+          
+          final restoredTx = _lastUpdatedTransaction!.copyWith(
+            receivableAmountPaid: originalPaidAmount,
+            isReceivablePaid: isFullyPaid,
+          );
+          _transactions[index] = restoredTx;
+          await _saveTransactions();
+          notifyListeners();
+          
+          // Clear undo data after use
+          _lastUpdatedTransaction = null;
+          _lastPaidAmount = null;
+        }
+      } catch (e) {
+        debugPrint('Error undoing receivable payment: $e');
+        rethrow;
+      }
+    }
+  }
+
+  bool get canUndoReceivablePayment => _lastUpdatedTransaction != null;
   Future<void> setAccountBalance(String accountName, double newBalance) async {
     final idx = _accounts.indexWhere((a) => a.name == accountName);
     if (idx != -1) {

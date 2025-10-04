@@ -1022,7 +1022,11 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                       // Calculate total receivable amount
                       final totalReceivable = filteredTransactions
                           .where((tx) => tx.isReceivable && tx.receivableAmount > 0)
-                          .fold(0.0, (sum, tx) => sum + tx.receivableAmount);
+                          .fold(0.0, (sum, tx) => sum + (tx.receivableAmount - tx.receivableAmountPaid));
+                      
+                      final receivableCount = filteredTransactions
+                          .where((tx) => tx.isReceivable && tx.receivableAmount > 0 && !tx.isReceivablePaid)
+                          .length;
                       
                       // Always use 2x2 grid layout for 4 cards
                       return Column(
@@ -1044,7 +1048,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _buildQuickStatsCard(
-                                  'Receivable',
+                                  'Receivable${receivableCount > 0 ? ' ($receivableCount)' : ''}',
                                   formatIndianAmount(totalReceivable),
                                   Icons.people,
                                   const Color(0xFF8B5CF6),

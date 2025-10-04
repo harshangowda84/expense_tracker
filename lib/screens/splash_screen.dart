@@ -17,7 +17,6 @@ class _SplashScreenState extends State<SplashScreen>
   
   late Animation<double> _fadeInAnimation;
   late Animation<double> _rippleAnimation;
-  late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _rippleOpacity;
   
@@ -71,15 +70,6 @@ class _SplashScreenState extends State<SplashScreen>
     ).animate(CurvedAnimation(
       parent: _rippleController,
       curve: Curves.easeOut,
-    ));
-    
-    // Slide animation from center to AppBar position
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0),
-      end: const Offset(0, -4.3), // Moved down slightly (2mm) from -4.4
-    ).animate(CurvedAnimation(
-      parent: _moveController,
-      curve: Curves.easeInOutCubic,
     ));
     
     // Scale animation for smooth size transition
@@ -159,8 +149,24 @@ class _SplashScreenState extends State<SplashScreen>
             child: AnimatedBuilder(
               animation: Listenable.merge([_fadeInController, _moveController]),
               builder: (context, child) {
-                return SlideTransition(
-                  position: _slideAnimation,
+                // Calculate position during animation
+                final progress = _moveController.value;
+                final screenHeight = MediaQuery.of(context).size.height;
+                final statusBarHeight = MediaQuery.of(context).padding.top;
+                final appBarHeight = kToolbarHeight;
+                
+                // Calculate the target Y position (AppBar center)
+                final targetY = statusBarHeight + (appBarHeight / 2);
+                final startY = screenHeight / 2;
+                
+                // Interpolate between start and target positions
+                final currentY = startY + ((targetY - startY) * progress);
+                
+                // Convert to offset from center
+                final offsetFromCenter = currentY - startY;
+                
+                return Transform.translate(
+                  offset: Offset(0, offsetFromCenter),
                   child: Transform.scale(
                     scale: _scaleAnimation.value,
                     child: AnimatedBuilder(

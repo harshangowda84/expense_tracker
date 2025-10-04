@@ -581,6 +581,7 @@ class _IncomeTabState extends State<IncomeTab> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             child: InkWell(
                               borderRadius: BorderRadius.circular(16),
+                              onTap: () => _editIncomeTransaction(context, tx, txIndex),
                               onLongPress: () async {
                                 if (await _confirmDelete(context, 'income')) {
                                   if (context.mounted) {
@@ -814,6 +815,282 @@ class _IncomeTabState extends State<IncomeTab> {
     }
     
     return parts.join(' • ');
+  }
+
+  void _editIncomeTransaction(BuildContext context, IncomeTransaction transaction, int index) {
+    final amountController = TextEditingController(text: transaction.amount.toString());
+    final noteController = TextEditingController(text: transaction.note);
+    final sourceController = TextEditingController(text: transaction.source);
+    IncomeCategory selectedCategory = transaction.category;
+    String? selectedAccount = transaction.accountName;
+    DateTime selectedDate = transaction.date;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (stateContext, setState) {
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  reverse: true,
+                  padding: EdgeInsets.only(
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                  ),
+                  child: Center(
+                    child: Card(
+                      margin: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      child: Container(
+                        width: constraints.maxWidth - 32,
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF6366F1).withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit,
+                                    color: Color(0xFF6366F1),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Edit Income',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            
+                            // Amount Field
+                            TextField(
+                              controller: amountController,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(
+                                labelText: 'Amount',
+                                hintText: 'Enter amount',
+                                prefixIcon: const Icon(Icons.currency_rupee),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // Category Dropdown
+                            DropdownButtonFormField<IncomeCategory>(
+                              value: selectedCategory,
+                              decoration: InputDecoration(
+                                labelText: 'Category',
+                                prefixIcon: Icon(IncomeCategoryUtils.getCategoryIcon(selectedCategory)),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                              ),
+                              items: IncomeCategory.values.map((category) {
+                                return DropdownMenuItem(
+                                  value: category,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        IncomeCategoryUtils.getCategoryIcon(category),
+                                        size: 20,
+                                        color: IncomeCategoryUtils.getCategoryColor(category),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(IncomeCategoryUtils.getCategoryName(category)),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                if (value != null) {
+                                  setState(() {
+                                    selectedCategory = value;
+                                  });
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // Account Dropdown
+                            Consumer<DataProvider>(
+                              builder: (context, dataProvider, child) {
+                                final accounts = dataProvider.accounts;
+                                return DropdownButtonFormField<String>(
+                                  value: selectedAccount,
+                                  decoration: InputDecoration(
+                                    labelText: 'Account',
+                                    prefixIcon: const Icon(Icons.account_balance_wallet),
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                    filled: true,
+                                    fillColor: Colors.grey[50],
+                                  ),
+                                  items: accounts.map((account) {
+                                    return DropdownMenuItem(
+                                      value: account.name,
+                                      child: Text(account.name),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      selectedAccount = value;
+                                    });
+                                  },
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // Source Field
+                            TextField(
+                              controller: sourceController,
+                              decoration: InputDecoration(
+                                labelText: 'Source (Optional)',
+                                hintText: 'e.g., Company name, client name',
+                                prefixIcon: const Icon(Icons.business),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // Note Field
+                            TextField(
+                              controller: noteController,
+                              decoration: InputDecoration(
+                                labelText: 'Note (Optional)',
+                                hintText: 'Add a note',
+                                prefixIcon: const Icon(Icons.note),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                filled: true,
+                                fillColor: Colors.grey[50],
+                              ),
+                              maxLines: 2,
+                            ),
+                            const SizedBox(height: 16),
+                            
+                            // Date Picker
+                            ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                              ),
+                              trailing: const Icon(Icons.edit),
+                              onTap: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: selectedDate,
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                );
+                                if (picked != null) {
+                                  setState(() {
+                                    selectedDate = picked;
+                                  });
+                                }
+                              },
+                            ),
+                            const SizedBox(height: 24),
+                            
+                            // Update Button
+                            ElevatedButton(
+                              onPressed: () async {
+                                final amount = double.tryParse(amountController.text);
+                                if (amount == null || amount <= 0) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please enter a valid amount'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                
+                                if (selectedAccount == null) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please select an account'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                  return;
+                                }
+                                
+                                final updatedTransaction = IncomeTransaction(
+                                  id: transaction.id, // Keep the same ID
+                                  amount: amount,
+                                  category: selectedCategory,
+                                  accountName: selectedAccount!,
+                                  source: sourceController.text.trim(),
+                                  note: noteController.text.trim(),
+                                  date: selectedDate,
+                                );
+                                
+                                if (context.mounted) {
+                                  Provider.of<DataProvider>(context, listen: false).updateIncomeTransaction(
+                                    index, 
+                                    updatedTransaction, 
+                                    transaction.amount, 
+                                    transaction.accountName
+                                  );
+                                  Navigator.of(context).pop();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: const Text('Income updated successfully!'),
+                                      backgroundColor: Colors.green,
+                                      behavior: SnackBarBehavior.floating,
+                                      margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                      duration: const Duration(milliseconds: 1500),
+                                    ),
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF6366F1),
+                                foregroundColor: Colors.white,
+                                minimumSize: const Size(double.infinity, 52),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                elevation: 2,
+                              ),
+                              child: const Text(
+                                'Update Income',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
   }
 
   void _showAddIncomeDialog() {

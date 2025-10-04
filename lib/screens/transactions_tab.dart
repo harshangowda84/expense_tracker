@@ -99,25 +99,27 @@ class _TransactionsTabState extends State<TransactionsTab> {
   Map<String, List<ExpenseTransaction>> _groupTransactionsByDate(List<ExpenseTransaction> transactions) {
     final Map<String, List<ExpenseTransaction>> grouped = {};
     final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
     
     for (var tx in transactions) {
+      final txDate = DateTime(tx.date.year, tx.date.month, tx.date.day);
       String dateKey;
-      final difference = now.difference(tx.date).inDays;
-      
-      if (difference == 0) {
+      if (txDate == today) {
         dateKey = 'Today';
-      } else if (difference == 1) {
+      } else if (txDate == yesterday) {
         dateKey = 'Yesterday';
-      } else if (difference < 7) {
-        dateKey = '${difference} days ago';
       } else {
-        dateKey = '${tx.date.day}/${tx.date.month}/${tx.date.year}';
+        final difference = today.difference(txDate).inDays;
+        if (difference < 7) {
+          dateKey = '${difference} days ago';
+        } else {
+          dateKey = '${tx.date.day}/${tx.date.month}/${tx.date.year}';
+        }
       }
-      
       grouped[dateKey] ??= [];
       grouped[dateKey]!.add(tx);
     }
-    
     return grouped;
   }
 

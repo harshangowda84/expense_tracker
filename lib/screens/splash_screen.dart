@@ -30,19 +30,19 @@ class _SplashScreenState extends State<SplashScreen>
     
     // Fade in animation controller for Spendly text
     _fadeInController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 800),
       vsync: this,
     );
     
     // Ripple animation controller for water effect
     _rippleController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     
     // Move to AppBar position animation controller
     _moveController = AnimationController(
-      duration: const Duration(milliseconds: 1200), // Slightly longer for better visibility
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     
@@ -97,26 +97,20 @@ class _SplashScreenState extends State<SplashScreen>
   void _startAnimationSequence() async {
     // Start fade in animation for Spendly text
     await _fadeInController.forward();
-    
-    // Wait for fade in to complete
-    await Future.delayed(const Duration(milliseconds: 1500));
-    
+    // Remove long delay after fade-in
+    await Future.delayed(const Duration(milliseconds: 200));
     // Start the ripple effect
     setState(() {
       _startRipple = true;
       _showMainContent = true;
     });
-    
     // Start ripple animation
     _rippleController.forward();
-    
     // Start move animation slightly after ripple starts
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 100));
     _moveController.forward();
-    
-    // Wait longer for move animation to complete and be visible
-    await Future.delayed(const Duration(milliseconds: 1200));
-    
+    // Wait for move animation to complete
+    await Future.delayed(const Duration(milliseconds: 600));
     // Complete the splash screen
     widget.onAnimationComplete();
   }

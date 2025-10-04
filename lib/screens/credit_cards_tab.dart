@@ -665,20 +665,26 @@ class CreditCardsTab extends StatelessWidget {
             return Dialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               child: Container(
-                padding: const EdgeInsets.all(32),
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  maxWidth: MediaQuery.of(context).size.width * 0.9,
+                ),
+                padding: const EdgeInsets.all(24), // Reduced padding for more space
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Modern indigo to purple
+                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)], // Purple gradient to match payment dialog
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Edit Credit Card',
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Edit Credit Card',
                       style: TextStyle(
                         fontSize: 24,
                         color: Colors.white,
@@ -817,13 +823,17 @@ class CreditCardsTab extends StatelessWidget {
                             Row(
                               children: [
                                 const Icon(Icons.calendar_today, color: Colors.deepPurple),
-                                const SizedBox(width: 12),
-                                Text(
-                                  '${selectedDay}${_getDaySuffix(selectedDay)} of every month',
-                                  style: const TextStyle(
-                                    color: Colors.deepPurple,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${selectedDay}${_getDaySuffix(selectedDay)} of every month',
+                                    style: const TextStyle(
+                                      color: Colors.deepPurple,
+                                      fontSize: 14, // Reduced font size slightly
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                   ),
                                 ),
                               ],
@@ -902,6 +912,7 @@ class CreditCardsTab extends StatelessWidget {
                     ),
                   ],
                 ),
+                ),
               ),
             );
           },
@@ -938,20 +949,26 @@ class CreditCardsTab extends StatelessWidget {
             return Dialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               child: Container(
-                padding: const EdgeInsets.all(32),
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                  maxWidth: MediaQuery.of(context).size.width * 0.9,
+                ),
+                padding: const EdgeInsets.all(24), // Reduced padding for more space
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Modern indigo to purple
+                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)], // Purple gradient to match payment dialog
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Add Credit Card',
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Add Credit Card',
                       style: TextStyle(
                         fontSize: 24,
                         color: Colors.white,
@@ -1090,13 +1107,17 @@ class CreditCardsTab extends StatelessWidget {
                             Row(
                               children: [
                                 const Icon(Icons.calendar_today, color: Colors.deepPurple),
-                                const SizedBox(width: 12),
-                                Text(
-                                  '${selectedDay}${_getDaySuffix(selectedDay)} of every month',
-                                  style: const TextStyle(
-                                    color: Colors.deepPurple,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${selectedDay}${_getDaySuffix(selectedDay)} of every month',
+                                    style: const TextStyle(
+                                      color: Colors.deepPurple,
+                                      fontSize: 14, // Reduced font size slightly
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
                                   ),
                                 ),
                               ],
@@ -1180,6 +1201,7 @@ class CreditCardsTab extends StatelessWidget {
                       ],
                     ),
                   ],
+                ),
                 ),
               ),
             );

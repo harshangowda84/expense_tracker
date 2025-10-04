@@ -244,7 +244,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: _selectedIndex == 0, // Can only pop when on summary tab (index 0)
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && _selectedIndex != 0) {
+          // If not on summary tab, navigate to summary tab first
+          _onTabTapped(0);
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(
         title: Text(
           'Spendly',
@@ -331,6 +339,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             fontSize: 12,
             fontWeight: FontWeight.w400,
           ),
+        ),
         ),
       ),
     );

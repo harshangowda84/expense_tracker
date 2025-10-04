@@ -144,7 +144,7 @@ class _SplashScreenState extends State<SplashScreen>
               child: const SizedBox.expand(),
             ),
           
-          // Spendly text with fade-in animation
+          // Spendly text with fade-in and enhanced animation
           Center(
             child: AnimatedBuilder(
               animation: Listenable.merge([_fadeInController, _moveController]),

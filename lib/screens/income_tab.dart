@@ -120,7 +120,7 @@ class _IncomeTabState extends State<IncomeTab> {
       } else if (transactionDate.isAtSameMomentAs(yesterdayDate)) {
         dateKey = 'Yesterday';
       } else {
-        dateKey = '${date.day}/${date.month}/${date.year}';
+        dateKey = '${date.day}/${date.month}/${(date.year % 100).toString().padLeft(2, '0')}';
       }
       
       if (!grouped.containsKey(dateKey)) {
@@ -673,7 +673,6 @@ class _IncomeTabState extends State<IncomeTab> {
                                         const SizedBox(width: 12),
                                         // Account and category info
                                         Expanded(
-                                          flex: 3,
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
@@ -714,11 +713,15 @@ class _IncomeTabState extends State<IncomeTab> {
                                                     color: Colors.grey[500],
                                                   ),
                                                   const SizedBox(width: 4),
-                                                  Text(
-                                                    _formatTime(tx.date),
-                                                    style: TextStyle(
-                                                      color: Colors.grey[500],
-                                                      fontSize: 12,
+                                                  Flexible(
+                                                    child: Text(
+                                                      _formatIncomeDate(tx.date),
+                                                      style: TextStyle(
+                                                        color: Colors.grey[500],
+                                                        fontSize: 12,
+                                                      ),
+                                                      softWrap: false,
+                                                      overflow: TextOverflow.visible,
                                                     ),
                                                   ),
                                                 ],
@@ -749,53 +752,72 @@ class _IncomeTabState extends State<IncomeTab> {
                                             ],
                                           ),
                                         ),
-                                        // Amount with Edit Icon
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              '+₹${tx.amount.toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                                color: Colors.green,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            IconButton(
-                                              icon: const Icon(Icons.edit, size: 18),
-                                              color: const Color(0xFF6366F1),
-                                              tooltip: 'Edit Income',
-                                              padding: const EdgeInsets.all(4),
-                                              constraints: const BoxConstraints(
-                                                minWidth: 32,
-                                                minHeight: 32,
-                                              ),
-                                              onPressed: () => _editIncomeTransaction(context, tx, txIndex),
-                                            ),
-                                          ],
+                                        // Amount
+                                        Text(
+                                          '+₹${tx.amount.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18,
+                                            color: Colors.green,
+                                          ),
                                         ),
                                       ],
                                     ),
                                     if (tx.note.isNotEmpty) ...[
-                                      const SizedBox(height: 8),
+                                      const SizedBox(height: 12),
                                       Container(
                                         width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                         decoration: BoxDecoration(
                                           color: Colors.blue.shade50,
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          tx.note,
-                                          style: TextStyle(
-                                            color: Colors.blue.shade700,
-                                            fontSize: 12,
-                                            fontFamily: 'Inter',
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: Colors.blue.shade100,
+                                            width: 1,
                                           ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.sticky_note_2_outlined,
+                                              size: 16,
+                                              color: Colors.blue.shade600,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                tx.note,
+                                                style: TextStyle(
+                                                  fontStyle: FontStyle.normal,
+                                                  color: Colors.grey[800],
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                  height: 1.3,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ],
+                                    const SizedBox(height: 8),
+                                    // Edit button at bottom
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, size: 18),
+                                          color: const Color(0xFF6366F1),
+                                          tooltip: 'Edit Income',
+                                          padding: const EdgeInsets.all(4),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 32,
+                                            minHeight: 32,
+                                          ),
+                                          onPressed: () => _editIncomeTransaction(context, tx, txIndex),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
@@ -838,8 +860,34 @@ class _IncomeTabState extends State<IncomeTab> {
   }
 
   String _formatTime(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  int hour = dateTime.hour;
+  String period = hour >= 12 ? 'PM' : 'AM';
+  if (hour == 0) hour = 12;
+  if (hour > 12) hour -= 12;
+  return '${hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')} $period';
   }
+
+  String _formatIncomeDate(DateTime date) {
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final yesterday = today.subtract(const Duration(days: 1));
+  final txDate = DateTime(date.year, date.month, date.day);
+  final weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  String dayStr = weekday[date.weekday - 1];
+  String dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${(date.year % 100).toString().padLeft(2, '0')}';
+  int hour = date.hour;
+  String period = hour >= 12 ? 'PM' : 'AM';
+  if (hour == 0) hour = 12;
+  if (hour > 12) hour -= 12;
+  String timeStr = '$hour:${date.minute.toString().padLeft(2, '0')} $period';
+  if (txDate == today) {
+    return 'Today, $dateStr, $timeStr';
+  } else if (txDate == yesterday) {
+    return 'Yesterday, $dateStr, $timeStr';
+  } else {
+    return '$dayStr, $dateStr, $timeStr';
+  }
+}
 
   String _getFilterDisplayText() {
     List<String> parts = [];
@@ -1055,7 +1103,7 @@ class _IncomeTabState extends State<IncomeTab> {
                             ListTile(
                               contentPadding: EdgeInsets.zero,
                               title: Text(
-                                '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                                '${selectedDate.day}/${selectedDate.month}/${(selectedDate.year % 100).toString().padLeft(2, '0')}',
                               ),
                               trailing: const Icon(Icons.edit),
                               onTap: () async {
@@ -1201,13 +1249,12 @@ class _IncomeTabState extends State<IncomeTab> {
                                     fontFamily: 'Inter', 
                                     color: const Color(0xFF6366F1),
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 28,
+                                    fontSize: 20,
                                   ),
                                 ),
                                 IconButton(
-                                  icon: const Icon(Icons.close, color: Color(0xFF6366F1), size: 28),
-                                  onPressed: () => Navigator.of(dialogContext).pop(),
-                                  tooltip: 'Close',
+                                  onPressed: () => Navigator.pop(dialogContext),
+                                  icon: const Icon(Icons.close, color: Colors.grey),
                                 ),
                               ],
                             ),
@@ -1308,7 +1355,7 @@ class _IncomeTabState extends State<IncomeTab> {
                               contentPadding: EdgeInsets.zero,
                               leading: const Icon(Icons.calendar_today),
                               title: Text(
-                                '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                                '${selectedDate.day}/${selectedDate.month}/${(selectedDate.year % 100).toString().padLeft(2, '0')}',
                               ),
                               trailing: const Icon(Icons.edit),
                               onTap: () async {

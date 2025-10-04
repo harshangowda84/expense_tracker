@@ -120,7 +120,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
         if (difference < 7) {
           dateKey = '${difference} days ago';
         } else {
-          dateKey = '${tx.date.day}/${tx.date.month}/${tx.date.year}';
+          dateKey = '${tx.date.day}/${tx.date.month}/${(tx.date.year % 100).toString().padLeft(2, '0')}';
         }
       }
       grouped[dateKey] ??= [];
@@ -778,7 +778,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                     const SizedBox(width: 8),
                     Text(
                       selectedDate != null
-                          ? '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'
+                          ? '${selectedDate.day}/${selectedDate.month}/${(selectedDate.year % 100).toString().padLeft(2, '0')}'
                           : 'Select Date',
                       style: TextStyle(
                         fontSize: 14,
@@ -1226,18 +1226,27 @@ class _TransactionsTabState extends State<TransactionsTab> {
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final diff = now.difference(date);
-    String dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-    String timeStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-    if (diff.inDays == 0) {
-      return 'Today, $dateStr $timeStr';
-    } else if (diff.inDays == 1) {
-      return 'Yesterday, $dateStr $timeStr';
-    } else if (diff.inDays < 7) {
-      final weekday = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      return '${weekday[date.weekday - 1]}, $dateStr $timeStr';
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final txDate = DateTime(date.year, date.month, date.day);
+    
+    // 12-hour format
+    int hour = date.hour;
+    String period = hour >= 12 ? 'PM' : 'AM';
+    if (hour == 0) hour = 12;
+    if (hour > 12) hour -= 12;
+    
+    final weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    String dayStr = weekday[date.weekday - 1];
+    String dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${(date.year % 100).toString().padLeft(2, '0')}';
+    String timeStr = '${hour}:${date.minute.toString().padLeft(2, '0')} $period';
+    
+    if (txDate == today) {
+      return 'Today, $dateStr, $timeStr';
+    } else if (txDate == yesterday) {
+      return 'Yesterday, $dateStr, $timeStr';
     } else {
-      return '$dateStr $timeStr';
+      return '$dayStr, $dateStr, $timeStr';
     }
   }
 
@@ -1669,7 +1678,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                       ),
                                       Expanded(
                                         child: Text(
-                                          'I paid for friends and expect reimbursement',
+                                          'Split bill',
                                           style: TextStyle(
                                             color: tx.receivableAmountPaid > 0 ? Colors.grey[400] : Colors.grey[700],
                                             fontSize: 14,
@@ -2713,7 +2722,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                 ),
                                 Expanded(
                                   child: Text(
-                                    'I paid for friends and expect reimbursement',
+                                    'Split bill',
                                     style: TextStyle(
                                       color: Colors.grey[700],
                                       fontSize: 14,
@@ -3044,7 +3053,6 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                         const SizedBox(width: 12),
                                         // Account and category info
                                         Expanded(
-                                          flex: 3,
                                           child: Column(
                                             crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
@@ -3087,11 +3095,15 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                                     color: Colors.grey[500],
                                                   ),
                                                   const SizedBox(width: 4),
-                                                  Text(
-                                                    _formatDate(tx.date),
-                                                    style: TextStyle(
-                                                      color: Colors.grey[500],
-                                                      fontSize: 12,
+                                                  Flexible(
+                                                    child: Text(
+                                                      _formatDate(tx.date),
+                                                      style: TextStyle(
+                                                        color: Colors.grey[500],
+                                                        fontSize: 12,
+                                                      ),
+                                                      softWrap: false,
+                                                      overflow: TextOverflow.visible,
                                                     ),
                                                   ),
                                                 ],
@@ -3099,34 +3111,24 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                             ],
                                           ),
                                         ),
-                                        // Amount and edit button
-                                        Column(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
-                                          children: [
-                                            Text(
-                                              '₹${tx.amount.toStringAsFixed(2)}',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.red,
-                                                fontSize: 18,
+                                        const SizedBox(width: 8),
+                                        // Amount only
+                                        Container(
+                                          width: 100,
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              Text(
+                                                '₹${tx.amount.toStringAsFixed(2)}',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.red,
+                                                  fontSize: 18,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
                                               ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            IconButton(
-                                              icon: const Icon(Icons.edit, size: 18),
-                                              color: const Color(0xFF6366F1),
-                                              tooltip: 'Edit Transaction',
-                                              padding: const EdgeInsets.all(4),
-                                              constraints: const BoxConstraints(
-                                                minWidth: 32,
-                                                minHeight: 32,
-                                              ),
-                                              onPressed: () {
-                                                final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
-                                                _showEditTransactionDialog(context, accounts, tx, txIndex);
-                                              },
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -3296,6 +3298,25 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                         ),
                                       ),
                                     ],
+                                    // Edit button at the bottom
+                                    const SizedBox(height: 8),
+                                    Align(
+                                      alignment: Alignment.centerRight,
+                                      child: IconButton(
+                                        icon: const Icon(Icons.edit, size: 18),
+                                        color: const Color(0xFF6366F1),
+                                        tooltip: 'Edit Transaction',
+                                        padding: const EdgeInsets.all(8),
+                                        constraints: const BoxConstraints(
+                                          minWidth: 36,
+                                          minHeight: 36,
+                                        ),
+                                        onPressed: () {
+                                          final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
+                                          _showEditTransactionDialog(context, accounts, tx, txIndex);
+                                        },
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),

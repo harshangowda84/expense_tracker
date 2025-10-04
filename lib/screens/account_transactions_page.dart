@@ -70,18 +70,27 @@ class AccountTransactionsPage extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final diff = now.difference(date);
-    String dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-    String timeStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-    if (diff.inDays == 0) {
-      return 'Today, $timeStr';
-    } else if (diff.inDays == 1) {
-      return 'Yesterday, $timeStr';
-    } else if (diff.inDays < 7) {
-      final weekday = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      return '${weekday[date.weekday - 1]}, $timeStr';
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final txDate = DateTime(date.year, date.month, date.day);
+    
+    // 12-hour format
+    int hour = date.hour;
+    String period = hour >= 12 ? 'PM' : 'AM';
+    if (hour == 0) hour = 12;
+    if (hour > 12) hour -= 12;
+    
+    final weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    String dayStr = weekday[date.weekday - 1];
+    String dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${(date.year % 100).toString().padLeft(2, '0')}';
+    String timeStr = '${hour}:${date.minute.toString().padLeft(2, '0')} $period';
+    
+    if (txDate == today) {
+      return 'Today, $dateStr, $timeStr';
+    } else if (txDate == yesterday) {
+      return 'Yesterday, $dateStr, $timeStr';
     } else {
-      return '$dateStr $timeStr';
+      return '$dayStr, $dateStr, $timeStr';
     }
   }
 
@@ -374,20 +383,37 @@ class AccountTransactionsPage extends StatelessWidget {
                                       fontSize: 14,
                                     ),
                                   ),
-                                if (tx.note.isNotEmpty) 
-                                  Text(
-                                    tx.note,
-                                    style: TextStyle(
-                                      color: Colors.grey[500],
-                                      fontSize: 13,
+                                if (tx.note.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: Colors.blue.shade200,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      tx.note,
+                                      style: TextStyle(
+                                        color: Colors.blue.shade700,
+                                        fontSize: 12,
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                     ),
                                   ),
+                                ],
+                                const SizedBox(height: 4),
                                 Text(
                                   _formatDate(tx.date),
                                   style: TextStyle(
                                     color: Colors.grey[600],
                                     fontSize: 12,
                                   ),
+                                  softWrap: false,
+                                  overflow: TextOverflow.visible,
                                 ),
                               ],
                             ),
@@ -444,20 +470,36 @@ class AccountTransactionsPage extends StatelessWidget {
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (tx.note.isNotEmpty) 
-                                  Text(
-                                    tx.note,
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 13,
+                                if (tx.note.isNotEmpty) ...[
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: Colors.orange.shade200,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      tx.note,
+                                      style: TextStyle(
+                                        color: Colors.orange.shade700,
+                                        fontSize: 12,
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                     ),
                                   ),
+                                  const SizedBox(height: 4),
+                                ],
                                 Text(
                                   _formatDate(tx.date),
                                   style: TextStyle(
                                     color: Colors.grey[600],
                                     fontSize: 12,
                                   ),
+                                  softWrap: false,
+                                  overflow: TextOverflow.visible,
                                 ),
                               ],
                             ),

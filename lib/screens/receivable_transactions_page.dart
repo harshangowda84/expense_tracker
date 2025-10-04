@@ -67,18 +67,30 @@ class ReceivableTransactionsPage extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final diff = now.difference(date);
-    String dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-    String timeStr = '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-    if (diff.inDays == 0) {
-      return 'Today, $timeStr';
-    } else if (diff.inDays == 1) {
-      return 'Yesterday, $timeStr';
-    } else if (diff.inDays < 7) {
-      final weekday = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-      return '${weekday[date.weekday - 1]}, $timeStr';
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final txDate = DateTime(date.year, date.month, date.day);
+    
+    final weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    String dayStr = weekday[date.weekday - 1];
+    String dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${(date.year % 100).toString().padLeft(2, '0')}';
+    
+    // Convert to 12-hour format
+    int hour = date.hour;
+    String period = hour >= 12 ? 'PM' : 'AM';
+    if (hour == 0) {
+      hour = 12;
+    } else if (hour > 12) {
+      hour = hour - 12;
+    }
+    String timeStr = '$hour:${date.minute.toString().padLeft(2, '0')} $period';
+    
+    if (txDate == today) {
+      return 'Today, $dateStr, $timeStr';
+    } else if (txDate == yesterday) {
+      return 'Yesterday, $dateStr, $timeStr';
     } else {
-      return '$dateStr $timeStr';
+      return '$dayStr, $dateStr, $timeStr';
     }
   }
 
@@ -788,13 +800,18 @@ class ReceivableTransactionsPage extends StatelessWidget {
                                             color: Colors.grey[500],
                                             fontSize: 12,
                                           ),
+                                          softWrap: false,
+                                          overflow: TextOverflow.visible,
                                         ),
                                       ],
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
                                   // Amount info
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                  Container(
+                                    width: 120,
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Text(
                                         '₹${tx.amount.toStringAsFixed(2)}',
@@ -845,6 +862,7 @@ class ReceivableTransactionsPage extends StatelessWidget {
                                       ),
                                     ],
                                   ),
+                                ),
                                 ],
                               ),
                               

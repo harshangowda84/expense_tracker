@@ -4,6 +4,8 @@ import '../models/income_transaction.dart';
 import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'receivable_transactions_page.dart';
+import '../services/navigation_service.dart';
 
 String formatIndianAmount(double amount) {
   String sign = amount < 0 ? '-' : '';
@@ -687,8 +689,8 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildQuickStatsCard(String title, String value, IconData icon, Color color) {
-    return Container(
+  Widget _buildQuickStatsCard(String title, String value, IconData icon, Color color, {VoidCallback? onTap}) {
+    Widget cardWidget = Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -738,9 +740,31 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
               textAlign: TextAlign.center,
             ),
           ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              'Tap to view',
+              style: TextStyle(fontFamily: 'Inter', 
+                fontSize: 10,
+                color: color.withOpacity(0.7),
+                fontWeight: FontWeight.w400,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         ],
       ),
     );
+
+    if (onTap != null) {
+      return GestureDetector(
+        onTap: onTap,
+        child: cardWidget,
+      );
+    }
+    
+    return cardWidget;
   }
 
   Widget _buildCategoryInsightCard(ExpenseCategory category, double amount, double percentage, Color color) {
@@ -805,6 +829,11 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
         ],
       ),
     );
+  }
+
+  void _navigateToTab(BuildContext context, int tabIndex) {
+    // Use the navigation service to change tabs
+    NavigationService().navigateToTab(tabIndex);
   }
 
   @override
@@ -987,78 +1016,81 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Quick stats - responsive layout
+                  // Quick stats - responsive layout (2x2 grid with 4 cards including Receivable)
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      // Determine if we should use 2x2 grid or 1x4 row layout
-                      final screenWidth = constraints.maxWidth;
-                      final useGridLayout = screenWidth < 600; // Switch to grid on smaller screens
+                      // Calculate total receivable amount
+                      final totalReceivable = filteredTransactions
+                          .where((tx) => tx.isReceivable && tx.receivableAmount > 0)
+                          .fold(0.0, (sum, tx) => sum + tx.receivableAmount);
                       
-                      if (useGridLayout) {
-                        // Single row layout for mobile screens (3 cards)
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: _buildQuickStatsCard(
-                                'Transactions',
-                                totalTransactions.toString(),
-                                Icons.receipt_long,
-                                const Color(0xFF3B82F6),
+                      // Always use 2x2 grid layout for 4 cards
+                      return Column(
+                        children: [
+                          // First row - Transactions and Receivable
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildQuickStatsCard(
+                                  'Transactions',
+                                  totalTransactions.toString(),
+                                  Icons.receipt_long,
+                                  const Color(0xFF3B82F6),
+                                  onTap: () {
+                                    _navigateToTab(context, 1);
+                                  },
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildQuickStatsCard(
-                                'Accounts',
-                                accounts.length.toString(),
-                                Icons.account_balance,
-                                const Color(0xFF10B981),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildQuickStatsCard(
+                                  'Receivable',
+                                  formatIndianAmount(totalReceivable),
+                                  Icons.people,
+                                  const Color(0xFF8B5CF6),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const ReceivableTransactionsPage(),
+                                      ),
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: _buildQuickStatsCard(
-                                'Cards',
-                                creditCards.length.toString(),
-                                Icons.credit_card,
-                                const Color(0xFFEF4444),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // Second row - Accounts and Cards
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildQuickStatsCard(
+                                  'Accounts',
+                                  accounts.length.toString(),
+                                  Icons.account_balance,
+                                  const Color(0xFF10B981),
+                                  onTap: () {
+                                    _navigateToTab(context, 3);
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        );
-                      } else {
-                        // Single row layout for larger screens (3 cards)
-                        return Row(
-                          children: [
-                            Expanded(
-                              child: _buildQuickStatsCard(
-                                'Transactions',
-                                totalTransactions.toString(),
-                                Icons.receipt_long,
-                                const Color(0xFF3B82F6),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildQuickStatsCard(
+                                  'Cards',
+                                  creditCards.length.toString(),
+                                  Icons.credit_card,
+                                  const Color(0xFFEF4444),
+                                  onTap: () {
+                                    _navigateToTab(context, 4);
+                                  },
+                                ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildQuickStatsCard(
-                                'Accounts',
-                                accounts.length.toString(),
-                                Icons.account_balance,
-                                const Color(0xFF10B981),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildQuickStatsCard(
-                                'Cards',
-                                creditCards.length.toString(),
-                                Icons.credit_card,
-                                const Color(0xFFEF4444),
-                              ),
-                            ),
-                          ],
-                        );
-                      }
+                            ],
+                          ),
+                        ],
+                      );
                     },
                   ),
                   const SizedBox(height: 24),

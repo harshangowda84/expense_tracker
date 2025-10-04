@@ -21,6 +21,8 @@ class ExpenseTransaction {
   ExpenseCategory category;
   String note;
   TransactionSourceType sourceType;
+  bool isReceivable;
+  double receivableAmount;
 
   ExpenseTransaction({
     required this.id,
@@ -30,6 +32,8 @@ class ExpenseTransaction {
     required this.category,
     this.note = '',
     this.sourceType = TransactionSourceType.bankAccount,
+    this.isReceivable = false,
+    this.receivableAmount = 0.0,
   });
 
   Map<String, dynamic> toMap() => {
@@ -40,6 +44,8 @@ class ExpenseTransaction {
         'category': category.index.toString(),
         'note': note,
         'sourceType': sourceType.index.toString(),
+        'isReceivable': isReceivable.toString(),
+        'receivableAmount': receivableAmount.toString(),
       };
 
   factory ExpenseTransaction.fromMap(Map<String, dynamic> map) {
@@ -53,6 +59,8 @@ class ExpenseTransaction {
       sourceType: map['sourceType'] != null
           ? TransactionSourceType.values[int.tryParse(map['sourceType'] ?? '0') ?? 0]
           : TransactionSourceType.bankAccount,
+      isReceivable: map['isReceivable'] == 'true',
+      receivableAmount: double.tryParse(map['receivableAmount'] ?? '0') ?? 0.0,
     );
   }
 
@@ -64,6 +72,8 @@ class ExpenseTransaction {
     ExpenseCategory? category,
     String? note,
     TransactionSourceType? sourceType,
+    bool? isReceivable,
+    double? receivableAmount,
   }) {
     return ExpenseTransaction(
       id: id ?? this.id,
@@ -73,6 +83,8 @@ class ExpenseTransaction {
       category: category ?? this.category,
       note: note ?? this.note,
       sourceType: sourceType ?? this.sourceType,
+      isReceivable: isReceivable ?? this.isReceivable,
+      receivableAmount: receivableAmount ?? this.receivableAmount,
     );
   }
 }

@@ -28,6 +28,9 @@ class _TransactionsTabState extends State<TransactionsTab> {
   DateFilterType _selectedDateFilter = DateFilterType.all;
   DateTime? _customStartDate;
   DateTime? _customEndDate;
+  String? _selectedSourceFilter;
+  String? _selectedReceivableFilter; // null = all, 'receivable' = only receivable, 'non-receivable' = only non-receivable
+  bool _showActualExpense = true; // Toggle for showing "Your actual expense" feature
   final TextEditingController _searchController = TextEditingController();
 
   @override
@@ -35,8 +38,6 @@ class _TransactionsTabState extends State<TransactionsTab> {
     _searchController.dispose();
     super.dispose();
   }
-
-  String? _selectedSourceFilter;
 
   List<ExpenseTransaction> _filterTransactions(List<ExpenseTransaction> transactions) {
     var filtered = transactions.where((tx) {
@@ -56,7 +57,12 @@ class _TransactionsTabState extends State<TransactionsTab> {
       // Source filter (specific account or card)
       final matchesSource = _selectedSourceFilter == null || tx.accountName == _selectedSourceFilter;
       
-      return matchesSearch && matchesCategory && matchesDate && matchesSource;
+      // Receivable filter
+      final matchesReceivable = _selectedReceivableFilter == null || 
+          (_selectedReceivableFilter == 'receivable' && tx.isReceivable && tx.receivableAmount > 0) ||
+          (_selectedReceivableFilter == 'non-receivable' && (!tx.isReceivable || tx.receivableAmount <= 0));
+      
+      return matchesSearch && matchesCategory && matchesDate && matchesSource && matchesReceivable;
     }).toList();
     
     // Sort by date (newest first)
@@ -276,13 +282,14 @@ class _TransactionsTabState extends State<TransactionsTab> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
+                        if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null || _selectedReceivableFilter != null)
                           TextButton(
                             onPressed: () {
                               setModalState(() {
                                 _selectedCategory = null;
                                 _selectedDateFilter = DateFilterType.all;
                                 _selectedSourceFilter = null;
+                                _selectedReceivableFilter = null;
                                 _customStartDate = null;
                                 _customEndDate = null;
                               });
@@ -290,6 +297,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                 _selectedCategory = null;
                                 _selectedDateFilter = DateFilterType.all;
                                 _selectedSourceFilter = null;
+                                _selectedReceivableFilter = null;
                                 _customStartDate = null;
                                 _customEndDate = null;
                               });
@@ -569,6 +577,34 @@ class _TransactionsTabState extends State<TransactionsTab> {
                             )),
                         ],
                       ),
+                      const SizedBox(height: 16),
+                      
+                      // Receivable Filter Section
+                      const Text(
+                        'Split Bill / Receivable',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          Expanded(
+                            child: _buildReceivableFilterChip('All', null, setModalState),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildReceivableFilterChip('Receivable', 'receivable', setModalState),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildReceivableFilterChip('Regular', 'non-receivable', setModalState),
+                          ),
+                        ],
+                      ),
                       const SizedBox(height: 8),
                     ],
                   ),
@@ -590,6 +626,14 @@ class _TransactionsTabState extends State<TransactionsTab> {
     
     if (_selectedSourceFilter != null) {
       parts.add(_selectedSourceFilter!.toUpperCase());
+    }
+    
+    if (_selectedReceivableFilter != null) {
+      if (_selectedReceivableFilter == 'receivable') {
+        parts.add('RECEIVABLE');
+      } else if (_selectedReceivableFilter == 'non-receivable') {
+        parts.add('REGULAR');
+      }
     }
     
     if (_selectedDateFilter != DateFilterType.all) {
@@ -1072,6 +1116,55 @@ class _TransactionsTabState extends State<TransactionsTab> {
     );
   }
 
+  Widget _buildReceivableFilterChip(String label, String? value, StateSetter setModalState) {
+    final isSelected = _selectedReceivableFilter == value;
+    return GestureDetector(
+      onTap: () {
+        setModalState(() {
+          _selectedReceivableFilter = value;
+        });
+      },
+      child: Container(
+        height: 40, // Fixed height for consistent alignment
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF8B5CF6) : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF8B5CF6) : Colors.grey.shade300,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              value == 'receivable' ? Icons.people : 
+              value == 'non-receivable' ? Icons.person :
+              Icons.all_inclusive,
+              size: 16, // Slightly larger icon for better visibility
+              color: isSelected ? Colors.white : Colors.grey.shade600,
+            ),
+            const SizedBox(width: 6),
+            Flexible( // Changed from Expanded to Flexible
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? Colors.white : Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   IconData _getCategoryIcon(ExpenseCategory category) {
     switch (category) {
       case ExpenseCategory.office:
@@ -1225,7 +1318,10 @@ class _TransactionsTabState extends State<TransactionsTab> {
     String accountName = tx.accountName;
     ExpenseCategory category = tx.category;
     String? amountError;
+    String? receivableAmountError;
     bool isSubmitting = false;
+    bool isReceivable = tx.isReceivable;
+    String receivableAmount = tx.receivableAmount > 0 ? tx.receivableAmount.toString() : '';
     final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
     final noteController = TextEditingController(text: tx.note);
     TransactionSourceType sourceType = tx.sourceType;
@@ -1500,6 +1596,147 @@ class _TransactionsTabState extends State<TransactionsTab> {
                               style: const TextStyle(color: Colors.black87, fontSize: 16),
                               maxLines: 2,
                             ),
+                            const SizedBox(height: 18),
+                            // Receivable Section
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.purple.shade50,
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(color: Colors.purple.shade200),
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(Icons.people, color: const Color(0xFF8B5CF6), size: 20),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Split Bill / Receivable',
+                                          style: TextStyle(
+                                            color: const Color(0xFF8B5CF6),
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                      // Toggle for showing actual expense
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            'Show actual',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Switch(
+                                            value: _showActualExpense,
+                                            onChanged: (value) {
+                                              setState(() {
+                                                _showActualExpense = value;
+                                              });
+                                            },
+                                            activeColor: const Color(0xFF8B5CF6),
+                                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Checkbox(
+                                        value: isReceivable,
+                                        onChanged: (value) {
+                                          setState(() {
+                                            isReceivable = value ?? false;
+                                            if (!isReceivable) {
+                                              receivableAmount = '';
+                                              receivableAmountError = null;
+                                            }
+                                          });
+                                        },
+                                        activeColor: const Color(0xFF8B5CF6),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          'I paid for friends and expect reimbursement',
+                                          style: TextStyle(
+                                            color: Colors.grey[700],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (isReceivable) ...[
+                                    const SizedBox(height: 12),
+                                    TextField(
+                                      decoration: InputDecoration(
+                                        labelText: 'Receivable Amount',
+                                        prefixIcon: Icon(Icons.currency_rupee, color: const Color(0xFF8B5CF6)),
+                                        errorText: receivableAmountError,
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        hintText: 'Amount friends will pay back',
+                                      ),
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      controller: TextEditingController(text: receivableAmount),
+                                      onChanged: (v) {
+                                        setState(() {
+                                          receivableAmount = v;
+                                          receivableAmountError = null;
+                                          if (receivableAmount.isNotEmpty) {
+                                            final receivableVal = double.tryParse(receivableAmount);
+                                            final totalAmount = double.tryParse(amountController.text);
+                                            if (receivableVal == null || receivableVal <= 0) {
+                                              receivableAmountError = 'Enter a valid receivable amount';
+                                            } else if (totalAmount != null && receivableVal >= totalAmount) {
+                                              receivableAmountError = 'Receivable amount must be less than total amount';
+                                            }
+                                          }
+                                        });
+                                      },
+                                      style: const TextStyle(color: Colors.black87, fontSize: 16),
+                                    ),
+                                    if (_showActualExpense && amountController.text.isNotEmpty && receivableAmount.isNotEmpty) ...[
+                                      const SizedBox(height: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.green.shade50,
+                                          borderRadius: BorderRadius.circular(8),
+                                          border: Border.all(color: Colors.green.shade200),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.info_outline, color: Colors.green.shade600, size: 16),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                'Your actual expense: ₹${(double.tryParse(amountController.text) ?? 0) - (double.tryParse(receivableAmount) ?? 0)}',
+                                                style: TextStyle(
+                                                  color: Colors.green.shade700,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ],
+                              ),
+                            ),
                             const SizedBox(height: 28),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1518,7 +1755,8 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                   backgroundColor: const Color(0xFF6366F1),
                                   foregroundColor: Colors.white,
                                   elevation: 2,
-                                  onPressed: (accountName.isEmpty || amountError != null || amountController.text.isEmpty || isSubmitting)
+                                  onPressed: (accountName.isEmpty || amountError != null || amountController.text.isEmpty || isSubmitting ||
+                                      (isReceivable && (receivableAmountError != null || receivableAmount.isEmpty)))
                                       ? null
                                       : () async {
                                           setState(() => isSubmitting = true);
@@ -1532,6 +1770,8 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                               category: category,
                                               note: noteController.text,
                                               sourceType: sourceType,
+                                              isReceivable: isReceivable,
+                                              receivableAmount: isReceivable ? double.parse(receivableAmount) : 0.0,
                                             );
                                             await Provider.of<DataProvider>(context, listen: false).updateTransaction(txIndex, updatedTx, tx.amount, tx.accountName);
                                             if (dialogContext.mounted) {
@@ -1591,7 +1831,10 @@ class _TransactionsTabState extends State<TransactionsTab> {
     ExpenseCategory category = ExpenseCategory.office;
     String note = '';
     String? amountError;
+    String? receivableAmountError;
     bool isSubmitting = false;
+    bool isReceivable = false;
+    String receivableAmount = '';
     TransactionSourceType sourceType = TransactionSourceType.bankAccount;
 
     showModalBottomSheet(
@@ -1882,6 +2125,146 @@ class _TransactionsTabState extends State<TransactionsTab> {
                         style: const TextStyle(color: Colors.black87, fontSize: 16),
                         maxLines: 2,
                       ),
+                      const SizedBox(height: 18),
+                      // Receivable Section
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.purple.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.purple.shade200),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.people, color: const Color(0xFF8B5CF6), size: 20),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'Split Bill / Receivable',
+                                    style: TextStyle(
+                                      color: const Color(0xFF8B5CF6),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                                // Toggle for showing actual expense
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Show actual',
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Switch(
+                                      value: _showActualExpense,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _showActualExpense = value;
+                                        });
+                                      },
+                                      activeColor: const Color(0xFF8B5CF6),
+                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: isReceivable,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      isReceivable = value ?? false;
+                                      if (!isReceivable) {
+                                        receivableAmount = '';
+                                        receivableAmountError = null;
+                                      }
+                                    });
+                                  },
+                                  activeColor: const Color(0xFF8B5CF6),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'I paid for friends and expect reimbursement',
+                                    style: TextStyle(
+                                      color: Colors.grey[700],
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (isReceivable) ...[
+                              const SizedBox(height: 12),
+                              TextField(
+                                decoration: InputDecoration(
+                                  labelText: 'Receivable Amount',
+                                  prefixIcon: Icon(Icons.currency_rupee, color: const Color(0xFF8B5CF6)),
+                                  errorText: receivableAmountError,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  hintText: 'Amount friends will pay back',
+                                ),
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                onChanged: (v) {
+                                  setState(() {
+                                    receivableAmount = v;
+                                    receivableAmountError = null;
+                                    if (receivableAmount.isNotEmpty) {
+                                      final receivableVal = double.tryParse(receivableAmount);
+                                      final totalAmount = double.tryParse(amount);
+                                      if (receivableVal == null || receivableVal <= 0) {
+                                        receivableAmountError = 'Enter a valid receivable amount';
+                                      } else if (totalAmount != null && receivableVal >= totalAmount) {
+                                        receivableAmountError = 'Receivable amount must be less than total amount';
+                                      }
+                                    }
+                                  });
+                                },
+                                style: const TextStyle(color: Colors.black87, fontSize: 16),
+                              ),
+                              if (_showActualExpense && amount.isNotEmpty && receivableAmount.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.shade50,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: Colors.green.shade200),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.info_outline, color: Colors.green.shade600, size: 16),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          'Your actual expense: ₹${(double.tryParse(amount) ?? 0) - (double.tryParse(receivableAmount) ?? 0)}',
+                                          style: TextStyle(
+                                            color: Colors.green.shade700,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ],
+                        ),
+                      ),
                       const SizedBox(height: 28),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1900,7 +2283,8 @@ class _TransactionsTabState extends State<TransactionsTab> {
                             backgroundColor: const Color(0xFF6366F1),
                             foregroundColor: Colors.white,
                             elevation: 2,
-                            onPressed: (accountName.isEmpty || amountError != null || amount.isEmpty || isSubmitting)
+                            onPressed: (accountName.isEmpty || amountError != null || amount.isEmpty || isSubmitting ||
+                                (isReceivable && (receivableAmountError != null || receivableAmount.isEmpty)))
                                 ? null
                                 : () async {
                                     setState(() => isSubmitting = true);
@@ -1929,6 +2313,8 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                           category: category,
                                           note: note,
                                           sourceType: sourceType,
+                                          isReceivable: isReceivable,
+                                          receivableAmount: isReceivable ? double.parse(receivableAmount) : 0.0,
                                         ),
                                       );
                                       if (dialogContext.mounted) {
@@ -2256,6 +2642,70 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                                   fontSize: 14,
                                                   fontWeight: FontWeight.w500,
                                                   height: 1.3,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                    if (tx.isReceivable && tx.receivableAmount > 0) ...[
+                                      const SizedBox(height: 12),
+                                      Container(
+                                        width: double.infinity,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        decoration: BoxDecoration(
+                                          color: Colors.purple.shade50,
+                                          borderRadius: BorderRadius.circular(10),
+                                          border: Border.all(
+                                            color: Colors.purple.shade200,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              Icons.people,
+                                              size: 16,
+                                              color: Colors.purple.shade600,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Split Bill: ₹${tx.receivableAmount.toStringAsFixed(2)} receivable',
+                                                    style: TextStyle(
+                                                      color: Colors.purple.shade700,
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    'Your actual expense: ₹${(tx.amount - tx.receivableAmount).toStringAsFixed(2)}',
+                                                    style: TextStyle(
+                                                      color: Colors.grey[700],
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.orange.shade100,
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                'PENDING',
+                                                style: TextStyle(
+                                                  color: Colors.orange.shade700,
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
                                                 ),
                                               ),
                                             ),

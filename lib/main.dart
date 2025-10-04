@@ -8,6 +8,7 @@ import 'screens/splash_screen.dart';
 import 'providers/data_provider.dart';
 import 'screens/credit_cards_tab.dart';
 import 'screens/income_tab.dart';
+import 'services/navigation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -39,6 +40,7 @@ class _SpendlyAppState extends State<SpendlyApp> {
     return ChangeNotifierProvider(
       create: (_) => DataProvider(),
       child: MaterialApp(
+        navigatorKey: NavigationService().navigatorKey,
         title: 'Spendly',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
@@ -118,6 +120,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    
+    // Register tab navigation callback with the navigation service
+    NavigationService().setTabSelectionCallback((tabIndex) {
+      _onTabTapped(tabIndex);
+    });
     
     // Initialize main animation controllers
     _animationControllers = List.generate(

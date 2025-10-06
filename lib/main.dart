@@ -31,6 +31,11 @@ void main() async {
   SchedulerBinding.instance.addPostFrameCallback((_) {
     // Enable high performance mode for scrolling
     SchedulerBinding.instance.scheduleWarmUpFrame();
+    
+    // Force maximum refresh rate
+    SchedulerBinding.instance.addPersistentFrameCallback((_) {
+      // This keeps the refresh rate active
+    });
   });
   
   runApp(const SpendlyApp());

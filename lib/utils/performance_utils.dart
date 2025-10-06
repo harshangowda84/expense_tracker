@@ -21,7 +21,7 @@ class PerformanceUtils {
           parent: AlwaysScrollableScrollPhysics(),
         ),
         padding: padding,
-        child: child,
+        child: RepaintBoundary(child: child), // Optimize repainting for 120Hz
       ),
     );
   }
@@ -47,9 +47,16 @@ class PerformanceUtils {
         shrinkWrap: shrinkWrap,
         itemExtent: itemExtent,
         itemCount: itemCount,
-        itemBuilder: itemBuilder,
-        // Enable high performance scrolling
-        cacheExtent: 250.0, // Cache more items for smoother scrolling
+        itemBuilder: (context, index) {
+          return RepaintBoundary(
+            child: itemBuilder(context, index),
+          );
+        },
+        // Enable high performance scrolling for 120Hz
+        cacheExtent: 500.0, // Increased cache for smoother scrolling
+        addAutomaticKeepAlives: true,
+        addRepaintBoundaries: true,
+        addSemanticIndexes: false, // Disable for better performance
       ),
     );
   }

@@ -1018,17 +1018,7 @@ class _IncomeTabState extends State<IncomeTab> {
                               items: IncomeCategory.values.map((category) {
                                 return DropdownMenuItem(
                                   value: category,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        IncomeCategoryUtils.getCategoryIcon(category),
-                                        size: 20,
-                                        color: IncomeCategoryUtils.getCategoryColor(category),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(IncomeCategoryUtils.getCategoryName(category)),
-                                    ],
-                                  ),
+                                  child: Text(IncomeCategoryUtils.getCategoryName(category)),
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -1282,17 +1272,7 @@ class _IncomeTabState extends State<IncomeTab> {
                               items: IncomeCategoryUtils.getAllCategories().map((category) {
                                 return DropdownMenuItem(
                                   value: category,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        IncomeCategoryUtils.getCategoryIcon(category),
-                                        color: IncomeCategoryUtils.getCategoryColor(category),
-                                        size: 20,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(IncomeCategoryUtils.getCategoryName(category)),
-                                    ],
-                                  ),
+                                  child: Text(IncomeCategoryUtils.getCategoryName(category)),
                                 );
                               }).toList(),
                               onChanged: (value) {

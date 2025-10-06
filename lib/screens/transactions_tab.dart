@@ -1494,20 +1494,9 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                       : Provider.of<DataProvider>(context, listen: false).creditCards.cast<dynamic>())
                                   .map<DropdownMenuItem<String>>((a) => DropdownMenuItem<String>(
                                     value: a.name,
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          sourceType == TransactionSourceType.bankAccount
-                                              ? Icons.account_balance_wallet
-                                              : Icons.credit_card,
-                                          color: const Color(0xFF8B5CF6)
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          a.name,
-                                          style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                        ),
-                                      ],
+                                    child: Text(
+                                      a.name,
+                                      style: const TextStyle(fontSize: 16, color: Colors.black87),
                                     ),
                                   )).toList(),
                               onChanged: (v) => setState(() {
@@ -1577,15 +1566,9 @@ class _TransactionsTabState extends State<TransactionsTab> {
                               initialValue: category,
                               items: ExpenseCategory.values.map((c) => DropdownMenuItem(
                                 value: c,
-                                child: Row(
-                                  children: [
-                                    Icon(Icons.category, color: const Color(0xFF8B5CF6)),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      c.name[0].toUpperCase() + c.name.substring(1),
-                                      style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                    ),
-                                  ],
+                                child: Text(
+                                  c.name[0].toUpperCase() + c.name.substring(1),
+                                  style: const TextStyle(fontSize: 16, color: Colors.black87),
                                 ),
                               )).toList(),
                               onChanged: (v) => setState(() => category = v ?? ExpenseCategory.office),
@@ -2508,27 +2491,13 @@ class _TransactionsTabState extends State<TransactionsTab> {
                               return DropdownMenuItem<String>(
                                 value: a.name,
                                 enabled: isAvailable,
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      sourceType == TransactionSourceType.bankAccount
-                                          ? Icons.account_balance_wallet
-                                          : Icons.credit_card,
-                                      color: isAvailable 
-                                          ? const Color(0xFF8B5CF6)
-                                          : Colors.grey.shade400,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${a.name} (₹${availableAmount.toStringAsFixed(0)})',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: isAvailable ? Colors.black87 : Colors.grey,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
+                                child: Text(
+                                  '${a.name} (₹${availableAmount.toStringAsFixed(0)})',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: isAvailable ? Colors.black87 : Colors.grey,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               );
                             })
@@ -2601,15 +2570,9 @@ class _TransactionsTabState extends State<TransactionsTab> {
                         items: ExpenseCategory.values
                             .map((c) => DropdownMenuItem(
                                   value: c,
-                                  child: Row(
-                                    children: [
-                                      Icon(Icons.category, color: const Color(0xFF8B5CF6)),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        c.name[0].toUpperCase() + c.name.substring(1),
-                                        style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    c.name[0].toUpperCase() + c.name.substring(1),
+                                    style: const TextStyle(fontSize: 16, color: Colors.black87),
                                   ),
                                 ))
                             .toList(),

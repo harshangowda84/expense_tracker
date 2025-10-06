@@ -14,11 +14,13 @@ class _SplashScreenState extends State<SplashScreen>
   late AnimationController _fadeInController;
   late AnimationController _rippleController;
   late AnimationController _moveController;
+  late AnimationController _zoomController; // New controller for clean zoom effect
   
   late Animation<double> _fadeInAnimation;
   late Animation<double> _rippleAnimation;
   late Animation<double> _scaleAnimation;
   late Animation<double> _rippleOpacity;
+  late Animation<double> _zoomAnimation; // New animation for zoom effect
   
   bool _showMainContent = false;
   bool _startRipple = false;
@@ -30,6 +32,12 @@ class _SplashScreenState extends State<SplashScreen>
     // Fade in animation controller for Spendly text
     _fadeInController = AnimationController(
       duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    // Zoom animation controller for clean zoom effect
+    _zoomController = AnimationController(
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
     
@@ -51,6 +59,15 @@ class _SplashScreenState extends State<SplashScreen>
       end: 1.0,
     ).animate(CurvedAnimation(
       parent: _fadeInController,
+      curve: Curves.easeInOut,
+    ));
+    
+    // Clean zoom animation - just a subtle scale effect
+    _zoomAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.1, // Subtle 10% zoom
+    ).animate(CurvedAnimation(
+      parent: _zoomController,
       curve: Curves.easeInOut,
     ));
     
@@ -87,13 +104,28 @@ class _SplashScreenState extends State<SplashScreen>
   void _startAnimationSequence() async {
     // Start fade in animation for Spendly text
     await _fadeInController.forward();
-    // Remove long delay after fade-in
-    await Future.delayed(const Duration(milliseconds: 200));
+    
+    // Brief pause, then start zoom effect
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    // Zoom in effect
+    await _zoomController.forward();
+    
+    // Hold zoom for a moment
+    await Future.delayed(const Duration(milliseconds: 150));
+    
+    // Zoom back to normal
+    await _zoomController.reverse();
+    
+    // Brief pause before movement
+    await Future.delayed(const Duration(milliseconds: 50));
+    
     // Start the ripple effect
     setState(() {
       _startRipple = true;
       _showMainContent = true;
     });
+    
     // Start ripple animation
     _rippleController.forward();
     // Start move animation slightly after ripple starts
@@ -110,6 +142,7 @@ class _SplashScreenState extends State<SplashScreen>
     _fadeInController.dispose();
     _rippleController.dispose();
     _moveController.dispose();
+    _zoomController.dispose(); // Dispose the zoom controller
     super.dispose();
   }
 
@@ -144,10 +177,10 @@ class _SplashScreenState extends State<SplashScreen>
               child: const SizedBox.expand(),
             ),
           
-          // Spendly text with fade-in and enhanced animation
+          // Spendly text with clean zoom and movement animation
           Center(
             child: AnimatedBuilder(
-              animation: Listenable.merge([_fadeInController, _moveController]),
+              animation: Listenable.merge([_fadeInController, _moveController, _zoomController]),
               builder: (context, child) {
                 // Calculate position during animation
                 final progress = _moveController.value;
@@ -165,10 +198,13 @@ class _SplashScreenState extends State<SplashScreen>
                 // Convert to offset from center
                 final offsetFromCenter = currentY - startY;
                 
+                // Combine zoom effect with scale animation
+                final combinedScale = _scaleAnimation.value * _zoomAnimation.value;
+                
                 return Transform.translate(
                   offset: Offset(0, offsetFromCenter),
                   child: Transform.scale(
-                    scale: _scaleAnimation.value,
+                    scale: combinedScale,
                     child: AnimatedBuilder(
                       animation: _fadeInController,
                       builder: (context, child) {
@@ -178,9 +214,9 @@ class _SplashScreenState extends State<SplashScreen>
                             'Spendly',
                             style: const TextStyle(
                               fontFamily: 'BagelFatOne',
-                              fontSize: 56, // Slightly larger for better scaling effect
+                              fontSize: 56,
                               color: Colors.white,
-                              fontWeight: FontWeight.w900, // Use bold weight as fallback
+                              fontWeight: FontWeight.w900,
                               letterSpacing: 0.2,
                               shadows: [
                                 Shadow(

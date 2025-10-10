@@ -263,12 +263,23 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // Add haptic feedback for tab change
       PerformanceUtils.enableHapticFeedback();
       
-      // Animate to the selected page smoothly
-      _pageController.animateToPage(
-        index,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOutCubic,
-      );
+      // Calculate distance to determine animation strategy
+      final distance = (index - _selectedIndex).abs();
+      
+      // Use jump for any non-adjacent navigation (distance > 1)
+      // This ensures direct navigation for all long jumps
+      if (distance > 1) {
+        // For non-adjacent tabs, jump directly (no animation through intermediate pages)
+        _pageController.jumpToPage(index);
+        _updateSelectedIndex(index);
+      } else {
+        // Only animate for adjacent tabs (distance = 1)
+        _pageController.animateToPage(
+          index,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOutCubic,
+        );
+      }
     } else {
       // Add haptic feedback for same tab bounce
       PerformanceUtils.enableHapticFeedback();
@@ -373,8 +384,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       canPop: _selectedIndex == 0, // Can only pop when on summary tab (index 0)
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop && _selectedIndex != 0) {
-          // If not on summary tab, navigate to summary tab first
-          _onTabTapped(0);
+          // If not on summary tab, jump directly to summary tab (no animation through all pages)
+          _pageController.jumpToPage(0);
+          _updateSelectedIndex(0);
         }
       },
       child: Scaffold(

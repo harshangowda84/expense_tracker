@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/physics.dart';
 import 'package:provider/provider.dart';
 import 'screens/accounts_tab.dart';
 import 'screens/transactions_tab.dart';
@@ -136,6 +137,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
+  double _currentPageValue = 0.0; // Track current page position for smooth animations
+  late PageController _pageController;
+  late AnimationController _pageAnimationController;
+  late Animation<double> _pageAnimation;
   late List<AnimationController> _animationControllers;
   late List<AnimationController> _pulseControllers;
   late List<Animation<double>> _scaleAnimations;
@@ -154,25 +159,62 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     
+    // Initialize PageController with optimized settings
+    _pageController = PageController(
+      initialPage: _selectedIndex,
+      viewportFraction: 1.0,
+    );
+    
+    // Create dedicated animation controller for page tracking
+    _pageAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1), // Very fast for real-time updates
+    );
+    
+    _pageAnimation = Tween<double>(
+      begin: 0.0,
+      end: 0.0,
+    ).animate(_pageAnimationController);
+    
+    // Set initial page value
+    _currentPageValue = _selectedIndex.toDouble();
+    
+    // Optimized page listener with throttling
+    _pageController.addListener(() {
+      if (_pageController.hasClients) {
+        final newPageValue = _pageController.page ?? _selectedIndex.toDouble();
+        // Only update if there's a significant change to reduce rebuilds
+        if ((newPageValue - _currentPageValue).abs() > 0.01) {
+          _currentPageValue = newPageValue;
+          // Use animation to trigger smooth rebuilds
+          _pageAnimation = Tween<double>(
+            begin: _currentPageValue,
+            end: _currentPageValue,
+          ).animate(_pageAnimationController);
+          _pageAnimationController.forward(from: 0);
+        }
+      }
+    });
+    
     // Register tab navigation callback with the navigation service
     NavigationService().setTabSelectionCallback((tabIndex) {
       _onTabTapped(tabIndex);
     });
     
-    // Initialize main animation controllers
+    // Initialize main animation controllers (smooth 120Hz optimized)
     _animationControllers = List.generate(
       5,
       (index) => AnimationController(
-        duration: const Duration(milliseconds: 400),
+        duration: const Duration(milliseconds: 350), // Smooth, fluid timing
         vsync: this,
       ),
     );
     
-    // Initialize pulse controllers for continuous pulse effect
+    // Initialize pulse controllers for continuous pulse effect (smooth)
     _pulseControllers = List.generate(
       5,
       (index) => AnimationController(
-        duration: const Duration(milliseconds: 1200),
+        duration: const Duration(milliseconds: 1000), // Gentle pulse rhythm
         vsync: this,
       ),
     );
@@ -205,6 +247,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _pageController.dispose();
+    _pageAnimationController.dispose();
     for (var controller in _animationControllers) {
       controller.dispose();
     }
@@ -219,15 +263,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // Add haptic feedback for tab change
       PerformanceUtils.enableHapticFeedback();
       
-      // Stop previous tab animations
-      _animationControllers[_selectedIndex].reverse();
-      _pulseControllers[_selectedIndex].stop();
-      
-      setState(() => _selectedIndex = index);
-      
-      // Start new tab animations
-      _animationControllers[index].forward();
-      _pulseControllers[index].repeat(reverse: true);
+      // Animate to the selected page smoothly
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOutCubic,
+      );
     } else {
       // Add haptic feedback for same tab bounce
       PerformanceUtils.enableHapticFeedback();
@@ -239,39 +280,84 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
+  void _onPageChanged(int index) {
+    if (index != _selectedIndex) {
+      _updateSelectedIndex(index);
+    }
+  }
+
+  void _updateSelectedIndex(int index) {
+    // Stop previous tab animations
+    if (_selectedIndex < _animationControllers.length) {
+      _animationControllers[_selectedIndex].reverse();
+      _pulseControllers[_selectedIndex].stop();
+    }
+    
+    setState(() => _selectedIndex = index);
+    
+    // Start new tab animations
+    if (index < _animationControllers.length) {
+      _animationControllers[index].forward();
+      _pulseControllers[index].repeat(reverse: true);
+    }
+  }
+
   Widget _buildAnimatedIcon(IconData iconData, int index) {
     return AnimatedBuilder(
       animation: Listenable.merge([
+        _pageAnimation, // Listen to page changes
         _scaleAnimations[index],
         _rotationAnimations[index],
         _pulseAnimations[index],
       ]),
       builder: (context, child) {
+        // Calculate smooth animation progress based on swipe position
+        double animationProgress = 1.0;
+        double scaleMultiplier = 1.0;
+        
+        // Calculate distance from current page position
+        double distance = (_currentPageValue - index).abs();
+        
+        if (distance <= 1.0) {
+          // We're close to this tab, calculate smooth transition
+          animationProgress = 1.0 - distance;
+          scaleMultiplier = 0.85 + (0.15 * animationProgress); // Scale between 0.85 and 1.0
+        } else {
+          animationProgress = 0.0;
+          scaleMultiplier = 0.85;
+        }
+        
         final isSelected = _selectedIndex == index;
-        final scale = isSelected 
-            ? _scaleAnimations[index].value * _pulseAnimations[index].value
-            : 1.0;
+        
+        // Combine static animations with real-time swipe animations
+        final finalScale = scaleMultiplier * 
+            (isSelected ? _scaleAnimations[index].value * _pulseAnimations[index].value : 1.0);
         final rotation = isSelected ? _rotationAnimations[index].value : 0.0;
         
+        // Smooth color transition based on swipe progress
+        final color = Color.lerp(
+          Colors.grey,
+          const Color(0xFF6366F1),
+          animationProgress,
+        ) ?? Colors.grey;
+        
         return Container(
-          decoration: isSelected ? BoxDecoration(
+          decoration: animationProgress > 0.6 ? BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF6366F1).withOpacity(0.3),
-                blurRadius: 8,
-                spreadRadius: 2,
+                color: const Color(0xFF6366F1).withOpacity(0.2 * animationProgress),
+                blurRadius: 6 * animationProgress,
+                spreadRadius: 1 * animationProgress,
               ),
             ],
           ) : null,
           child: Transform.rotate(
             angle: rotation,
             child: Transform.scale(
-              scale: scale,
+              scale: finalScale,
               child: Icon(
                 iconData,
-                color: isSelected 
-                    ? const Color(0xFF6366F1) 
-                    : Colors.grey,
+                color: color,
                 size: 24,
               ),
             ),
@@ -319,28 +405,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         backgroundColor: Colors.transparent,
       ),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 400),
-        switchInCurve: Curves.easeInOut,
-        switchOutCurve: Curves.easeInOut,
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0.3, 0),
-              end: Offset.zero,
-            ).animate(animation),
-            child: FadeTransition(
-              opacity: animation,
-              child: child,
-            ),
-          );
-        },
-        child: OptimizedAnimatedWidget(
-          key: ValueKey(_selectedIndex),
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeOutCubic,
-          child: _tabs[_selectedIndex],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        physics: const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
         ),
+        children: _tabs,
       ),
       bottomNavigationBar: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

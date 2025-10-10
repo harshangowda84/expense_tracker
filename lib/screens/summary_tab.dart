@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/income_transaction.dart';
+import '../models/credit_card.dart';
 import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -138,6 +139,187 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
     return transactions.where((tx) => 
       tx.date.isAfter(startDate) && tx.date.isBefore(endDate)
     ).toList();
+  }
+
+  // Check for upcoming credit card due dates
+  List<Map<String, dynamic>> _getUpcomingDueDates(List<CreditCard> creditCards) {
+    final now = DateTime.now();
+    final currentDay = now.day;
+    final currentMonth = now.month;
+    final currentYear = now.year;
+    
+    List<Map<String, dynamic>> upcomingDues = [];
+    
+    for (var card in creditCards) {
+      if ((card.usedAmount ?? 0.0) > 0) { // Only check cards with outstanding balance
+        final dueDay = card.dueDate;
+        DateTime nextDueDate;
+        
+        // Calculate next due date
+        if (dueDay >= currentDay) {
+          // Due date is in current month
+          nextDueDate = DateTime(currentYear, currentMonth, dueDay);
+        } else {
+          // Due date is in next month
+          nextDueDate = DateTime(currentYear, currentMonth + 1, dueDay);
+        }
+        
+        final daysUntilDue = nextDueDate.difference(now).inDays;
+        
+        // Alert for due dates within next 7 days
+        if (daysUntilDue >= 0 && daysUntilDue <= 7) {
+          String urgency;
+          Color alertColor;
+          IconData alertIcon;
+          
+          if (daysUntilDue == 0) {
+            urgency = 'Due Today!';
+            alertColor = Colors.red;
+            alertIcon = Icons.warning;
+          } else if (daysUntilDue == 1) {
+            urgency = 'Due Tomorrow';
+            alertColor = Colors.orange;
+            alertIcon = Icons.notification_important;
+          } else if (daysUntilDue <= 3) {
+            urgency = 'Due in $daysUntilDue days';
+            alertColor = Colors.orange;
+            alertIcon = Icons.schedule;
+          } else {
+            urgency = 'Due in $daysUntilDue days';
+            alertColor = Colors.blue;
+            alertIcon = Icons.info;
+          }
+          
+          upcomingDues.add({
+            'card': card,
+            'daysUntilDue': daysUntilDue,
+            'urgency': urgency,
+            'alertColor': alertColor,
+            'alertIcon': alertIcon,
+            'nextDueDate': nextDueDate,
+          });
+        }
+      }
+    }
+    
+    // Sort by urgency (closest due date first)
+    upcomingDues.sort((a, b) => a['daysUntilDue'].compareTo(b['daysUntilDue']));
+    return upcomingDues;
+  }
+
+  // Build credit card due alert widget
+  Widget _buildCreditCardDueAlert(List<Map<String, dynamic>> upcomingDues) {
+    if (upcomingDues.isEmpty) return const SizedBox.shrink();
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            upcomingDues.first['alertColor'].withOpacity(0.1),
+            upcomingDues.first['alertColor'].withOpacity(0.05),
+          ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: upcomingDues.first['alertColor'].withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          // Navigate to credit cards tab
+          NavigationService().navigateToTab(4);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    upcomingDues.first['alertIcon'],
+                    color: upcomingDues.first['alertColor'],
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      upcomingDues.length == 1 
+                          ? 'Credit Card Payment Due' 
+                          : '${upcomingDues.length} Credit Card Payments Due',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: upcomingDues.first['alertColor'],
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: upcomingDues.first['alertColor'],
+                    size: 16,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...upcomingDues.take(3).map((due) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 4,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: due['alertColor'],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            due['card'].name,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            '${due['urgency']} • ₹${(due['card'].usedAmount ?? 0.0).toStringAsFixed(2)} outstanding',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )).toList(),
+              if (upcomingDues.length > 3) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'and ${upcomingDues.length - 3} more...',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   List<BarChartGroupData> _buildMonthlyBarData(List<ExpenseTransaction> transactions) {
@@ -847,6 +1029,9 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
         final accounts = data.accounts;
         final creditCards = data.creditCards;
         
+        // Get upcoming credit card due dates
+        final upcomingDues = _getUpcomingDueDates(creditCards);
+        
         // Calculate comprehensive analytics
         final totalBalance = accounts.fold(0.0, (sum, acc) => sum + acc.balance);
         final totalCreditLimit = creditCards.fold(0.0, (sum, cc) => sum + cc.limit);
@@ -963,6 +1148,9 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                     ),
                   ),
                   const SizedBox(height: 24),
+                  
+                  // Credit Card Due Alert
+                  _buildCreditCardDueAlert(upcomingDues),
                   
                   // Main summary cards
                   Row(

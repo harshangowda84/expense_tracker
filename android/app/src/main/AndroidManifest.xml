@@ -1,9 +1,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.spendly.app">
 
-    <!-- Permissions for CSV export -->
+    <!-- Permissions for internet access and updates -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Permissions for downloading and installing APKs -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <!-- For Android 11+ file access -->
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+    <!-- Permissions for CSV export -->
 
     <application
         android:label="Spendly"

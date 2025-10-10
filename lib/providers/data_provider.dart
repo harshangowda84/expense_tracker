@@ -624,4 +624,47 @@ class DataProvider extends ChangeNotifier {
       return card.availableBalance >= amount;
     }
   }
+
+  // Recalculate credit card balances based on actual transactions
+  Future<void> recalculateCreditCardBalances() async {
+    try {
+      bool hasChanges = false;
+      
+      for (int i = 0; i < _creditCards.length; i++) {
+        final card = _creditCards[i];
+        
+        // Calculate total transactions for this credit card
+        final totalUsed = _transactions
+            .where((tx) => tx.accountName == card.name && tx.sourceType == TransactionSourceType.creditCard)
+            .fold(0.0, (sum, tx) => sum + tx.amount);
+        
+        // Update if there's a discrepancy
+        if ((card.usedAmount ?? 0.0) != totalUsed) {
+          final updatedCard = CreditCard(
+            name: card.name,
+            limit: card.limit,
+            dueDate: card.dueDate,
+            addedDate: card.addedDate,
+            usedAmount: totalUsed,
+          );
+          
+          _creditCards[i] = updatedCard;
+          hasChanges = true;
+          
+          debugPrint('Synced ${card.name}: ${card.usedAmount ?? 0.0} -> $totalUsed');
+        }
+      }
+      
+      if (hasChanges) {
+        await _saveCreditCards();
+        notifyListeners();
+        debugPrint('Credit card balances successfully recalculated and synced!');
+      } else {
+        debugPrint('All credit card balances are already in sync.');
+      }
+    } catch (e) {
+      debugPrint('Error recalculating credit card balances: $e');
+      rethrow;
+    }
+  }
 }

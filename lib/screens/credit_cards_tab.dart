@@ -881,6 +881,7 @@ class CreditCardsTab extends StatelessWidget {
                                 limit: double.parse(cardLimitController.text),
                                 dueDate: selectedDay,
                                 addedDate: card.addedDate,
+                                usedAmount: card.usedAmount, // Preserve existing used amount
                               );
                               await Provider.of<DataProvider>(context, listen: false)
                                   .updateCreditCard(index, updatedCard);

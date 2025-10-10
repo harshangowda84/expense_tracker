@@ -11,6 +11,8 @@ import 'providers/data_provider.dart';
 import 'screens/credit_cards_tab.dart';
 import 'screens/income_tab.dart';
 import 'services/navigation_service.dart';
+import 'services/update_service.dart';
+import 'widgets/update_banner.dart';
 import 'utils/performance_utils.dart';
 
 void main() async {
@@ -146,6 +148,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late List<Animation<double>> _scaleAnimations;
   late List<Animation<double>> _rotationAnimations;
   late List<Animation<double>> _pulseAnimations;
+  
+  // Update functionality
+  UpdateInfo? _updateInfo;
+  bool _updateCheckCompleted = false;
 
   static const List<Widget> _tabs = [
     SummaryTab(),
@@ -243,6 +249,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     // Start animation for initially selected tab
     _animationControllers[_selectedIndex].forward();
     _pulseControllers[_selectedIndex].repeat(reverse: true);
+    
+    // Check for updates on app startup
+    _checkForUpdates();
+  }
+  
+  /// Check for app updates from GitHub
+  void _checkForUpdates() async {
+    try {
+      final updateService = UpdateService();
+      final updateInfo = await updateService.checkForUpdate();
+      
+      if (mounted && updateInfo != null) {
+        setState(() {
+          _updateInfo = updateInfo;
+          _updateCheckCompleted = true;
+        });
+      } else if (mounted) {
+        setState(() {
+          _updateCheckCompleted = true;
+        });
+      }
+    } catch (e) {
+      print('🔍 Update check failed: $e');
+      if (mounted) {
+        setState(() {
+          _updateCheckCompleted = true;
+        });
+      }
+    }
   }
 
   @override
@@ -417,13 +452,30 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
         backgroundColor: Colors.transparent,
       ),
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        physics: const BouncingScrollPhysics(
-          parent: AlwaysScrollableScrollPhysics(),
-        ),
-        children: _tabs,
+      body: Column(
+        children: [
+          // Show update banner if available
+          if (_updateInfo != null)
+            UpdateBanner(
+              updateInfo: _updateInfo!,
+              onDismiss: () {
+                setState(() {
+                  _updateInfo = null;
+                });
+              },
+            ),
+          // Main page content
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: _onPageChanged,
+              physics: const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              ),
+              children: _tabs,
+            ),
+          ),
+        ],
       ),
       bottomNavigationBar: AnimatedContainer(
         duration: const Duration(milliseconds: 200),

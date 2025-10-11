@@ -1,9 +1,13 @@
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import '../models/income_transaction.dart';
 import '../models/account.dart';
 import '../utils/income_category_utils.dart';
+
+// Track expanded transactions by their index
+final Set<int> _expandedIncomeIndices = {};
 
 enum DateFilterType {
   all,
@@ -602,225 +606,243 @@ class _IncomeTabState extends State<IncomeTab> {
                       ...dayTransactions.asMap().entries.map((entry) {
                         final txIndex = allTransactions.indexOf(entry.value);
                         final tx = entry.value;
-                        // Swipe-to-delete disabled, but code retained for future use
-                        return Dismissible(
-                          key: Key(tx.id),
-                          background: Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 24),
-                            child: const Icon(Icons.delete, color: Colors.white),
-                          ),
-                          direction: DismissDirection.none, // Disabled swipe
-                          // confirmDismiss: (_) => _confirmDelete(context, 'income'),
-                          // onDismissed: (_) {
-                          //   Provider.of<DataProvider>(context, listen: false).deleteIncomeTransaction(txIndex);
-                          //   ScaffoldMessenger.of(context).showSnackBar(
-                          //     SnackBar(
-                          //       content: const Text('Income deleted'),
-                          //       backgroundColor: Colors.red,
-                          //       behavior: SnackBarBehavior.floating,
-                          //       margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                          //       duration: const Duration(milliseconds: 1500),
-                          //     ),
-                          //   );
-                          // },
-                          child: Card(
+                        final isExpanded = _expandedIncomeIndices.contains(txIndex);
+                        return GestureDetector(
+                          onLongPress: () {
+                            setState(() {
+                              if (isExpanded) {
+                                _expandedIncomeIndices.remove(txIndex);
+                              } else {
+                                _expandedIncomeIndices.add(txIndex);
+                              }
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOutCubic,
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            child: InkWell(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
-                              onLongPress: () async {
-                                if (await _confirmDelete(context, 'income')) {
-                                  if (context.mounted) {
-                                    Provider.of<DataProvider>(context, listen: false).deleteIncomeTransaction(txIndex);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: const Text('Income deleted'),
-                                        backgroundColor: Colors.red,
-                                        behavior: SnackBarBehavior.floating,
-                                        margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                        duration: const Duration(milliseconds: 1500),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        // Category icon
-                                        Container(
-                                          padding: const EdgeInsets.all(8),
-                                          decoration: BoxDecoration(
-                                            color: IncomeCategoryUtils.getCategoryColor(tx.category).withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Icon(
-                                            IncomeCategoryUtils.getCategoryIcon(tx.category),
-                                            size: 20,
-                                            color: IncomeCategoryUtils.getCategoryColor(tx.category),
-                                          ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black12,
+                                  blurRadius: 4,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: AnimatedSize(
+                              duration: const Duration(milliseconds: 350),
+                              curve: Curves.easeInOutCubic,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Category icon
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: IncomeCategoryUtils.getCategoryColor(tx.category).withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
                                         ),
-                                        const SizedBox(width: 12),
-                                        // Account and category info
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
+                                        child: Icon(
+                                          IncomeCategoryUtils.getCategoryIcon(tx.category),
+                                          size: 20,
+                                          color: IncomeCategoryUtils.getCategoryColor(tx.category),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      // Account and category info
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.account_balance_wallet,
+                                                  size: 16,
+                                                  color: Colors.grey[600],
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    tx.accountName,
+                                                    style: const TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      fontSize: 16,
+                                                    ),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              IncomeCategoryUtils.getCategoryName(tx.category),
+                                              style: TextStyle(
+                                                color: Colors.grey[600],
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.access_time,
+                                                  size: 12,
+                                                  color: Colors.grey[500],
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Flexible(
+                                                  child: Text(
+                                                    _formatIncomeDate(tx.date),
+                                                    style: TextStyle(
+                                                      color: Colors.grey[500],
+                                                      fontSize: 12,
+                                                    ),
+                                                    softWrap: false,
+                                                    overflow: TextOverflow.visible,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            if (tx.source.isNotEmpty) ...[
+                                              const SizedBox(height: 4),
                                               Row(
                                                 children: [
                                                   Icon(
-                                                    Icons.account_balance_wallet,
-                                                    size: 16,
-                                                    color: Colors.grey[600],
+                                                    Icons.business,
+                                                    size: 12,
+                                                    color: Colors.grey[500],
                                                   ),
-                                                  const SizedBox(width: 8),
+                                                  const SizedBox(width: 4),
                                                   Expanded(
                                                     child: Text(
-                                                      tx.accountName,
-                                                      style: const TextStyle(
-                                                        fontWeight: FontWeight.bold,
-                                                        fontSize: 16,
+                                                      tx.source,
+                                                      style: TextStyle(
+                                                        color: Colors.grey[600],
+                                                        fontSize: 12,
                                                       ),
                                                       overflow: TextOverflow.ellipsis,
                                                     ),
                                                   ),
                                                 ],
                                               ),
-                                              const SizedBox(height: 4),
-                                              Text(
-                                                IncomeCategoryUtils.getCategoryName(tx.category),
-                                                style: TextStyle(
-                                                  color: Colors.grey[600],
-                                                  fontSize: 14,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Row(
-                                                children: [
-                                                  Icon(
-                                                    Icons.access_time,
-                                                    size: 12,
-                                                    color: Colors.grey[500],
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Flexible(
-                                                    child: Text(
-                                                      _formatIncomeDate(tx.date),
-                                                      style: TextStyle(
-                                                        color: Colors.grey[500],
-                                                        fontSize: 12,
-                                                      ),
-                                                      softWrap: false,
-                                                      overflow: TextOverflow.visible,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              if (tx.source.isNotEmpty) ...[
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    Icon(
-                                                      Icons.business,
-                                                      size: 12,
-                                                      color: Colors.grey[500],
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        tx.source,
-                                                        style: TextStyle(
-                                                          color: Colors.grey[600],
-                                                          fontSize: 12,
-                                                        ),
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
                                             ],
-                                          ),
-                                        ),
-                                        // Amount
-                                        Text(
-                                          '+₹${tx.amount.toStringAsFixed(2)}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18,
-                                            color: Colors.green,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    if (tx.note.isNotEmpty) ...[
-                                      const SizedBox(height: 12),
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                        decoration: BoxDecoration(
-                                          color: Colors.blue.shade50,
-                                          borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(
-                                            color: Colors.blue.shade100,
-                                            width: 1,
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Icon(
-                                              Icons.sticky_note_2_outlined,
-                                              size: 16,
-                                              color: Colors.blue.shade600,
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                tx.note,
-                                                style: TextStyle(
-                                                  fontStyle: FontStyle.normal,
-                                                  color: Colors.grey[800],
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.w500,
-                                                  height: 1.3,
-                                                ),
-                                              ),
-                                            ),
                                           ],
                                         ),
                                       ),
+                                      // Amount
+                                      Text(
+                                        '+₹${tx.amount.toStringAsFixed(2)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Colors.green,
+                                        ),
+                                      ),
                                     ],
-                                    const SizedBox(height: 8),
-                                    // Edit button at bottom
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.end,
-                                      children: [
-                                        IconButton(
-                                          icon: const Icon(Icons.edit, size: 18),
-                                          color: const Color(0xFF6366F1),
-                                          tooltip: 'Edit Income',
-                                          padding: const EdgeInsets.all(4),
-                                          constraints: const BoxConstraints(
-                                            minWidth: 32,
-                                            minHeight: 32,
+                                  ),
+                                  if (tx.note.isNotEmpty) ...[
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.shade50,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: Colors.blue.shade100,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.sticky_note_2_outlined,
+                                            size: 16,
+                                            color: Colors.blue.shade600,
                                           ),
-                                          onPressed: () => _editIncomeTransaction(context, tx, txIndex),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              tx.note,
+                                              style: TextStyle(
+                                                fontStyle: FontStyle.normal,
+                                                color: Colors.grey[800],
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                height: 1.3,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 8),
+                                  if (isExpanded) ...[
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                            child: ElevatedButton.icon(
+                                              icon: const Icon(Icons.edit, size: 18),
+                                              label: const Text('Edit'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF6366F1),
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                              onPressed: () => _editIncomeTransaction(context, tx, txIndex),
+                                            ),
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                            child: ElevatedButton.icon(
+                                              icon: const Icon(Icons.delete, size: 18),
+                                              label: const Text('Delete'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.red,
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                              onPressed: () async {
+                                                if (await _confirmDelete(context, 'income')) {
+                                                  if (context.mounted) {
+                                                    Provider.of<DataProvider>(context, listen: false).deleteIncomeTransaction(txIndex);
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: const Text('Income deleted'),
+                                                        backgroundColor: Colors.red,
+                                                        behavior: SnackBarBehavior.floating,
+                                                        margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                                        duration: const Duration(milliseconds: 1500),
+                                                      ),
+                                                    );
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),
+                                    const SizedBox(height: 8),
                                   ],
-                                ),
+                                ],
                               ),
                             ),
                           ),

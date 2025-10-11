@@ -602,6 +602,7 @@ class _IncomeTabState extends State<IncomeTab> {
                       ...dayTransactions.asMap().entries.map((entry) {
                         final txIndex = allTransactions.indexOf(entry.value);
                         final tx = entry.value;
+                        // Swipe-to-delete disabled, but code retained for future use
                         return Dismissible(
                           key: Key(tx.id),
                           background: Container(
@@ -614,20 +615,20 @@ class _IncomeTabState extends State<IncomeTab> {
                             padding: const EdgeInsets.only(right: 24),
                             child: const Icon(Icons.delete, color: Colors.white),
                           ),
-                          direction: DismissDirection.endToStart,
-                          confirmDismiss: (_) => _confirmDelete(context, 'income'),
-                          onDismissed: (_) {
-                            Provider.of<DataProvider>(context, listen: false).deleteIncomeTransaction(txIndex);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('Income deleted'),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                                margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                duration: const Duration(milliseconds: 1500),
-                              ),
-                            );
-                          },
+                          direction: DismissDirection.none, // Disabled swipe
+                          // confirmDismiss: (_) => _confirmDelete(context, 'income'),
+                          // onDismissed: (_) {
+                          //   Provider.of<DataProvider>(context, listen: false).deleteIncomeTransaction(txIndex);
+                          //   ScaffoldMessenger.of(context).showSnackBar(
+                          //     SnackBar(
+                          //       content: const Text('Income deleted'),
+                          //       backgroundColor: Colors.red,
+                          //       behavior: SnackBarBehavior.floating,
+                          //       margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                          //       duration: const Duration(milliseconds: 1500),
+                          //     ),
+                          //   );
+                          // },
                           child: Card(
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -832,28 +833,33 @@ class _IncomeTabState extends State<IncomeTab> {
             },
           ),
         ),
-        Container(
-          padding: const EdgeInsets.all(16.0),
-          child: ElevatedButton.icon(
-            icon: const Icon(Icons.add),
-            label: Text(
-              'Add Income',
-              style: TextStyle(
-                fontFamily: 'Inter', 
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+        Consumer<DataProvider>(
+          builder: (context, provider, _) {
+            final hasAccounts = provider.accounts.isNotEmpty;
+            return Container(
+              padding: const EdgeInsets.all(16.0),
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.add),
+                label: Text(
+                  'Add Income',
+                  style: TextStyle(
+                    fontFamily: 'Inter', 
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onPressed: hasAccounts ? _showAddIncomeDialog : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: hasAccounts ? const Color(0xFF6366F1) : Colors.grey[400],
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(double.infinity, 52),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 4,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
-            ),
-            onPressed: _showAddIncomeDialog,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              foregroundColor: Colors.white,
-              minimumSize: const Size(double.infinity, 52),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 4,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-            ),
-          ),
+            );
+          },
         ),
       ],
     );

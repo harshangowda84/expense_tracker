@@ -2946,6 +2946,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                       ...dayTransactions.asMap().entries.map((entry) {
                         final txIndex = allTransactions.indexOf(entry.value);
                         final tx = entry.value;
+                        // Swipe-to-delete disabled, but code retained for future use
                         return Dismissible(
                           key: Key(tx.id),
                           background: Container(
@@ -2953,25 +2954,25 @@ class _TransactionsTabState extends State<TransactionsTab> {
                             decoration: BoxDecoration(
                               color: Colors.red,
                               borderRadius: BorderRadius.circular(16),
-                      ),
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 24),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    direction: DismissDirection.endToStart,
-                    confirmDismiss: (_) => _confirmDelete(context, 'transaction'),
-                          onDismissed: (_) {
-                            Provider.of<DataProvider>(context, listen: false).deleteTransaction(txIndex);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('Transaction deleted'),
-                                backgroundColor: Colors.red,
-                                behavior: SnackBarBehavior.floating,
-                                margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                duration: const Duration(milliseconds: 1500),
-                              ),
-                            );
-                          },
+                            ),
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 24),
+                            child: const Icon(Icons.delete, color: Colors.white),
+                          ),
+                          direction: DismissDirection.none, // Disabled swipe
+                          // confirmDismiss: (_) => _confirmDelete(context, 'transaction'),
+                          // onDismissed: (_) {
+                          //   Provider.of<DataProvider>(context, listen: false).deleteTransaction(txIndex);
+                          //   ScaffoldMessenger.of(context).showSnackBar(
+                          //     SnackBar(
+                          //       content: const Text('Transaction deleted'),
+                          //       backgroundColor: Colors.red,
+                          //       behavior: SnackBarBehavior.floating,
+                          //       margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                          //       duration: const Duration(milliseconds: 1500),
+                          //     ),
+                          //   );
+                          // },
                           child: Card(
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

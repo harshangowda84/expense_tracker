@@ -1194,6 +1194,7 @@ class CreditCardsTab extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 8),
                   itemBuilder: (context, index) {
                     final card = creditCards[index];
+                    // Swipe-to-delete disabled, but code retained for future use
                     return Dismissible(
                       key: Key(card.name),
                       background: Container(
@@ -1206,91 +1207,27 @@ class CreditCardsTab extends StatelessWidget {
                         padding: const EdgeInsets.only(right: 24),
                         child: const Icon(Icons.delete, color: Colors.white),
                       ),
-                      direction: DismissDirection.endToStart,
-                      confirmDismiss: (_) async {
-                        return await showDialog(
-                          context: context,
-                          builder: (BuildContext context) => Dialog(
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Colors.deepPurple, Colors.purpleAccent],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    'Delete Credit Card',
-                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'Are you sure you want to delete ${card.name}?',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
-                                        style: TextButton.styleFrom(
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                        ),
-                                        child: const Text(
-                                          'Cancel',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      ElevatedButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                          elevation: 2,
-                                        ),
-                                        child: const Text(
-                                          'Delete',
-                                          style: TextStyle(fontSize: 16),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                      onDismissed: (_) {
-                        Provider.of<DataProvider>(context, listen: false).deleteCreditCard(index);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${card.name} deleted'),
-                            backgroundColor: Colors.red,
-                            behavior: SnackBarBehavior.floating,
-                            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                            duration: const Duration(seconds: 5),
-                          ),
-                        );
-                      },
+                      direction: DismissDirection.none, // Disabled swipe
+                      // confirmDismiss: (_) async {
+                      //   return await showDialog(
+                      //     context: context,
+                      //     builder: (BuildContext context) => Dialog(
+                      //       ...existing code...
+                      //     ),
+                      //   );
+                      // },
+                      // onDismissed: (_) {
+                      //   Provider.of<DataProvider>(context, listen: false).deleteCreditCard(index);
+                      //   ScaffoldMessenger.of(context).showSnackBar(
+                      //     SnackBar(
+                      //       content: Text('${card.name} deleted'),
+                      //       backgroundColor: Colors.red,
+                      //       behavior: SnackBarBehavior.floating,
+                      //       margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                      //       duration: const Duration(seconds: 5),
+                      //     ),
+                      //   );
+                      // },
                       child: Card(
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

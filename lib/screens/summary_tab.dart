@@ -1156,26 +1156,36 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                   Row(
                     children: [
                       Expanded(
-                        child: _buildModernSummaryCard(
-                          'Total Income',
-                          formatIndianAmount(totalIncome),
-                          selectedPeriod.toLowerCase(),
-                          Icons.trending_up,
-                          const Color(0xFF10B981),
-                          const Color(0xFF065F46),
+                        child: GestureDetector(
+                          onTap: () {
+                            _navigateToTab(context, 2); // Income tab
+                          },
+                          child: _buildModernSummaryCard(
+                            'Total Income',
+                            formatIndianAmount(totalIncome),
+                            selectedPeriod.toLowerCase(),
+                            Icons.trending_up,
+                            const Color(0xFF10B981),
+                            const Color(0xFF065F46),
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
-                        child: _buildModernSummaryCard(
-                          'Total Spent',
-                          formatIndianAmount(totalSpent),
-                          selectedPeriod.toLowerCase(),
-                          Icons.trending_down,
-                          const Color(0xFFEF4444),
-                          const Color(0xFF991B1B),
-                          showTrend: true,
-                          trendValue: spendingTrend,
+                        child: GestureDetector(
+                          onTap: () {
+                            _navigateToTab(context, 1); // Transactions tab
+                          },
+                          child: _buildModernSummaryCard(
+                            'Total Spent',
+                            formatIndianAmount(totalSpent),
+                            selectedPeriod.toLowerCase(),
+                            Icons.trending_down,
+                            const Color(0xFFEF4444),
+                            const Color(0xFF991B1B),
+                            showTrend: true,
+                            trendValue: spendingTrend,
+                          ),
                         ),
                       ),
                     ],
@@ -1183,24 +1193,34 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                   const SizedBox(height: 16),
                   
                   // Balance card - full width
-                  _buildModernSummaryCard(
-                    'Total Balance',
-                    formatIndianAmount(totalBalance),
-                    'Available in accounts',
-                    Icons.account_balance_wallet,
-                    const Color(0xFF3B82F6),
-                    const Color(0xFF1E40AF),
+                  GestureDetector(
+                    onTap: () {
+                      _navigateToTab(context, 3); // Accounts tab
+                    },
+                    child: _buildModernSummaryCard(
+                      'Total Balance',
+                      formatIndianAmount(totalBalance),
+                      'Available in accounts',
+                      Icons.account_balance_wallet,
+                      const Color(0xFF3B82F6),
+                      const Color(0xFF1E40AF),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   
                   // Credit summary card
-                  _buildModernSummaryCard(
-                    'Credit Utilization',
-                    totalCreditLimit > 0 ? '${((totalCreditUsed / totalCreditLimit) * 100).toStringAsFixed(1)}%' : '0%',
-                    '${formatIndianAmount(totalCreditUsed)} of ${formatIndianAmount(totalCreditLimit)} used',
-                    Icons.credit_card,
-                    const Color(0xFF8B5CF6),
-                    const Color(0xFF5B21B6),
+                  GestureDetector(
+                    onTap: () {
+                      _navigateToTab(context, 4); // Credit Card tab
+                    },
+                    child: _buildModernSummaryCard(
+                      'Credit Utilization',
+                      totalCreditLimit > 0 ? '${((totalCreditUsed / totalCreditLimit) * 100).toStringAsFixed(1)}%' : '0%',
+                      '${formatIndianAmount(totalCreditUsed)} of ${formatIndianAmount(totalCreditLimit)} used',
+                      Icons.credit_card,
+                      const Color(0xFF8B5CF6),
+                      const Color(0xFF5B21B6),
+                    ),
                   ),
                   const SizedBox(height: 24),
                   

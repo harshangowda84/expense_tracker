@@ -3264,23 +3264,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                     ],
                                     // Edit button at the bottom
                                     const SizedBox(height: 8),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: IconButton(
-                                        icon: const Icon(Icons.edit, size: 18),
-                                        color: const Color(0xFF6366F1),
-                                        tooltip: 'Edit Transaction',
-                                        padding: const EdgeInsets.all(8),
-                                        constraints: const BoxConstraints(
-                                          minWidth: 36,
-                                          minHeight: 36,
-                                        ),
-                                        onPressed: () {
-                                          final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
-                                          _showEditTransactionDialog(context, accounts, tx, txIndex);
-                                        },
-                                      ),
-                                    ),
+                                    // Edit icon removed, but edit logic (_showEditTransactionDialog) is preserved for future use
                                   ],
                                 ),
                               ),

@@ -489,54 +489,6 @@ class CreditCardsTab extends StatelessWidget {
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
             duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'UNDO',
-              textColor: Colors.white,
-              onPressed: () {
-                // Restore the original state
-                final restoredCard = CreditCard(
-                  name: card.name,
-                  limit: card.limit,
-                  dueDate: card.dueDate,
-                  addedDate: card.addedDate,
-                  usedAmount: originalUsedAmount,
-                );
-                dataProvider.updateCreditCard(cardIndex, restoredCard);
-                
-                // If paid by bank account, restore bank balance and remove the payment transaction
-                if (paymentMethod == PaymentMethod.bankAccount && selectedAccount != null) {
-                  final accountIndex = dataProvider.accounts.indexWhere((acc) => acc.name == selectedAccount.name);
-                  if (accountIndex != -1) {
-                    final originalAccount = dataProvider.accounts[accountIndex];
-                    final restoredAccount = Account(
-                      name: originalAccount.name,
-                      balance: originalAccount.balance + paymentAmount,
-                      balanceDate: originalAccount.balanceDate,
-                    );
-                    dataProvider.updateAccount(accountIndex, restoredAccount);
-                    
-                    // Remove the payment transaction that was created
-                    final transactionToRemove = dataProvider.transactions.where((t) =>
-                      t.accountName == selectedAccount.name &&
-                      t.amount == paymentAmount &&
-                      t.category == ExpenseCategory.bills &&
-                      t.note == 'Credit card payment: ${card.name}' &&
-                      t.sourceType == TransactionSourceType.bankAccount
-                    ).toList();
-                    
-                    // Remove the most recent matching transaction (last one added)
-                    if (transactionToRemove.isNotEmpty) {
-                      // Sort by date descending and take the first (most recent)
-                      transactionToRemove.sort((a, b) => b.date.compareTo(a.date));
-                      final transactionIndex = dataProvider.transactions.indexOf(transactionToRemove.first);
-                      if (transactionIndex != -1) {
-                        dataProvider.deleteTransaction(transactionIndex);
-                      }
-                    }
-                  }
-                }
-              },
-            ),
           ),
         );
       }
@@ -638,14 +590,6 @@ class CreditCardsTab extends StatelessWidget {
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
             duration: const Duration(seconds: 5),
-            action: SnackBarAction(
-              label: 'UNDO',
-              textColor: Colors.white,
-              onPressed: () {
-                // Re-insert the credit card at the same position
-                Provider.of<DataProvider>(context, listen: false).insertCreditCardAt(deletedIndex, deletedCard);
-              },
-            ),
           ),
         );
       }
@@ -875,7 +819,7 @@ class CreditCardsTab extends StatelessWidget {
                           label: const Text('Save'),
                           onPressed: () async {
                             if (cardNameController.text.isNotEmpty && cardLimitController.text.isNotEmpty) {
-                              final originalCard = card; // Store original card for undo
+                              final originalCard = card.copyWith(); // Deep copy for undo
                               final updatedCard = CreditCard(
                                 name: cardNameController.text,
                                 limit: double.parse(cardLimitController.text),
@@ -887,7 +831,8 @@ class CreditCardsTab extends StatelessWidget {
                                   .updateCreditCard(index, updatedCard);
                               if (context.mounted) {
                                 Navigator.of(context).pop();
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                final rootContext = Navigator.of(context).context;
+                                ScaffoldMessenger.of(rootContext).showSnackBar(
                                   SnackBar(
                                     content: const Text('Credit card updated successfully!'),
                                     backgroundColor: Colors.deepPurple,
@@ -898,8 +843,7 @@ class CreditCardsTab extends StatelessWidget {
                                       label: 'UNDO',
                                       textColor: Colors.white,
                                       onPressed: () {
-                                        // Restore the original card
-                                        Provider.of<DataProvider>(context, listen: false)
+                                        Provider.of<DataProvider>(rootContext, listen: false)
                                             .updateCreditCard(index, originalCard);
                                       },
                                     ),
@@ -1336,8 +1280,6 @@ class CreditCardsTab extends StatelessWidget {
                         );
                       },
                       onDismissed: (_) {
-                        final deletedCard = card;
-                        final deletedIndex = index;
                         Provider.of<DataProvider>(context, listen: false).deleteCreditCard(index);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -1346,13 +1288,6 @@ class CreditCardsTab extends StatelessWidget {
                             behavior: SnackBarBehavior.floating,
                             margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
                             duration: const Duration(seconds: 5),
-                            action: SnackBarAction(
-                              label: 'UNDO',
-                              textColor: Colors.white,
-                              onPressed: () {
-                                Provider.of<DataProvider>(context, listen: false).insertCreditCardAt(deletedIndex, deletedCard);
-                              },
-                            ),
                           ),
                         );
                       },

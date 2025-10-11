@@ -508,10 +508,7 @@ class AccountsTab extends StatelessWidget {
                       direction: DismissDirection.endToStart,
                       confirmDismiss: (_) => _confirmDelete(context, account.name),
                       onDismissed: (_) {
-                        final deletedAccount = account;
-                        final deletedIndex = index;
                         Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
-                        
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('${account.name} deleted'),
@@ -519,13 +516,6 @@ class AccountsTab extends StatelessWidget {
                             behavior: SnackBarBehavior.floating,
                             margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
                             duration: const Duration(seconds: 5),
-                            action: SnackBarAction(
-                              label: 'UNDO',
-                              textColor: Colors.white,
-                              onPressed: () {
-                                Provider.of<DataProvider>(context, listen: false).insertAccountAt(deletedIndex, deletedAccount);
-                              },
-                            ),
                           ),
                         );
                       },
@@ -767,10 +757,7 @@ class AccountsTab extends StatelessWidget {
                                               onPressed: () async {
                                                 if (await _confirmDelete(context, account.name)) {
                                                   if (context.mounted) {
-                                                    final deletedAccount = account;
-                                                    final deletedIndex = index;
                                                     Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
-                                                    
                                                     ScaffoldMessenger.of(context).showSnackBar(
                                                       SnackBar(
                                                         content: Text('${account.name} deleted'),
@@ -778,13 +765,6 @@ class AccountsTab extends StatelessWidget {
                                                         behavior: SnackBarBehavior.floating,
                                                         margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
                                                         duration: const Duration(seconds: 5),
-                                                        action: SnackBarAction(
-                                                          label: 'UNDO',
-                                                          textColor: Colors.white,
-                                                          onPressed: () {
-                                                            Provider.of<DataProvider>(context, listen: false).insertAccountAt(deletedIndex, deletedAccount);
-                                                          },
-                                                        ),
                                                       ),
                                                     );
                                                   }
@@ -861,10 +841,7 @@ class AccountsTab extends StatelessWidget {
                                                 onPressed: () async {
                                                   if (await _confirmDelete(context, account.name)) {
                                                     if (context.mounted) {
-                                                      final deletedAccount = account;
-                                                      final deletedIndex = index;
                                                       Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
-                                                      
                                                       ScaffoldMessenger.of(context).showSnackBar(
                                                         SnackBar(
                                                           content: Text('${account.name} deleted'),
@@ -872,13 +849,6 @@ class AccountsTab extends StatelessWidget {
                                                           behavior: SnackBarBehavior.floating,
                                                           margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
                                                           duration: const Duration(seconds: 5),
-                                                          action: SnackBarAction(
-                                                            label: 'UNDO',
-                                                            textColor: Colors.white,
-                                                            onPressed: () {
-                                                              Provider.of<DataProvider>(context, listen: false).insertAccountAt(deletedIndex, deletedAccount);
-                                                            },
-                                                          ),
                                                         ),
                                                       );
                                                     }

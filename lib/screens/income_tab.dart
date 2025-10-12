@@ -608,7 +608,7 @@ class _IncomeTabState extends State<IncomeTab> {
                         final tx = entry.value;
                         final isExpanded = _expandedIncomeIndices.contains(txIndex);
                         return GestureDetector(
-                          onLongPress: () {
+                          onTap: () {
                             setState(() {
                               if (isExpanded) {
                                 _expandedIncomeIndices.remove(txIndex);

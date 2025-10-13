@@ -3023,53 +3023,53 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
-                                                Expanded(
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                    child: ElevatedButton.icon(
-                                                      icon: const Icon(Icons.edit, size: 18),
-                                                      label: const Text('Edit'),
-                                                      style: ElevatedButton.styleFrom(
-                                                        backgroundColor: const Color(0xFF6366F1),
-                                                        foregroundColor: Colors.white,
-                                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                      child: ElevatedButton.icon(
+                                                        icon: const Icon(Icons.edit, size: 18),
+                                                        label: const Text('Edit'),
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor: const Color(0xFF6366F1),
+                                                          foregroundColor: Colors.white,
+                                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                        ),
+                                                        onPressed: () => _showEditTransactionDialog(context, Provider.of<DataProvider>(context, listen: false).accounts, tx, txIndex),
                                                       ),
-                                                      onPressed: () => _showEditTransactionDialog(context, Provider.of<DataProvider>(context, listen: false).accounts, tx, txIndex),
                                                     ),
                                                   ),
-                                                ),
-                                                Expanded(
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                    child: ElevatedButton.icon(
-                                                      icon: const Icon(Icons.delete, size: 18),
-                                                      label: const Text('Delete'),
-                                                      style: ElevatedButton.styleFrom(
-                                                        backgroundColor: Colors.red,
-                                                        foregroundColor: Colors.white,
-                                                        padding: const EdgeInsets.symmetric(vertical: 14),
-                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                                      ),
-                                                      onPressed: () async {
-                                                        if (await _confirmDelete(context, 'transaction')) {
-                                                          if (context.mounted) {
-                                                            Provider.of<DataProvider>(context, listen: false).deleteTransaction(txIndex);
-                                                            ScaffoldMessenger.of(context).showSnackBar(
-                                                              SnackBar(
-                                                                content: const Text('Transaction deleted'),
-                                                                backgroundColor: Colors.red,
-                                                                behavior: SnackBarBehavior.floating,
-                                                                margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                                duration: const Duration(milliseconds: 1500),
-                                                              ),
-                                                            );
+                                                  Expanded(
+                                                    child: Padding(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                                      child: ElevatedButton.icon(
+                                                        icon: const Icon(Icons.delete, size: 18),
+                                                        label: const Text('Delete'),
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor: Colors.red,
+                                                          foregroundColor: Colors.white,
+                                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                        ),
+                                                        onPressed: () async {
+                                                          if (await _confirmDelete(context, 'transaction')) {
+                                                            if (context.mounted) {
+                                                              Provider.of<DataProvider>(context, listen: false).deleteTransaction(txIndex);
+                                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                                SnackBar(
+                                                                  content: const Text('Transaction deleted'),
+                                                                  backgroundColor: Colors.red,
+                                                                  behavior: SnackBarBehavior.floating,
+                                                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                                                  duration: const Duration(milliseconds: 1500),
+                                                                ),
+                                                              );
+                                                            }
                                                           }
-                                                        }
-                                                      },
+                                                        },
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
                                               ],
                                             ),
                                             const SizedBox(height: 8),
@@ -3089,13 +3089,8 @@ class _TransactionsTabState extends State<TransactionsTab> {
                   // Overlay: only show if any transaction is expanded
                   if (_expandedTransactionIndices.isNotEmpty)
                     Positioned.fill(
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onTap: () {
-                          setState(() {
-                            _expandedTransactionIndices.clear();
-                          });
-                        },
+                      child: IgnorePointer(
+                        ignoring: true,
                         child: Container(color: Colors.transparent),
                       ),
                     ),

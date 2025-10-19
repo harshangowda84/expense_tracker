@@ -1035,14 +1035,16 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
         // Calculate comprehensive analytics
         final totalBalance = accounts.fold(0.0, (sum, acc) => sum + acc.balance);
         final totalCreditLimit = creditCards.fold(0.0, (sum, cc) => sum + cc.limit);
-        final totalCreditUsed = creditCards.fold(0.0, (sum, cc) => sum + (cc.usedAmount ?? 0.0));
-        final totalSpent = filteredTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
+  final totalCreditUsed = creditCards.fold(0.0, (sum, cc) => sum + (cc.usedAmount ?? 0.0));
+  // Exclude credit-card payment transactions (they are transfers, not spending)
+  final spendingTransactions = filteredTransactions.where((tx) => !(tx.isCreditCardPayment ?? false)).toList();
+  final totalSpent = spendingTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
         final totalIncome = filteredIncomeTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
   final totalTransactions = filteredTransactions.length;
         
         // Calculate category breakdown
         final Map<ExpenseCategory, double> categoryTotals = {};
-        for (var tx in filteredTransactions) {
+        for (var tx in spendingTransactions) {
           categoryTotals[tx.category] = (categoryTotals[tx.category] ?? 0) + tx.amount;
         }
         
@@ -1050,18 +1052,12 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
           ..sort((a, b) => b.value.compareTo(a.value));
         
         // Calculate trend (simplified - comparing with previous period)
-        final previousPeriodTransactions = _getPreviousPeriodTransactions(allTransactions);
-        final previousSpent = previousPeriodTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
+  final previousPeriodTransactions = _getPreviousPeriodTransactions(allTransactions).where((tx) => !(tx.isCreditCardPayment ?? false)).toList();
+  final previousSpent = previousPeriodTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
         final spendingTrend = previousSpent > 0 ? ((totalSpent - previousSpent) / previousSpent * 100) : 0.0;
         
         return Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFF8FAFC), Color(0xFFE2E8F0)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
+          color: Colors.white,
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: FadeTransition(

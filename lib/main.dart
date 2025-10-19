@@ -339,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
 
-  Widget _buildAnimatedIcon(IconData iconData, int index) {
+  Widget _buildAnimatedIcon(IconData activeIcon, IconData inactiveIcon, int index) {
     return AnimatedBuilder(
       animation: Listenable.merge([
         _pageAnimation, // Listen to page changes
@@ -378,29 +378,98 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           animationProgress,
         ) ?? Colors.grey;
         
-        return Container(
-          decoration: animationProgress > 0.6 ? BoxDecoration(
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF6366F1).withOpacity(0.2 * animationProgress),
-                blurRadius: 6 * animationProgress,
-                spreadRadius: 1 * animationProgress,
+        // Modern pill-style icon: gradient/pill when selected, subtle outlined tile when unselected
+        final double tileSize = isSelected ? 48.0 : 40.0;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              width: tileSize,
+              height: tileSize,
+              decoration: BoxDecoration(
+                // Circular token. Unselected tokens are transparent with a subtle border.
+                color: isSelected ? null : Colors.transparent,
+                gradient: isSelected
+                    ? const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                      )
+                    : null,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? Colors.transparent : Theme.of(context).dividerColor.withOpacity(0.12),
+                  width: 1.0,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF6366F1).withOpacity(0.16),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ]
+                    : null,
               ),
-            ],
-          ) : null,
-          child: Transform.rotate(
-            angle: rotation,
-            child: Transform.scale(
-              scale: finalScale,
-              child: Icon(
-                iconData,
-                color: color,
-                size: 24,
+              alignment: Alignment.center,
+                  child: Transform.rotate(
+                angle: rotation,
+                child: Transform.scale(
+                  scale: finalScale,
+                  child: Icon(
+                    isSelected ? activeIcon : inactiveIcon,
+                    // When nav is light, unselected icons should be dark; selected
+                    // icons remain white (they sit on a colored token).
+                    color: isSelected
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                    size: isSelected ? 26 : 22,
+                  ),
+                ),
               ),
             ),
-          ),
+          ],
         );
       },
+    );
+  }
+
+  // Wrap the animated token with a label beneath. Tokens are evenly spaced.
+  Widget _buildTokenWithLabel(IconData activeIcon, IconData inactiveIcon, int index, String label) {
+    final isSelected = _selectedIndex == index;
+
+    return Expanded(
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onTabTapped(index),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Use existing animated token
+            _buildAnimatedIcon(activeIcon, inactiveIcon, index),
+            const SizedBox(height: 4),
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 220),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                // When nav is light, selected label uses primary indigo for contrast
+                color: isSelected
+                    ? const Color(0xFF6366F1)
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.85),
+              ),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -455,62 +524,67 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 });
               },
             ),
-          // Main page content
+          // Main page content. Wrap PageView with a unified background so all
+          // tabs share the same subtle gradient. This prevents stark white
+          // backgrounds on some screens (Transactions/Income) while others use
+          // cards/gradients, producing a consistent app look.
           Expanded(
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: _onPageChanged,
-              physics: const BouncingScrollPhysics(
-                parent: AlwaysScrollableScrollPhysics(),
+            child: Container(
+              // Use a plain white background for all pages so every tab has
+              // a consistent white canvas.
+              color: Colors.white,
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: _onPageChanged,
+                physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics(),
+                ),
+                children: _tabs,
               ),
-              children: _tabs,
             ),
           ),
         ],
       ),
       bottomNavigationBar: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        child: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onTabTapped,
-          items: [
-            BottomNavigationBarItem(
-              icon: _buildAnimatedIcon(Icons.bar_chart, 0), 
-              label: 'Summary'
-            ),
-            BottomNavigationBarItem(
-              icon: _buildAnimatedIcon(Icons.list_alt, 1), 
-              label: 'Transactions'
-            ),
-            BottomNavigationBarItem(
-              icon: _buildAnimatedIcon(Icons.trending_up, 2), 
-              label: 'Income'
-            ),
-            BottomNavigationBarItem(
-              icon: _buildAnimatedIcon(Icons.account_balance_wallet, 3), 
-              label: 'Accounts'
-            ),
-            BottomNavigationBarItem(
-              icon: _buildAnimatedIcon(Icons.credit_card, 4), 
-              label: 'Credit Card'
+  // Remove horizontal inset so the rounded nav touches the screen edges
+  margin: EdgeInsets.zero,
+        // Reduce inner padding while keeping rounded container look
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        decoration: BoxDecoration(
+          // Light themed nav: white rounded bar with subtle border and shadow
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: Theme.of(context).dividerColor.withOpacity(0.08),
+            width: 1.0,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 6),
             ),
           ],
-          selectedItemColor: const Color(0xFF6366F1), // Modern indigo
-          unselectedItemColor: Colors.grey,
-          showUnselectedLabels: true,
-          type: BottomNavigationBarType.fixed,
-          selectedLabelStyle: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
-          unselectedLabelStyle: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 12,
-            fontWeight: FontWeight.w400,
+        ),
+        child: SafeArea(
+          top: false,
+          left: false,
+          right: false,
+          bottom: true, // ensure nav sits above system navigation bar
+            child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildTokenWithLabel(Icons.bar_chart_rounded, Icons.bar_chart, 0, 'Summary'),
+              _buildTokenWithLabel(Icons.receipt_long_rounded, Icons.receipt_long, 1, 'Spends'),
+              _buildTokenWithLabel(Icons.trending_up_rounded, Icons.trending_up, 2, 'Income'),
+              _buildTokenWithLabel(Icons.account_balance_wallet_rounded, Icons.account_balance_wallet, 3, 'Accounts'),
+              _buildTokenWithLabel(Icons.credit_card_rounded, Icons.credit_card, 4, 'Credit Card'),
+            ],
           ),
         ),
-        ),
+      ),
       ),
     );
   }

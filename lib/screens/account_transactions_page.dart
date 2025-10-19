@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../models/income_transaction.dart';
@@ -69,29 +70,14 @@ class AccountTransactionsPage extends StatelessWidget {
   }
 
   String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(const Duration(days: 1));
-    final txDate = DateTime(date.year, date.month, date.day);
-    
-    // 12-hour format
+    // Always return date and time only (dd/MM/yy, hh:mm AM/PM)
     int hour = date.hour;
     String period = hour >= 12 ? 'PM' : 'AM';
     if (hour == 0) hour = 12;
     if (hour > 12) hour -= 12;
-    
-    final weekday = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    String dayStr = weekday[date.weekday - 1];
     String dateStr = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${(date.year % 100).toString().padLeft(2, '0')}';
     String timeStr = '${hour}:${date.minute.toString().padLeft(2, '0')} $period';
-    
-    if (txDate == today) {
-      return 'Today, $dateStr, $timeStr';
-    } else if (txDate == yesterday) {
-      return 'Yesterday, $dateStr, $timeStr';
-    } else {
-      return '$dayStr, $dateStr, $timeStr';
-    }
+    return '$dateStr, $timeStr';
   }
 
   @override
@@ -334,6 +320,8 @@ class AccountTransactionsPage extends StatelessWidget {
                       
                       if (isIncome) {
                         final tx = item['transaction'] as IncomeTransaction;
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final trailingWidth = math.min(math.max((screenWidth - 32) * 0.24, 80.0), 140.0);
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -346,36 +334,18 @@ class AccountTransactionsPage extends StatelessWidget {
                                 size: 20,
                               ),
                             ),
-                            title: Row(
-                              children: [
-                                Text(
-                                  IncomeCategoryUtils.getCategoryName(tx.category),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'INCOME',
-                                    style: TextStyle(
-                                      color: Colors.green[700],
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            title: Text(
+                              IncomeCategoryUtils.getCategoryName(tx.category),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                if (tx.source.isNotEmpty) 
+                                if (tx.source.isNotEmpty)
                                   Text(
                                     tx.source,
                                     style: TextStyle(
@@ -384,7 +354,7 @@ class AccountTransactionsPage extends StatelessWidget {
                                     ),
                                   ),
                                 if (tx.note.isNotEmpty) ...[
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
@@ -402,33 +372,71 @@ class AccountTransactionsPage extends StatelessWidget {
                                         fontSize: 12,
                                         fontStyle: FontStyle.italic,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
                                 ],
-                                const SizedBox(height: 4),
-                                Text(
-                                  _formatDate(tx.date),
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                  softWrap: false,
-                                  overflow: TextOverflow.visible,
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _formatDate(tx.date),
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            trailing: Text(
-                              '+${formatIndianAmount(tx.amount)}',
-                              style: TextStyle(
-                                color: Colors.green[600],
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            trailing: SizedBox(
+                              width: trailingWidth,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      'INCOME',
+                                      style: TextStyle(
+                                        color: Colors.green[700],
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '+${formatIndianAmount(tx.amount)}',
+                                    style: TextStyle(
+                                      color: Colors.green[600],
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ],
                               ),
                             ),
                           ),
                         );
                       } else {
                         final tx = item['transaction'] as ExpenseTransaction;
+                        final screenWidth = MediaQuery.of(context).size.width;
+                        final trailingWidth = math.min(math.max((screenWidth - 32) * 0.24, 80.0), 140.0);
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -441,31 +449,13 @@ class AccountTransactionsPage extends StatelessWidget {
                                 size: 20,
                               ),
                             ),
-                            title: Row(
-                              children: [
-                                Text(
-                                  tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.red.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: Text(
-                                    'EXPENSE',
-                                    style: TextStyle(
-                                      color: Colors.red[700],
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            title: Text(
+                              tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             subtitle: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -488,27 +478,64 @@ class AccountTransactionsPage extends StatelessWidget {
                                         fontSize: 12,
                                         fontStyle: FontStyle.italic,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
                                 ],
-                                Text(
-                                  _formatDate(tx.date),
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 12,
-                                  ),
-                                  softWrap: false,
-                                  overflow: TextOverflow.visible,
+                                const SizedBox(height: 6),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        _formatDate(tx.date),
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                            trailing: Text(
-                              '-${formatIndianAmount(tx.amount)}',
-                              style: TextStyle(
-                                color: Colors.red[600],
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                            trailing: SizedBox(
+                              width: trailingWidth,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      'EXPENSE',
+                                      style: TextStyle(
+                                        color: Colors.red[700],
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    '-${formatIndianAmount(tx.amount)}',
+                                    style: TextStyle(
+                                      color: Colors.red[600],
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.right,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 1,
+                                  ),
+                                ],
                               ),
                             ),
                           ),

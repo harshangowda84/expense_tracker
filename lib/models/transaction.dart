@@ -25,6 +25,7 @@ class ExpenseTransaction {
   double receivableAmount;
   bool isReceivablePaid;
   double receivableAmountPaid;
+  bool isCreditCardPayment;
 
   ExpenseTransaction({
     required this.id,
@@ -38,6 +39,7 @@ class ExpenseTransaction {
     this.receivableAmount = 0.0,
     this.isReceivablePaid = false,
     this.receivableAmountPaid = 0.0,
+    this.isCreditCardPayment = false,
   });
 
   Map<String, dynamic> toMap() => {
@@ -52,6 +54,7 @@ class ExpenseTransaction {
         'receivableAmount': receivableAmount.toString(),
         'isReceivablePaid': isReceivablePaid.toString(),
         'receivableAmountPaid': receivableAmountPaid.toString(),
+            'isCreditCardPayment': isCreditCardPayment.toString(),
       };
 
   factory ExpenseTransaction.fromMap(Map<String, dynamic> map) {
@@ -69,6 +72,7 @@ class ExpenseTransaction {
       receivableAmount: double.tryParse(map['receivableAmount'] ?? '0') ?? 0.0,
       isReceivablePaid: map['isReceivablePaid'] == 'true',
       receivableAmountPaid: double.tryParse(map['receivableAmountPaid'] ?? '0') ?? 0.0,
+      isCreditCardPayment: map['isCreditCardPayment'] == 'true',
     );
   }
 
@@ -84,6 +88,7 @@ class ExpenseTransaction {
     double? receivableAmount,
     bool? isReceivablePaid,
     double? receivableAmountPaid,
+    bool? isCreditCardPayment,
   }) {
     return ExpenseTransaction(
       id: id ?? this.id,
@@ -97,6 +102,7 @@ class ExpenseTransaction {
       receivableAmount: receivableAmount ?? this.receivableAmount,
       isReceivablePaid: isReceivablePaid ?? this.isReceivablePaid,
       receivableAmountPaid: receivableAmountPaid ?? this.receivableAmountPaid,
+      isCreditCardPayment: isCreditCardPayment ?? this.isCreditCardPayment,
     );
   }
 }

@@ -304,9 +304,13 @@ class DataProvider extends ChangeNotifier {
         _accounts.removeAt(index);
         await _saveAccounts();
 
-        // Remove associated transactions
-        _transactions.removeWhere((tx) => tx.accountName == accountName);
-        await _saveTransactions();
+  // Remove associated expense transactions
+  _transactions.removeWhere((tx) => tx.accountName == accountName);
+  await _saveTransactions();
+
+  // Also remove associated income transactions tied to this account
+  _incomeTransactions.removeWhere((tx) => tx.accountName == accountName);
+  await _saveIncomeTransactions();
 
         notifyListeners();
       }
@@ -472,8 +476,15 @@ class DataProvider extends ChangeNotifier {
   Future<void> deleteCreditCard(int index) async {
     try {
       if (index >= 0 && index < _creditCards.length) {
+        // capture the card name first so we can remove related transactions
+        final cardName = _creditCards[index].name;
         _creditCards.removeAt(index);
         await _saveCreditCards();
+
+        // Remove any transactions that were recorded against this credit card
+        _transactions.removeWhere((tx) => tx.accountName == cardName && tx.sourceType == TransactionSourceType.creditCard);
+        await _saveTransactions();
+
         notifyListeners();
       }
     } catch (e) {
@@ -582,6 +593,7 @@ class DataProvider extends ChangeNotifier {
           category: ExpenseCategory.bills, // Credit card payment is typically a bill
           note: 'Credit card payment: ${card.name}',
           sourceType: TransactionSourceType.bankAccount,
+          isCreditCardPayment: true,
         );
         
         // Add the transaction

@@ -5,7 +5,6 @@ import 'package:flutter/scheduler.dart';
 class HighRefreshRateService {
   static const platform = MethodChannel('com.spendly.app/refresh_rate');
   static bool _isEnabled = false;
-  static TickerProvider? _vsync;
   static Map<String, dynamic>? _displayInfo;
 
   /// Initialize high refresh rate service

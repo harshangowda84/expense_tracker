@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import '../models/credit_card.dart';
 import '../models/account.dart';
-import '../models/transaction.dart';
 import 'account_transactions_page.dart';
 
 enum PaymentMethod { other, bankAccount }
@@ -395,9 +394,8 @@ class CreditCardsTab extends StatelessWidget {
     String customAmountText,
     Account? selectedAccount,
   ) async {
-    try {
-      double paymentAmount;
-      final originalUsedAmount = card.usedAmount ?? 0.0;
+  try {
+  double paymentAmount;
       
       if (isPayingFull) {
         paymentAmount = card.usedBalance;
@@ -509,7 +507,7 @@ class CreditCardsTab extends StatelessWidget {
 
   void _showDeleteConfirmationDialog(BuildContext context, int index) async {
     final card = Provider.of<DataProvider>(context, listen: false).creditCards[index];
-    if (await showDialog(
+  if (await showDialog(
       context: context,
       builder: (BuildContext context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -579,8 +577,6 @@ class CreditCardsTab extends StatelessWidget {
         ),
       ),
     )) {
-      final deletedCard = card;
-      final deletedIndex = index;
       Provider.of<DataProvider>(context, listen: false).deleteCreditCard(index);
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -603,11 +603,7 @@ class ReceivableTransactionsPage extends StatelessWidget {
             final totalPending = receivableTransactions
                 .fold<double>(0, (sum, tx) => sum + (tx.receivableAmount - tx.receivableAmountPaid));
                 
-            final totalActualExpense = receivableTransactions
-                .fold<double>(0, (sum, tx) => sum + (tx.amount - tx.receivableAmount));
             
-            final totalTransactions = receivableTransactions.length;
-            final paidTransactions = receivableTransactions.where((tx) => tx.isReceivablePaid).length;
             
             return Column(
               children: [

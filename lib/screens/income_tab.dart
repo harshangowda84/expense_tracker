@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import '../models/income_transaction.dart';
-import '../models/account.dart';
 import '../utils/income_category_utils.dart';
 
 // Track expanded transactions by their index
@@ -899,13 +898,7 @@ class _IncomeTabState extends State<IncomeTab> {
     );
   }
 
-  String _formatTime(DateTime dateTime) {
-  int hour = dateTime.hour;
-  String period = hour >= 12 ? 'PM' : 'AM';
-  if (hour == 0) hour = 12;
-  if (hour > 12) hour -= 12;
-  return '${hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')} $period';
-  }
+  // Helper _formatTime removed: no longer used in the UI (kept formatting in _formatIncomeDate)
 
   String _formatIncomeDate(DateTime date) {
   final now = DateTime.now();
@@ -1005,26 +998,36 @@ class _IncomeTabState extends State<IncomeTab> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF6366F1).withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit,
-                                    color: Color(0xFF6366F1),
-                                    size: 20,
-                                  ),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF6366F1).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(
+                                        Icons.edit,
+                                        color: Color(0xFF6366F1),
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Edit Income',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(width: 12),
-                                const Text(
-                                  'Edit Income',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                // Close button to dismiss the edit sheet
+                                IconButton(
+                                  onPressed: () => Navigator.of(dialogContext).pop(),
+                                  icon: const Icon(Icons.close, color: Colors.grey),
                                 ),
                               ],
                             ),

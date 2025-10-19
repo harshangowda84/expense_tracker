@@ -2633,9 +2633,18 @@ class _TransactionsTabState extends State<TransactionsTab> {
       children: [
         _buildSearchAndFilters(),
         Expanded(
-          child: Selector<DataProvider, List<ExpenseTransaction>>(
-            selector: (_, provider) => provider.transactions,
-            builder: (context, allTransactions, _) {
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTap: () {
+              if (_expandedTransactionIndices.isNotEmpty) {
+                setState(() {
+                  _expandedTransactionIndices.clear();
+                });
+              }
+            },
+            child: Selector<DataProvider, List<ExpenseTransaction>>(
+              selector: (_, provider) => provider.transactions,
+              builder: (context, allTransactions, _) {
               final filteredTransactions = _filterTransactions(allTransactions);
               
               if (filteredTransactions.isEmpty) {
@@ -2723,7 +2732,9 @@ class _TransactionsTabState extends State<TransactionsTab> {
                             return GestureDetector(
                               onTap: () {
                                 setState(() {
-                                  if (!isExpanded) {
+                                  if (isExpanded) {
+                                    _expandedTransactionIndices.remove(txIndex);
+                                  } else {
                                     _expandedTransactionIndices.clear();
                                     _expandedTransactionIndices.add(txIndex);
                                   }
@@ -3086,17 +3097,11 @@ class _TransactionsTabState extends State<TransactionsTab> {
                       );
                     },
                   ),
-                  // Overlay: only show if any transaction is expanded
-                  if (_expandedTransactionIndices.isNotEmpty)
-                    Positioned.fill(
-                      child: IgnorePointer(
-                        ignoring: true,
-                        child: Container(color: Colors.transparent),
-                      ),
-                    ),
+                  // No overlay here; outer GestureDetector (above Selector) handles taps to collapse expanded item(s).
                 ],
               );
             },
+          ),
           ),
         ),
         Container(

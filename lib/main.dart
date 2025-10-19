@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
-import 'package:flutter/physics.dart';
 import 'package:provider/provider.dart';
 import 'screens/accounts_tab.dart';
 import 'screens/transactions_tab.dart';
@@ -151,7 +150,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   
   // Update functionality
   UpdateInfo? _updateInfo;
-  bool _updateCheckCompleted = false;
 
   static const List<Widget> _tabs = [
     SummaryTab(),
@@ -263,19 +261,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       if (mounted && updateInfo != null) {
         setState(() {
           _updateInfo = updateInfo;
-          _updateCheckCompleted = true;
-        });
-      } else if (mounted) {
-        setState(() {
-          _updateCheckCompleted = true;
         });
       }
     } catch (e) {
       print('🔍 Update check failed: $e');
       if (mounted) {
-        setState(() {
-          _updateCheckCompleted = true;
-        });
+        setState(() {});
       }
     }
   }

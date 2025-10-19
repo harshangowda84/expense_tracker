@@ -1038,8 +1038,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
         final totalCreditUsed = creditCards.fold(0.0, (sum, cc) => sum + (cc.usedAmount ?? 0.0));
         final totalSpent = filteredTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
         final totalIncome = filteredIncomeTransactions.fold(0.0, (sum, tx) => sum + tx.amount);
-        final totalTransactions = filteredTransactions.length;
-        final totalIncomeTransactions = filteredIncomeTransactions.length;
+  final totalTransactions = filteredTransactions.length;
         
         // Calculate category breakdown
         final Map<ExpenseCategory, double> categoryTotals = {};

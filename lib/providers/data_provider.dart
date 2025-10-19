@@ -4,6 +4,7 @@ import '../models/account.dart';
 import '../models/transaction.dart';
 import '../models/credit_card.dart';
 import '../models/income_transaction.dart';
+import '../models/receivable_payment.dart';
 
 class DataProvider extends ChangeNotifier {
   Future<void> updateTransaction(int index, ExpenseTransaction updatedTx, double oldAmount, String oldAccountName) async {
@@ -98,6 +99,14 @@ class DataProvider extends ChangeNotifier {
             isReceivablePaid: isFullyPaid,
           );
           _transactions[index] = restoredTx;
+          // Also remove the most recent recorded payment entry for this transaction, if any
+          final paymentsForTx = _receivablePayments.where((p) => p.transactionId == _lastUpdatedTransaction!.id).toList();
+          if (paymentsForTx.isNotEmpty) {
+            paymentsForTx.sort((a, b) => b.date.compareTo(a.date));
+            final mostRecent = paymentsForTx.first;
+            _receivablePayments.removeWhere((p) => p.id == mostRecent.id);
+            await _saveReceivablePayments();
+          }
           await _saveTransactions();
           notifyListeners();
           
@@ -139,12 +148,14 @@ class DataProvider extends ChangeNotifier {
   }
   List<Account> _accounts = [];
   List<ExpenseTransaction> _transactions = [];
+  List<ReceivablePayment> _receivablePayments = [];
   List<CreditCard> _creditCards = [];
   List<IncomeTransaction> _incomeTransactions = [];
   bool _initialized = false;
 
   List<Account> get accounts => List.unmodifiable(_accounts);
   List<ExpenseTransaction> get transactions => List.unmodifiable(_transactions);
+  List<ReceivablePayment> get receivablePayments => List.unmodifiable(_receivablePayments);
   List<CreditCard> get creditCards => List.unmodifiable(_creditCards);
   List<IncomeTransaction> get incomeTransactions => List.unmodifiable(_incomeTransactions);
   bool get initialized => _initialized;
@@ -177,6 +188,13 @@ class DataProvider extends ChangeNotifier {
       .map((e) => IncomeTransaction.fromMap(Map<String, dynamic>.from(Uri.splitQueryString(e))))
       .toList();
     _incomeTransactions.sort((a, b) => b.date.compareTo(a.date));
+
+    // Load receivable payments
+    final paymentsList = prefs.getStringList('receivablePayments') ?? [];
+    _receivablePayments = paymentsList
+      .map((e) => ReceivablePayment.fromMap(Map<String, dynamic>.from(Uri.splitQueryString(e))))
+      .toList();
+    _receivablePayments.sort((a, b) => b.date.compareTo(a.date));
 
       _initialized = true;
       notifyListeners();
@@ -374,6 +392,37 @@ class DataProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList('incomeTransactions',
         _incomeTransactions.map((t) => Uri(queryParameters: t.toMap()).query).toList());
+  }
+
+  Future<void> _saveReceivablePayments() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('receivablePayments',
+        _receivablePayments.map((p) => Uri(queryParameters: p.toMap()).query).toList());
+  }
+
+  // Record an individual receivable payment entry
+  Future<void> recordReceivablePayment(String transactionId, double amount) async {
+    try {
+      final payment = ReceivablePayment(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        transactionId: transactionId,
+        amount: amount,
+        date: DateTime.now(),
+      );
+      _receivablePayments.add(payment);
+      _receivablePayments.sort((a, b) => b.date.compareTo(a.date));
+      await _saveReceivablePayments();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error recording receivable payment: $e');
+      rethrow;
+    }
+  }
+
+  List<ReceivablePayment> getPaymentsForTransaction(String transactionId) {
+    final list = _receivablePayments.where((p) => p.transactionId == transactionId).toList();
+    list.sort((a, b) => b.date.compareTo(a.date));
+    return list;
   }
 
   // Income Transaction CRUD Operations

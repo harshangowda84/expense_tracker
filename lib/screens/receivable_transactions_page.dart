@@ -2,9 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../providers/data_provider.dart';
+import 'receivable_details_page.dart';
 
-class ReceivableTransactionsPage extends StatelessWidget {
+class ReceivableTransactionsPage extends StatefulWidget {
   const ReceivableTransactionsPage({Key? key}) : super(key: key);
+
+  @override
+  _ReceivableTransactionsPageState createState() => _ReceivableTransactionsPageState();
+}
+
+class _ReceivableTransactionsPageState extends State<ReceivableTransactionsPage> {
+  @override
+  void dispose() {
+    super.dispose();
+  }
 
   String formatIndianAmount(double amount) {
     String sign = amount < 0 ? '-' : '';
@@ -345,9 +356,11 @@ class ReceivableTransactionsPage extends StatelessWidget {
                                     onPressed: () {
                                       final double? amount = double.tryParse(amountController.text);
                                       if (amount != null && amount > 0 && amount <= remainingAmount) {
-                                        final newTotalPaid = tx.receivableAmountPaid + amount;
-                                        Provider.of<DataProvider>(context, listen: false)
-                                            .updateReceivablePayment(tx.id, newTotalPaid);
+                                        final provider = Provider.of<DataProvider>(context, listen: false);
+                                        // record the discrete payment entry
+                                        provider.recordReceivablePayment(tx.id, amount);
+                                        // update cumulative paid amount by passing the single payment amount
+                                        provider.updateReceivablePayment(tx.id, amount);
                                         Navigator.of(context).pop();
                                         _showPaymentConfirmation(context, amount, false);
                                       } else {
@@ -395,11 +408,15 @@ class ReceivableTransactionsPage extends StatelessWidget {
                                 child: Container(
                                   height: 50,
                                   child: ElevatedButton(
-                                    onPressed: () {
-                                      Provider.of<DataProvider>(context, listen: false)
-                                          .updateReceivablePayment(tx.id, tx.receivableAmount);
+                                      onPressed: () {
+                                      final provider = Provider.of<DataProvider>(context, listen: false);
+                                      final remaining = tx.receivableAmount - tx.receivableAmountPaid;
+                                      // record final payment entry
+                                      provider.recordReceivablePayment(tx.id, remaining);
+                                      // mark fully paid by adding the remaining amount
+                                      provider.updateReceivablePayment(tx.id, remaining);
                                       Navigator.of(context).pop();
-                                      _showPaymentConfirmation(context, remainingAmount, true);
+                                      _showPaymentConfirmation(context, remaining, true);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.white,
@@ -594,104 +611,159 @@ class ReceivableTransactionsPage extends StatelessWidget {
             }
             
             // Calculate totals
-            final totalReceivable = receivableTransactions
-                .fold<double>(0, (sum, tx) => sum + tx.receivableAmount);
-            
-            final totalPaid = receivableTransactions
-                .fold<double>(0, (sum, tx) => sum + tx.receivableAmountPaid);
-                
-            final totalPending = receivableTransactions
-                .fold<double>(0, (sum, tx) => sum + (tx.receivableAmount - tx.receivableAmountPaid));
+            final totalReceivable = receivableTransactions.fold<double>(0, (sum, tx) => sum + tx.receivableAmount);
+            final totalPaid = receivableTransactions.fold<double>(0, (sum, tx) => sum + tx.receivableAmountPaid);
+            final totalPending = receivableTransactions.fold<double>(0, (sum, tx) => sum + (tx.receivableAmount - tx.receivableAmountPaid));
                 
             
             
             return Column(
               children: [
-                // Summary Card
+                // Summary Card (refined layout)
                 Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(20),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFF8B5CF6), Color(0xFF9333EA)], // Purple gradient
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Total Receivable',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              formatIndianAmount(totalReceivable),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Paid',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              formatIndianAmount(totalPaid),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Pending',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.8),
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              formatIndianAmount(totalPending),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
                       ),
                     ],
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Left: Total Receivable (stacked with bottom-aligned amount)
+                        Expanded(
+                          child: SizedBox(
+                            height: 88,
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  top: 8,
+                                  left: 0,
+                                  right: 0,
+                                  child: Text(
+                                    'Total\nReceivable',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.9),
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 2,
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 8,
+                                  left: 0,
+                                  child: Text(
+                                    formatIndianAmount(totalReceivable),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Middle: Paid
+                        Expanded(
+                          child: SizedBox(
+                            height: 88,
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  top: 8,
+                                  left: 0,
+                                  right: 0,
+                                  child: Center(
+                                    child: Text(
+                                      'Paid',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 8,
+                                  left: 0,
+                                  right: 0,
+                                  child: Center(
+                                    child: Text(
+                                      formatIndianAmount(totalPaid),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        // Right: Pending
+                        Expanded(
+                          child: SizedBox(
+                            height: 88,
+                            child: Stack(
+                              children: [
+                                Positioned(
+                                  top: 8,
+                                  left: 0,
+                                  right: 0,
+                                  child: Align(
+                                    alignment: Alignment.topRight,
+                                    child: Text(
+                                      'Pending',
+                                      style: TextStyle(
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 8,
+                                  right: 0,
+                                  child: Text(
+                                    formatIndianAmount(totalPending),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 
@@ -729,303 +801,316 @@ class ReceivableTransactionsPage extends StatelessWidget {
                     itemCount: receivableTransactions.length,
                     itemBuilder: (context, index) {
                       final tx = receivableTransactions[index];
-                      return Card(
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Category icon
-                                  Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: BoxDecoration(
-                                      color: _getCategoryColor(tx.category).withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
+                      return InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(MaterialPageRoute(
+                            builder: (_) => ReceivableDetailsPage(transaction: tx),
+                          ));
+                        },
+                        child: Card(
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Category icon
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: _getCategoryColor(tx.category).withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Icon(
+                                        _getCategoryIcon(tx.category),
+                                        size: 20,
+                                        color: _getCategoryColor(tx.category),
+                                      ),
                                     ),
-                                    child: Icon(
-                                      _getCategoryIcon(tx.category),
-                                      size: 20,
-                                      color: _getCategoryColor(tx.category),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  // Transaction details
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              tx.sourceType == TransactionSourceType.bankAccount
-                                                  ? Icons.account_balance_wallet
-                                                  : Icons.credit_card,
-                                              size: 16,
-                                              color: Colors.grey[600],
-                                            ),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                tx.accountName,
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 16,
+                                    const SizedBox(width: 12),
+                                    // Transaction details
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                tx.sourceType == TransactionSourceType.bankAccount
+                                                    ? Icons.account_balance_wallet
+                                                    : Icons.credit_card,
+                                                size: 16,
+                                                color: Colors.grey[600],
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  tx.accountName,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
-                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            _formatDate(tx.date),
+                                            style: TextStyle(
+                                              color: Colors.grey[500],
+                                              fontSize: 12,
+                                            ),
+                                            softWrap: false,
+                                            overflow: TextOverflow.visible,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Amount info
+                                    Container(
+                                      width: 120,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          Text(
+                                            '₹${tx.amount.toStringAsFixed(2)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.red,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: tx.isReceivablePaid ? Colors.green.shade100 : Colors.orange.shade100,
+                                              borderRadius: BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color: tx.isReceivablePaid ? Colors.green.shade300 : Colors.orange.shade300,
+                                                width: 1,
                                               ),
                                             ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 14,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  tx.isReceivablePaid ? Icons.check_circle : Icons.schedule,
+                                                  size: 12,
+                                                  color: tx.isReceivablePaid ? Colors.green.shade700 : Colors.orange.shade700,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  tx.isReceivablePaid ? 'PAID' : 'PENDING',
+                                                  style: TextStyle(
+                                                    color: tx.isReceivablePaid ? Colors.green.shade700 : Colors.orange.shade700,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          _formatDate(tx.date),
-                                          style: TextStyle(
-                                            color: Colors.grey[500],
-                                            fontSize: 12,
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                // Progress bar showing how much received
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      LinearProgressIndicator(
+                                        value: tx.receivableAmount > 0 ? (tx.receivableAmountPaid / tx.receivableAmount).clamp(0.0, 1.0) : 0.0,
+                                        minHeight: 6,
+                                        backgroundColor: Colors.grey.shade200,
+                                        valueColor: AlwaysStoppedAnimation<Color>(tx.isReceivablePaid ? Colors.green : Colors.purple),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            'Received: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}',
+                                            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                                           ),
-                                          softWrap: false,
-                                          overflow: TextOverflow.visible,
+                                          Text(
+                                            '${((tx.receivableAmountPaid / (tx.receivableAmount == 0 ? 1 : tx.receivableAmount)) * 100).toStringAsFixed(0)}% paid',
+                                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    if (tx.receivableAmountPaid >= tx.receivableAmount) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: const Text('This transaction is already fully paid'),
+                                          backgroundColor: Colors.green,
+                                          behavior: SnackBarBehavior.floating,
+                                          margin: const EdgeInsets.all(16),
+                                          duration: const Duration(milliseconds: 2000),
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    _showReceivablePaymentDialog(context, tx, index);
+                                  },
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      color: tx.isReceivablePaid ? Colors.green.shade50 : Colors.purple.shade50,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: tx.isReceivablePaid ? Colors.green.shade200 : Colors.purple.shade200,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          tx.isReceivablePaid ? Icons.check_circle : Icons.people,
+                                          size: 16,
+                                          color: tx.isReceivablePaid ? Colors.green.shade600 : Colors.purple.shade600,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      tx.isReceivablePaid
+                                                          ? 'Received: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}'
+                                                          : 'Split Bill: ₹${tx.receivableAmount.toStringAsFixed(2)} receivable',
+                                                      style: TextStyle(
+                                                        color: tx.isReceivablePaid ? Colors.green.shade700 : Colors.purple.shade700,
+                                                        fontSize: 14,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Container(
+                                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: tx.isReceivablePaid ? Colors.green.shade100 : Colors.orange.shade100,
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                    child: Text(
+                                                      tx.isReceivablePaid ? 'PAID' : 'PENDING',
+                                                      style: TextStyle(
+                                                        color: tx.isReceivablePaid ? Colors.green.shade700 : Colors.orange.shade700,
+                                                        fontSize: 10,
+                                                        fontWeight: FontWeight.bold,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Row(
+                                                children: [
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Your actual expense: ₹${(tx.amount - tx.receivableAmount).toStringAsFixed(2)}',
+                                                      style: TextStyle(
+                                                        color: Colors.grey[700],
+                                                        fontSize: 12,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                      overflow: TextOverflow.ellipsis,
+                                                      maxLines: 1,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  if (!tx.isReceivablePaid && tx.receivableAmountPaid > 0)
+                                                    Text(
+                                                      'Partial: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}',
+                                                      style: TextStyle(
+                                                        color: Colors.blue.shade600,
+                                                        fontSize: 11,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  const SizedBox(width: 4),
+                                                  Icon(
+                                                    Icons.touch_app,
+                                                    size: 12,
+                                                    color: Colors.grey[500],
+                                                  ),
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  // Amount info
+                                ),
+                                if (tx.note.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
                                   Container(
-                                    width: 120,
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        '₹${tx.amount.toStringAsFixed(2)}',
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.red,
-                                          fontSize: 16,
-                                        ),
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.shade50,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.blue.shade200,
+                                        width: 1,
                                       ),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: tx.isReceivablePaid 
-                                              ? Colors.green.shade100 
-                                              : Colors.orange.shade100,
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(
-                                            color: tx.isReceivablePaid 
-                                                ? Colors.green.shade300 
-                                                : Colors.orange.shade300,
-                                            width: 1,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.sticky_note_2_outlined,
+                                          size: 14,
+                                          color: Colors.blue.shade600,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            tx.note,
+                                            style: TextStyle(
+                                              color: Colors.grey[800],
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                           ),
                                         ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              tx.isReceivablePaid ? Icons.check_circle : Icons.schedule,
-                                              size: 12,
-                                              color: tx.isReceivablePaid 
-                                                  ? Colors.green.shade700 
-                                                  : Colors.orange.shade700,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              tx.isReceivablePaid ? 'PAID' : 'PENDING',
-                                              style: TextStyle(
-                                                color: tx.isReceivablePaid 
-                                                    ? Colors.green.shade700 
-                                                    : Colors.orange.shade700,
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
                                 ],
-                              ),
-                              
-              // Receivable info
-              const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () {
-                  // Prevent payment dialog for fully paid transactions
-                  if (tx.receivableAmountPaid >= tx.receivableAmount) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('This transaction is already fully paid'),
-                        backgroundColor: Colors.green,
-                        behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.all(16),
-                        duration: const Duration(milliseconds: 2000),
-                      ),
-                    );
-                    return;
-                  }
-                  _showReceivablePaymentDialog(context, tx, index);
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: tx.isReceivablePaid 
-                        ? Colors.green.shade50 
-                        : Colors.purple.shade50,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: tx.isReceivablePaid 
-                          ? Colors.green.shade200 
-                          : Colors.purple.shade200,
-                      width: 1,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        tx.isReceivablePaid ? Icons.check_circle : Icons.people,
-                        size: 16,
-                        color: tx.isReceivablePaid 
-                            ? Colors.green.shade600 
-                            : Colors.purple.shade600,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    tx.isReceivablePaid 
-                                        ? 'Received: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}'
-                                        : 'Split Bill: ₹${tx.receivableAmount.toStringAsFixed(2)} receivable',
-                                    style: TextStyle(
-                                      color: tx.isReceivablePaid 
-                                          ? Colors.green.shade700 
-                                          : Colors.purple.shade700,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: tx.isReceivablePaid 
-                                        ? Colors.green.shade100 
-                                        : Colors.orange.shade100,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    tx.isReceivablePaid ? 'PAID' : 'PENDING',
-                                    style: TextStyle(
-                                      color: tx.isReceivablePaid 
-                                          ? Colors.green.shade700 
-                                          : Colors.orange.shade700,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
                               ],
                             ),
-                            const SizedBox(height: 2),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    'Your actual expense: ₹${(tx.amount - tx.receivableAmount).toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      color: Colors.grey[700],
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                if (!tx.isReceivablePaid && tx.receivableAmountPaid > 0)
-                                  Text(
-                                    'Partial: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}',
-                                    style: TextStyle(
-                                      color: Colors.blue.shade600,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.touch_app,
-                                  size: 12,
-                                  color: Colors.grey[500],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),                              // Note if present
-                              if (tx.note.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.blue.shade50,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.blue.shade200,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.sticky_note_2_outlined,
-                                        size: 14,
-                                        color: Colors.blue.shade600,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          tx.note,
-                                          style: TextStyle(
-                                            color: Colors.grey[800],
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ],
                           ),
                         ),
                       );

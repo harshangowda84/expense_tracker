@@ -1903,9 +1903,9 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                     onPressed: () {
                                       final double? amount = double.tryParse(amountController.text);
                                       if (amount != null && amount > 0 && amount <= remainingAmount) {
-                                        final newTotalPaid = tx.receivableAmountPaid + amount;
-                                        Provider.of<DataProvider>(context, listen: false)
-                                            .updateReceivablePayment(tx.id, newTotalPaid);
+                                        final provider = Provider.of<DataProvider>(context, listen: false);
+                                        provider.recordReceivablePayment(tx.id, amount);
+                                        provider.updateReceivablePayment(tx.id, amount);
                                         Navigator.of(context).pop();
                                         _showPaymentConfirmationInTransactions(context, amount, false);
                                       } else {
@@ -1954,10 +1954,12 @@ class _TransactionsTabState extends State<TransactionsTab> {
                                   height: 50,
                                   child: ElevatedButton(
                                     onPressed: () {
-                                      Provider.of<DataProvider>(context, listen: false)
-                                          .updateReceivablePayment(tx.id, tx.receivableAmount);
-                                      Navigator.of(context).pop();
-                                      _showPaymentConfirmationInTransactions(context, remainingAmount, true);
+                    final provider = Provider.of<DataProvider>(context, listen: false);
+                    final remaining = tx.receivableAmount - tx.receivableAmountPaid;
+                    provider.recordReceivablePayment(tx.id, remaining);
+                    provider.updateReceivablePayment(tx.id, remaining);
+                    Navigator.of(context).pop();
+                    _showPaymentConfirmationInTransactions(context, remaining, true);
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Colors.white,

@@ -38,6 +38,21 @@ class _ReceivableTransactionsPageState extends State<ReceivableTransactionsPage>
     return '₹$sign$num.$dec';
   }
 
+  // Compact formatter for large numbers (e.g., 50.1K)
+  String formatCompactAmount(double amount) {
+    if (amount.abs() < 1000) return formatIndianAmount(amount);
+    final suffixes = ['K', 'M', 'B'];
+    double value = amount.abs();
+    int idx = -1;
+    while (value >= 1000 && idx < suffixes.length - 1) {
+      value = value / 1000;
+      idx++;
+    }
+    final sign = amount < 0 ? '-' : '';
+    final formatted = value.toStringAsFixed(value >= 10 ? 0 : 1);
+    return formatIndianAmount(amount);
+  }
+
   IconData _getCategoryIcon(ExpenseCategory category) {
     switch (category) {
       case ExpenseCategory.office:
@@ -643,74 +658,30 @@ class _ReceivableTransactionsPageState extends State<ReceivableTransactionsPage>
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        // Left: Total Receivable (stacked with bottom-aligned amount)
+                        // Left: Total Receivable (bigger area, amount bottom-aligned)
                         Expanded(
+                          flex: 2,
                           child: SizedBox(
-                            height: 88,
-                            child: Stack(
+                            height: 96,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Positioned(
-                                  top: 8,
-                                  left: 0,
-                                  right: 0,
-                                  child: Text(
-                                    'Total\nReceivable',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.9),
-                                      fontSize: 13,
-                                    ),
-                                    maxLines: 2,
+                                Text(
+                                  'Total\nReceivable',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 13,
                                   ),
+                                  maxLines: 2,
                                 ),
-                                Positioned(
-                                  bottom: 8,
-                                  left: 0,
-                                  child: Text(
-                                    formatIndianAmount(totalReceivable),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Middle: Paid
-                        Expanded(
-                          child: SizedBox(
-                            height: 88,
-                            child: Stack(
-                              children: [
-                                Positioned(
-                                  top: 8,
-                                  left: 0,
-                                  right: 0,
-                                  child: Center(
+                                Expanded(
+                                  child: Align(
+                                    alignment: Alignment.bottomLeft,
                                     child: Text(
-                                      'Paid',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  bottom: 8,
-                                  left: 0,
-                                  right: 0,
-                                  child: Center(
-                                    child: Text(
-                                      formatIndianAmount(totalPaid),
+                                      formatIndianAmount(totalReceivable),
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 20,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.w700,
                                       ),
                                       maxLines: 1,
@@ -723,39 +694,63 @@ class _ReceivableTransactionsPageState extends State<ReceivableTransactionsPage>
                           ),
                         ),
 
-                        // Right: Pending
+                        // Right: Paid (top block) and Pending (bottom block) stacked
                         Expanded(
+                          flex: 1,
                           child: SizedBox(
-                            height: 88,
-                            child: Stack(
+                            height: 96,
+                            child: Column(
                               children: [
-                                Positioned(
-                                  top: 8,
-                                  left: 0,
-                                  right: 0,
-                                  child: Align(
-                                    alignment: Alignment.topRight,
-                                    child: Text(
-                                      'Pending',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.9),
-                                        fontSize: 13,
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'Paid',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.9),
+                                          fontSize: 13,
+                                        ),
                                       ),
-                                    ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        formatIndianAmount(totalPaid),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Positioned(
-                                  bottom: 8,
-                                  right: 0,
-                                  child: Text(
-                                    formatIndianAmount(totalPending),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                Expanded(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'Pending',
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.9),
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        formatIndianAmount(totalPending),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -945,16 +940,31 @@ class _ReceivableTransactionsPageState extends State<ReceivableTransactionsPage>
                                         valueColor: AlwaysStoppedAnimation<Color>(tx.isReceivablePaid ? Colors.green : Colors.purple),
                                       ),
                                       const SizedBox(height: 6),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      Column(
                                         children: [
-                                          Text(
-                                            'Received: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}',
-                                            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Received: ₹${tx.receivableAmountPaid.toStringAsFixed(2)}',
+                                                style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                                              ),
+                                              Text(
+                                                '${((tx.receivableAmountPaid / (tx.receivableAmount == 0 ? 1 : tx.receivableAmount)) * 100).toStringAsFixed(0)}% paid',
+                                                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                              ),
+                                            ],
                                           ),
-                                          Text(
-                                            '${((tx.receivableAmountPaid / (tx.receivableAmount == 0 ? 1 : tx.receivableAmount)) * 100).toStringAsFixed(0)}% paid',
-                                            style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text(
+                                                'Pending: ₹${(tx.receivableAmount - tx.receivableAmountPaid).toStringAsFixed(2)}',
+                                                style: TextStyle(fontSize: 12, color: Colors.red.shade700, fontWeight: FontWeight.w600),
+                                              ),
+                                              SizedBox.shrink(),
+                                            ],
                                           ),
                                         ],
                                       ),

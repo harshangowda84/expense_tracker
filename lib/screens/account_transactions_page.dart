@@ -11,7 +11,9 @@ class AccountTransactionsPage extends StatelessWidget {
   const AccountTransactionsPage({Key? key, required this.accountName}) : super(key: key);
 
   String formatIndianAmount(double amount) {
-    String sign = amount < 0 ? '-' : '';
+    // Always format absolute amount without a leading + or - sign. The UI
+    // indicates income/expense via color/badges, so we don't show explicit
+    // plus/minus symbols next to amounts.
     amount = amount.abs();
     String str = amount.toStringAsFixed(2);
     List<String> parts = str.split('.');
@@ -28,7 +30,7 @@ class AccountTransactionsPage extends StatelessWidget {
       if (first.isNotEmpty) firstParts.insert(0, first);
       num = firstParts.join(',') + ',' + last;
     }
-    return '₹$sign$num.$dec';
+    return '₹$num.$dec';
   }
 
   IconData _getCategoryIcon(ExpenseCategory category) {
@@ -186,60 +188,40 @@ class AccountTransactionsPage extends StatelessWidget {
                     ),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: isCreditCard 
-                    ? Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Total Spent',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 14,
-                                ),
+                  child: Row(
+                    children: [
+                      // Left: Transactions
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Transactions',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 12,
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                formatIndianAmount(totalSpent),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              totalTransactions.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
-                            ],
-                          ),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Text(
-                                'Total Transactions',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                totalTransactions.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Right: stacked totals (Income on top, Spent below)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            // Total Income (top right)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
                                   'Total Income',
@@ -253,16 +235,16 @@ class AccountTransactionsPage extends StatelessWidget {
                                   formatIndianAmount(totalIncome),
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
+                            const SizedBox(height: 12),
+                            // Total Spent (below)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
                                   'Total Spent',
@@ -276,38 +258,17 @@ class AccountTransactionsPage extends StatelessWidget {
                                   formatIndianAmount(totalSpent),
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'Transactions',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.8),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  totalTransactions.toString(),
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                    ],
+                  ),
                 ),
                 // Transactions List
                 Expanded(
@@ -321,19 +282,16 @@ class AccountTransactionsPage extends StatelessWidget {
                       if (isIncome) {
                         final tx = item['transaction'] as IncomeTransaction;
                         final screenWidth = MediaQuery.of(context).size.width;
-                        final trailingWidth = math.min(math.max((screenWidth - 32) * 0.24, 80.0), 140.0);
+                        final trailingWidth = math.min(math.max((screenWidth - 32) * 0.32, 100.0), 220.0);
+            final displayAmount = formatIndianAmount(tx.amount.abs());
+            // Remove ".00" for whole-rupee amounts in trailing display
+            final trailingDisplay = displayAmount.endsWith('.00')
+              ? displayAmount.substring(0, displayAmount.length - 3)
+              : displayAmount;
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.green.withOpacity(0.1),
-                              child: Icon(
-                                IncomeCategoryUtils.getCategoryIcon(tx.category),
-                                color: IncomeCategoryUtils.getCategoryColor(tx.category),
-                                size: 20,
-                              ),
-                            ),
                             title: Text(
                               IncomeCategoryUtils.getCategoryName(tx.category),
                               style: const TextStyle(
@@ -417,8 +375,9 @@ class AccountTransactionsPage extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(height: 6),
+                                  // Amount aligned to the far right in trailing
                                   Text(
-                                    '+${formatIndianAmount(tx.amount)}',
+                                    trailingDisplay,
                                     style: TextStyle(
                                       color: Colors.green[600],
                                       fontSize: 16,
@@ -436,19 +395,16 @@ class AccountTransactionsPage extends StatelessWidget {
                       } else {
                         final tx = item['transaction'] as ExpenseTransaction;
                         final screenWidth = MediaQuery.of(context).size.width;
-                        final trailingWidth = math.min(math.max((screenWidth - 32) * 0.24, 80.0), 140.0);
+                        final trailingWidth = math.min(math.max((screenWidth - 32) * 0.32, 100.0), 220.0);
+            final displayAmount = formatIndianAmount(tx.amount.abs());
+            // Remove ".00" for whole-rupee amounts in trailing display
+            final trailingDisplay = displayAmount.endsWith('.00')
+              ? displayAmount.substring(0, displayAmount.length - 3)
+              : displayAmount;
                         return Card(
                           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: _getCategoryColor(tx.category).withOpacity(0.1),
-                              child: Icon(
-                                _getCategoryIcon(tx.category),
-                                color: _getCategoryColor(tx.category),
-                                size: 20,
-                              ),
-                            ),
                             title: Text(
                               tx.category.name[0].toUpperCase() + tx.category.name.substring(1),
                               style: const TextStyle(
@@ -525,7 +481,7 @@ class AccountTransactionsPage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 6),
                                   Text(
-                                    '-${formatIndianAmount(tx.amount)}',
+                                    trailingDisplay,
                                     style: TextStyle(
                                       color: Colors.red[600],
                                       fontSize: 16,

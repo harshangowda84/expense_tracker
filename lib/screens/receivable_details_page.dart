@@ -96,11 +96,21 @@ class ReceivableDetailsPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    Row(
+                    Column(
                       children: [
-                        _statTile('Amount', formatIndianAmount(transaction.amount)),
-                        _statTile('Receivable', formatIndianAmount(transaction.receivableAmount)),
-                        _statTile('Received', formatIndianAmount(transaction.receivableAmountPaid)),
+                        Row(
+                          children: [
+                            _statTile('Amount', formatIndianAmount(transaction.amount)),
+                            _statTile('Receivable', formatIndianAmount(transaction.receivableAmount)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            _statTile('Received', formatIndianAmount(transaction.receivableAmountPaid)),
+                            _statTile('Pending', formatIndianAmount(transaction.receivableAmount - transaction.receivableAmountPaid), valueColor: Colors.red.shade700),
+                          ],
+                        ),
                       ],
                     ),
                     if (transaction.note.isNotEmpty) ...[
@@ -245,14 +255,14 @@ class ReceivableDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _statTile(String label, String value) {
+  Widget _statTile(String label, String value, {Color? valueColor}) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
           const SizedBox(height: 6),
-          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
+          Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: valueColor)),
         ],
       ),
     );

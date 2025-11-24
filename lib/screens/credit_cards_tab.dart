@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../utils/performance_utils.dart';
 import '../providers/data_provider.dart';
 import '../models/credit_card.dart';
 import '../models/account.dart';
@@ -618,7 +619,7 @@ class CreditCardsTab extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: SingleChildScrollView(
+                child: PerformanceUtils.createOptimizedScrollView(
                   physics: const ClampingScrollPhysics(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -903,7 +904,7 @@ class CreditCardsTab extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: SingleChildScrollView(
+                child: PerformanceUtils.createOptimizedScrollView(
                   physics: const ClampingScrollPhysics(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

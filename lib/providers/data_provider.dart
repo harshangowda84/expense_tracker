@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/account.dart';
 import '../models/transaction.dart';
@@ -197,13 +198,17 @@ class DataProvider extends ChangeNotifier {
     _receivablePayments.sort((a, b) => b.date.compareTo(a.date));
 
       _initialized = true;
+      // No automatic seeding in any build; leave persisted state as-is.
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading data: $e');
       _initialized = true;
+      // Do not seed data automatically after load errors; keep storage empty.
       notifyListeners();
     }
   }
+
+  // Seed function removed: no automatic sample data in source.
 
   Future<void> addTransaction(ExpenseTransaction tx) async {
     try {
@@ -727,5 +732,37 @@ class DataProvider extends ChangeNotifier {
       debugPrint('Error recalculating credit card balances: $e');
       rethrow;
     }
+  }
+
+  /// Clear all persisted app data and in-memory lists.
+  /// Use carefully — this removes accounts, transactions, credit cards, income and receivable payments.
+  Future<void> clearAllData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('accounts');
+      await prefs.remove('transactions');
+      await prefs.remove('creditCards');
+      await prefs.remove('incomeTransactions');
+      await prefs.remove('receivablePayments');
+
+      _accounts.clear();
+      _transactions.clear();
+      _creditCards.clear();
+      _incomeTransactions.clear();
+      _receivablePayments.clear();
+
+      _initialized = true;
+      notifyListeners();
+      debugPrint('All app data cleared.');
+    } catch (e) {
+      debugPrint('Error clearing app data: $e');
+      rethrow;
+    }
+  }
+
+  /// Debug-only helper to clear data. No-op in release/profile builds.
+  Future<void> clearDebugData() async {
+    if (!kDebugMode) return;
+    await clearAllData();
   }
 }

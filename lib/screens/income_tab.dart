@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/data_provider.dart';
 import '../models/income_transaction.dart';
 import '../utils/income_category_utils.dart';
+import '../utils/performance_utils.dart';
 
 // Track expanded transactions by their index
 final Set<int> _expandedIncomeIndices = {};
@@ -137,7 +138,7 @@ class _IncomeTabState extends State<IncomeTab> {
 
   Widget _buildSearchAndFilters() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Row(
         children: [
           // Search Bar
@@ -152,7 +153,7 @@ class _IncomeTabState extends State<IncomeTab> {
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
                 decoration: InputDecoration(
-                  hintText: 'Search by amount, account, note, source, or category...',
+                  hintText: 'Search',
                   prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
@@ -574,14 +575,14 @@ class _IncomeTabState extends State<IncomeTab> {
 
                 final groupedTransactions = _groupTransactionsByDate(filteredTransactions);
                 
-                return ListView.builder(
+                return PerformanceUtils.createOptimizedListView(
                   itemCount: groupedTransactions.length,
-                  padding: const EdgeInsets.only(top: 8, bottom: 80),
+                  padding: const EdgeInsets.only(top: 0, bottom: 80),
                   itemBuilder: (context, index) {
                     final dateKey = groupedTransactions.keys.elementAt(index);
                     final dayTransactions = groupedTransactions[dateKey]!;
                     final dayTotal = dayTransactions.fold<double>(0, (sum, tx) => sum + tx.amount);
-                    
+
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -857,7 +858,7 @@ class _IncomeTabState extends State<IncomeTab> {
                               ),
                             ),
                           );
-                        }),
+                        }).toList(),
                       ],
                     );
                   },

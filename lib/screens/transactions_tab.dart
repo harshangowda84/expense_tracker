@@ -4,6 +4,7 @@ import '../models/transaction.dart';
 import '../models/account.dart';
 import '../models/credit_card.dart';
 import '../providers/data_provider.dart';
+import 'receivable_transactions_page.dart';
 import '../utils/performance_utils.dart';
 
 enum DateFilterType {
@@ -135,26 +136,33 @@ class _TransactionsTabState extends State<TransactionsTab> {
 
   Widget _buildSearchAndFilters() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Search Bar
-          Expanded(
+          // Top: Wide Search Bar (reduced height, vertically centered)
+          SizedBox(
+            height: 44,
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.grey[100],
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: Colors.grey[300]!),
               ),
+              alignment: Alignment.center,
               child: TextField(
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
+                textAlignVertical: TextAlignVertical.center,
+                style: const TextStyle(height: 1.0),
                 decoration: InputDecoration(
-                  hintText: 'Search by amount, account, note, or category...',
-                  prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                  isDense: true,
+                  hintText: 'Search',
+                  prefixIcon: const Icon(Icons.search),
+                  prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, color: Colors.grey[600]),
+                          icon: const Icon(Icons.clear),
                           onPressed: () {
                             _searchController.clear();
                             setState(() => _searchQuery = '');
@@ -162,80 +170,106 @@ class _TransactionsTabState extends State<TransactionsTab> {
                         )
                       : null,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          // Filter Button
-          Container(
-            decoration: BoxDecoration(
-              color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) 
-                  ? const Color(0xFF6366F1) : Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) 
-                    ? const Color(0xFF6366F1) : Colors.grey[300]!,
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
-                onTap: _showFilterModal,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.filter_list,
-                        color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) 
-                            ? Colors.white : Colors.grey[600],
-                        size: 20,
+          const SizedBox(height: 6),
+          // Bottom row: Filter and Receivables split the same width as search
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
+                          ? const Color(0xFF6366F1)
+                          : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
+                            ? const Color(0xFF6366F1)
+                            : Colors.grey[300]!,
                       ),
-                      const SizedBox(width: 4),
-                      if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) ...[
-                        if (_selectedCategory != null) ...[
-                          Icon(
-                            _getCategoryIcon(_selectedCategory!),
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                        ],
-                        if (_selectedDateFilter != DateFilterType.all) ...[
-                          Icon(
-                            Icons.calendar_today,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                        ],
-                        Text(
-                          _getFilterDisplayText(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ] else ...[
-                        Text(
-                          'Filter',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: _showFilterModal,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.filter_list,
+                                color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
+                                    ? Colors.white
+                                    : Colors.grey[600],
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Filter',
+                                style: TextStyle(
+                                  color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
+                                      ? Colors.white
+                                      : Colors.grey[700],
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: SizedBox(
+                  height: 44,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ReceivableTransactionsPage(),
+                        ));
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B5CF6),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(Icons.people, color: Colors.white, size: 16),
+                            SizedBox(width: 6),
+                            Text(
+                              'Receivables',
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1125,6 +1159,10 @@ class _TransactionsTabState extends State<TransactionsTab> {
     return GestureDetector(
       onTap: () {
         setModalState(() {
+          _selectedReceivableFilter = value;
+        });
+        // Also update parent state so the list filters immediately
+        setState(() {
           _selectedReceivableFilter = value;
         });
       },
@@ -2693,7 +2731,7 @@ class _TransactionsTabState extends State<TransactionsTab> {
                 children: [
                   PerformanceUtils.createOptimizedListView(
                     itemCount: groupedTransactions.length,
-                    padding: const EdgeInsets.only(top: 8, bottom: 80),
+                    padding: const EdgeInsets.only(top: 0, bottom: 80),
                     itemBuilder: (context, index) {
                       final dateKey = groupedTransactions.keys.elementAt(index);
                       final dayTransactions = groupedTransactions[dateKey]!;

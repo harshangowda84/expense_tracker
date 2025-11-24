@@ -27,6 +27,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Install debug builds side-by-side with the Play Store / release install
+            // by adding an applicationId suffix. Debug build will become
+            // com.spendly.app.debug
+            applicationIdSuffix = ".debug"
+        }
+
         release {
             signingConfig = signingConfigs.getByName("debug")
         }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:provider/provider.dart';
@@ -67,6 +68,27 @@ class _SpendlyAppState extends State<SpendlyApp> {
         navigatorKey: NavigationService().navigatorKey,
         title: 'Spendly',
         debugShowCheckedModeBanner: false,
+        // Wrap the app with a visible debug banner when running in debug mode.
+        // We keep Flutter's default debug banner disabled and instead show a
+        // custom `Banner` so it appears even when `debugShowCheckedModeBanner`
+        // is false and we can control styling.
+        builder: (context, child) {
+          final appChild = child ?? const SizedBox.shrink();
+          if (kDebugMode) {
+            return Banner(
+              message: 'DEBUG',
+              location: BannerLocation.topEnd,
+              color: Colors.redAccent.withOpacity(0.9),
+              textStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+              child: appChild,
+            );
+          }
+          return appChild;
+        },
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
             seedColor: const Color(0xFF6366F1), // Modern indigo

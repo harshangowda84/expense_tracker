@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../utils/performance_utils.dart';
 import '../models/transaction.dart';
 import '../providers/data_provider.dart';
 import 'receivable_details_page.dart';
@@ -136,7 +137,7 @@ class _ReceivableTransactionsPageState extends State<ReceivableTransactionsPage>
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.85,
           ),
-          child: SingleChildScrollView(
+          child: PerformanceUtils.createOptimizedScrollView(
             physics: const ClampingScrollPhysics(),
             child: Container(
               margin: EdgeInsets.only(
@@ -791,7 +792,7 @@ class _ReceivableTransactionsPageState extends State<ReceivableTransactionsPage>
                 
                 // Transactions List
                 Expanded(
-                  child: ListView.builder(
+                  child: PerformanceUtils.createOptimizedListView(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: receivableTransactions.length,
                     itemBuilder: (context, index) {

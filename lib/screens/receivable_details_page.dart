@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../models/receivable_payment.dart';
 import '../providers/data_provider.dart';
+import '../utils/performance_utils.dart';
 
 class ReceivableDetailsPage extends StatelessWidget {
   final ExpenseTransaction transaction;
@@ -47,7 +48,7 @@ class ReceivableDetailsPage extends StatelessWidget {
         title: const Text('Receivable Details'),
         backgroundColor: const Color(0xFF8B5CF6),
       ),
-      body: SingleChildScrollView(
+      body: PerformanceUtils.createOptimizedScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

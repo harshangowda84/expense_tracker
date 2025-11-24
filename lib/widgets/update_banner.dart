@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../services/update_service.dart';
+import '../utils/performance_utils.dart';
 
 class UpdateBanner extends StatefulWidget {
   final UpdateInfo updateInfo;
@@ -157,7 +158,7 @@ class _UpdateBannerState extends State<UpdateBanner> {
                   const SizedBox(height: 4),
                   Container(
                     constraints: const BoxConstraints(maxHeight: 150),
-                    child: SingleChildScrollView(
+                    child: PerformanceUtils.createOptimizedScrollView(
                       child: Text(
                         widget.updateInfo.releaseNotes,
                         style: TextStyle(

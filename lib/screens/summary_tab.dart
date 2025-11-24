@@ -7,6 +7,7 @@ import '../providers/data_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'receivable_transactions_page.dart';
 import '../services/navigation_service.dart';
+import '../utils/performance_utils.dart';
 
 String formatIndianAmount(double amount) {
   String sign = amount < 0 ? '-' : '';
@@ -1058,7 +1059,7 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
         
         return Container(
           color: Colors.white,
-          child: SingleChildScrollView(
+          child: PerformanceUtils.createOptimizedScrollView(
             padding: const EdgeInsets.all(16),
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -1453,127 +1454,6 @@ class _SummaryTabState extends State<SummaryTab> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 24),
                   ],
-                  
-                  // Monthly spending chart
-                  Card(
-                    elevation: 8,
-                    shadowColor: Colors.black12,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFF8B5CF6).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Icon(
-                                  Icons.bar_chart,
-                                  color: Color(0xFF8B5CF6),
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  'Monthly Spending Trend',
-                                  style: TextStyle(fontFamily: 'Inter', 
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: const Color(0xFF1E293B),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              return SizedBox(
-                                height: 280,
-                                width: constraints.maxWidth,
-                                child: BarChart(
-                                  BarChartData(
-                                    barGroups: _buildMonthlyBarData(allTransactions),
-                                    gridData: FlGridData(
-                                      show: true,
-                                      drawHorizontalLine: true,
-                                      drawVerticalLine: false,
-                                      horizontalInterval: 1000,
-                                      getDrawingHorizontalLine: (value) => FlLine(
-                                        color: Colors.grey.withOpacity(0.2),
-                                        strokeWidth: 1,
-                                      ),
-                                    ),
-                                    titlesData: FlTitlesData(
-                                      leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                      topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                                      bottomTitles: AxisTitles(
-                                        sideTitles: SideTitles(
-                                          showTitles: true,
-                                          reservedSize: 30,
-                                          getTitlesWidget: (value, meta) {
-                                          final now = DateTime.now();
-                                          final monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                          
-                                          // Calculate which month this bar represents (last 6 months)
-                                          final monthDate = DateTime(now.year, now.month - (5 - value.toInt()), 1);
-                                          final monthIndex = monthDate.month - 1; // Convert to 0-based index
-                                          
-                                          if (value.toInt() < 6 && monthIndex >= 0 && monthIndex < 12) {
-                                            return Padding(
-                                              padding: const EdgeInsets.only(top: 8),
-                                              child: Text(
-                                                monthNames[monthIndex],
-                                                style: TextStyle(fontFamily: 'Inter', 
-                                                  fontSize: 11,
-                                                  color: Colors.grey[600],
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                          return const Text('');
-                                        },
-                                        ),
-                                      ),
-                                    ),
-                                    borderData: FlBorderData(show: false),
-                                    barTouchData: BarTouchData(
-                                      touchTooltipData: BarTouchTooltipData(
-                                        tooltipBgColor: const Color(0xFF6366F1),
-                                        tooltipRoundedRadius: 8,
-                                        tooltipPadding: const EdgeInsets.all(8),
-                                        getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                                          return BarTooltipItem(
-                                            formatIndianAmount(rod.toY),
-                                            TextStyle(fontFamily: 'Inter', 
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 12,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    maxY: null, // Let the chart auto-scale
-                                    alignment: BarChartAlignment.center,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                 ],
               ),
             ),

@@ -962,30 +962,57 @@ class _IncomeTabState extends State<IncomeTab> {
             final hasAccounts = provider.accounts.isNotEmpty;
             return Container(
               padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: Text(
-                  'Add Income',
-                  style: TextStyle(
-                    fontFamily: 'Inter', 
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.shade300.withOpacity(0.5),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
                 ),
-                onPressed: () {
-                  if (hasAccounts) {
-                    _showAddIncomeDialog();
-                  } else {
-                    _showRequireAccountDialog(context);
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 52),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 4,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      if (hasAccounts) {
+                        _showAddIncomeDialog();
+                      } else {
+                        _showRequireAccountDialog(context);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.green.shade400, Colors.teal.shade400],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.add_circle_rounded, color: Colors.white, size: 24),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Add Income',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             );
@@ -1910,7 +1937,10 @@ class _IncomeTabState extends State<IncomeTab> {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        DefaultTabController.of(context).animateTo(1); // Navigate to Accounts tab
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AccountsTab()),
+                        );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF10B981),

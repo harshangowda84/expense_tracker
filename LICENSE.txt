@@ -1,0 +1,11 @@
+Spendly - Financial Companion
+Version 1.1.5
+Copyright (c) 2025
+
+SPENDLY SOFTWARE LICENSE AGREEMENT
+
+This software is provided "AS IS" without warranty of any kind.
+
+By using this software, you agree to use it responsibly and in compliance with all applicable laws.
+
+For more information, visit the Spendly website.

@@ -1,0 +1,34 @@
+# MSIX Configuration for Spendly
+# This file configures the Windows app package for distribution
+
+publish_name: Spendly
+publisher_display_name: Spendly
+identity_name: com.spendly.expensetracker
+msix_version: 1.1.5.0
+
+# Certificate configuration (use test certificate for development)
+certificate_path: null
+certificate_password: null
+
+# App details
+display_name: Spendly
+app_description: Your smart financial companion - track expenses with style
+publisher: Spendly
+output_path: build\windows\msix
+
+# Icons
+logo_path: assets/app_logo_source.png
+
+# Store configuration (optional - for Microsoft Store)
+store: false
+
+# Architecture (x64 is default, add more if needed)
+architecture: x64
+
+# Languages
+languages:
+  - en-us
+
+# Capabilities (permissions the app needs)
+capabilities:
+  - internetClient

@@ -158,17 +158,11 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
-  double _currentPageValue = 0.0; // Track current page position for smooth animations
-  late PageController _pageController;
-  late AnimationController _pageAnimationController;
-  late Animation<double> _pageAnimation;
-  late List<AnimationController> _animationControllers;
-  late List<AnimationController> _pulseControllers;
-  late List<Animation<double>> _scaleAnimations;
-  late List<Animation<double>> _rotationAnimations;
-  late List<Animation<double>> _pulseAnimations;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late AnimationController _fabController;
+  late Animation<double> _fabAnimation;
   
   // Update functionality
   UpdateInfo? _updateInfo;
@@ -181,100 +175,47 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     CreditCardsTab(),
   ];
 
+  static const List<String> _tabTitles = [
+    'Dashboard',
+    'Transactions',
+    'Income',
+    'Accounts',
+    'Credit Cards',
+  ];
+
+  static const List<IconData> _tabIcons = [
+    Icons.dashboard_rounded,
+    Icons.receipt_long_rounded,
+    Icons.trending_up_rounded,
+    Icons.account_balance_wallet_rounded,
+    Icons.credit_card_rounded,
+  ];
+
   @override
   void initState() {
     super.initState();
     
-    // Initialize PageController with optimized settings
-    _pageController = PageController(
-      initialPage: _selectedIndex,
-      viewportFraction: 1.0,
-    );
-    
-    // Create dedicated animation controller for page tracking
-    _pageAnimationController = AnimationController(
+    _fabController = AnimationController(
+      duration: const Duration(milliseconds: 300),
       vsync: this,
-      duration: const Duration(milliseconds: 1), // Very fast for real-time updates
     );
     
-    _pageAnimation = Tween<double>(
-      begin: 0.0,
-      end: 0.0,
-    ).animate(_pageAnimationController);
+    _fabAnimation = CurvedAnimation(
+      parent: _fabController,
+      curve: Curves.easeInOut,
+    );
     
-    // Set initial page value
-    _currentPageValue = _selectedIndex.toDouble();
+    _fabController.forward();
     
-    // Optimized page listener with throttling
-    _pageController.addListener(() {
-      if (_pageController.hasClients) {
-        final newPageValue = _pageController.page ?? _selectedIndex.toDouble();
-        // Only update if there's a significant change to reduce rebuilds
-        if ((newPageValue - _currentPageValue).abs() > 0.01) {
-          _currentPageValue = newPageValue;
-          // Use animation to trigger smooth rebuilds
-          _pageAnimation = Tween<double>(
-            begin: _currentPageValue,
-            end: _currentPageValue,
-          ).animate(_pageAnimationController);
-          _pageAnimationController.forward(from: 0);
-        }
-      }
-    });
-    
-    // Register tab navigation callback with the navigation service
+    // Register tab navigation callback
     NavigationService().setTabSelectionCallback((tabIndex) {
       _onTabTapped(tabIndex);
     });
     
-    // Initialize main animation controllers (smooth 120Hz optimized)
-    _animationControllers = List.generate(
-      5,
-      (index) => AnimationController(
-        duration: const Duration(milliseconds: 350), // Smooth, fluid timing
-        vsync: this,
-      ),
-    );
-    
-    // Initialize pulse controllers for continuous pulse effect (smooth)
-    _pulseControllers = List.generate(
-      5,
-      (index) => AnimationController(
-        duration: const Duration(milliseconds: 1000), // Gentle pulse rhythm
-        vsync: this,
-      ),
-    );
-    
-    // Initialize scale animations with bounce
-    _scaleAnimations = _animationControllers.map((controller) {
-      return Tween<double>(begin: 1.0, end: 1.3).animate(
-        CurvedAnimation(parent: controller, curve: Curves.elasticOut),
-      );
-    }).toList();
-    
-    // Initialize rotation animations
-    _rotationAnimations = _animationControllers.map((controller) {
-      return Tween<double>(begin: 0.0, end: 0.1).animate(
-        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
-      );
-    }).toList();
-    
-    // Initialize pulse animations
-    _pulseAnimations = _pulseControllers.map((controller) {
-      return Tween<double>(begin: 1.0, end: 1.1).animate(
-        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
-      );
-    }).toList();
-    
-    // Start animation for initially selected tab
-    _animationControllers[_selectedIndex].forward();
-    _pulseControllers[_selectedIndex].repeat(reverse: true);
-    
-    // Check for updates on app startup
+    // Check for updates
     _checkForUpdates();
   }
   
-  /// Check for app updates from GitHub
   void _checkForUpdates() async {
     try {
       final updateService = UpdateService();
@@ -287,326 +228,310 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       print('🔍 Update check failed: $e');
-      if (mounted) {
-        setState(() {});
-      }
     }
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
-    _pageAnimationController.dispose();
-    for (var controller in _animationControllers) {
-      controller.dispose();
-    }
-    for (var controller in _pulseControllers) {
-      controller.dispose();
-    }
+    _fabController.dispose();
     super.dispose();
   }
 
   void _onTabTapped(int index) {
     if (index != _selectedIndex) {
-      // Add haptic feedback for tab change
-      PerformanceUtils.enableHapticFeedback();
-      
-      // Calculate distance to determine animation strategy
-      final distance = (index - _selectedIndex).abs();
-      
-      // Use jump for any non-adjacent navigation (distance > 1)
-      // This ensures direct navigation for all long jumps
-      if (distance > 1) {
-        // For non-adjacent tabs, jump directly (no animation through intermediate pages)
-        _pageController.jumpToPage(index);
-        _updateSelectedIndex(index);
-      } else {
-        // Only animate for adjacent tabs (distance = 1)
-        _pageController.animateToPage(
-          index,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOutCubic,
-        );
-      }
-    } else {
-      // Add haptic feedback for same tab bounce
-      PerformanceUtils.enableHapticFeedback();
-      
-      // Create a strong bounce effect for same tab
-      _animationControllers[index].reverse().then((_) {
-        _animationControllers[index].forward();
-      });
+      setState(() => _selectedIndex = index);
+      _scaffoldKey.currentState?.closeDrawer();
+      _fabController.reset();
+      _fabController.forward();
     }
-  }
-
-  void _onPageChanged(int index) {
-    if (index != _selectedIndex) {
-      _updateSelectedIndex(index);
-    }
-  }
-
-  void _updateSelectedIndex(int index) {
-    // Stop previous tab animations
-    if (_selectedIndex < _animationControllers.length) {
-      _animationControllers[_selectedIndex].reverse();
-      _pulseControllers[_selectedIndex].stop();
-    }
-    
-    setState(() => _selectedIndex = index);
-    
-    // Start new tab animations
-    if (index < _animationControllers.length) {
-      _animationControllers[index].forward();
-      _pulseControllers[index].repeat(reverse: true);
-    }
-  }
-
-  Widget _buildAnimatedIcon(IconData activeIcon, IconData inactiveIcon, int index) {
-    return AnimatedBuilder(
-      animation: Listenable.merge([
-        _pageAnimation, // Listen to page changes
-        _scaleAnimations[index],
-        _rotationAnimations[index],
-        _pulseAnimations[index],
-      ]),
-      builder: (context, child) {
-        // Calculate smooth animation progress based on swipe position
-        double animationProgress = 1.0;
-        double scaleMultiplier = 1.0;
-        
-        // Calculate distance from current page position
-        double distance = (_currentPageValue - index).abs();
-        
-        if (distance <= 1.0) {
-          // We're close to this tab, calculate smooth transition
-          animationProgress = 1.0 - distance;
-          scaleMultiplier = 0.85 + (0.15 * animationProgress); // Scale between 0.85 and 1.0
-        } else {
-          animationProgress = 0.0;
-          scaleMultiplier = 0.85;
-        }
-        
-        final isSelected = _selectedIndex == index;
-        
-        // Combine static animations with real-time swipe animations
-        final finalScale = scaleMultiplier * 
-            (isSelected ? _scaleAnimations[index].value * _pulseAnimations[index].value : 1.0);
-        final rotation = isSelected ? _rotationAnimations[index].value : 0.0;
-        
-        // Smooth color transition based on swipe progress
-        final color = Color.lerp(
-          Colors.grey,
-          const Color(0xFF6366F1),
-          animationProgress,
-        ) ?? Colors.grey;
-        
-        // Modern pill-style icon: gradient/pill when selected, subtle outlined tile when unselected
-        final double tileSize = isSelected ? 48.0 : 40.0;
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 260),
-              curve: Curves.easeOutCubic,
-              width: tileSize,
-              height: tileSize,
-              decoration: BoxDecoration(
-                // Circular token. Unselected tokens are transparent with a subtle border.
-                color: isSelected ? null : Colors.transparent,
-                gradient: isSelected
-                    ? const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                      )
-                    : null,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? Colors.transparent : Theme.of(context).dividerColor.withOpacity(0.12),
-                  width: 1.0,
-                ),
-                boxShadow: isSelected
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF6366F1).withOpacity(0.16),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
-                        ),
-                      ]
-                    : null,
-              ),
-              alignment: Alignment.center,
-                  child: Transform.rotate(
-                angle: rotation,
-                child: Transform.scale(
-                  scale: finalScale,
-                  child: Icon(
-                    isSelected ? activeIcon : inactiveIcon,
-                    // When nav is light, unselected icons should be dark; selected
-                    // icons remain white (they sit on a colored token).
-                    color: isSelected
-                        ? Colors.white
-                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
-                    size: isSelected ? 26 : 22,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Wrap the animated token with a label beneath. Tokens are evenly spaced.
-  Widget _buildTokenWithLabel(IconData activeIcon, IconData inactiveIcon, int index, String label) {
-    final isSelected = _selectedIndex == index;
-
-    return Expanded(
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => _onTabTapped(index),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Use existing animated token
-            _buildAnimatedIcon(activeIcon, inactiveIcon, index),
-            const SizedBox(height: 4),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 220),
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                // When nav is light, selected label uses primary indigo for contrast
-                color: isSelected
-                    ? const Color(0xFF6366F1)
-                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.85),
-              ),
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: _selectedIndex == 0, // Can only pop when on summary tab (index 0)
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop && _selectedIndex != 0) {
-          // If not on summary tab, jump directly to summary tab (no animation through all pages)
-          _pageController.jumpToPage(0);
-          _updateSelectedIndex(0);
-        }
-      },
-      child: Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Spendly',
-          style: const TextStyle(
-            fontFamily: 'BagelFatOne',
-            fontSize: 28,
-            fontWeight: FontWeight.w900, // Use bold weight as fallback
-            color: Colors.white,
-            letterSpacing: 0.2,
-          ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF667EEA), // Light purple-blue
-                Color(0xFF764BA2), // Deep purple
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-      ),
+    return Scaffold(
+      key: _scaffoldKey,
+      drawer: _buildModernDrawer(),
+      appBar: _buildModernAppBar(),
       body: Column(
         children: [
-          // Show update banner if available
           if (_updateInfo != null)
             UpdateBanner(
               updateInfo: _updateInfo!,
-              onDismiss: () {
-                setState(() {
-                  _updateInfo = null;
-                });
-              },
+              onDismiss: () => setState(() => _updateInfo = null),
             ),
-          // Main page content. Wrap PageView with a unified background so all
-          // tabs share the same subtle gradient. This prevents stark white
-          // backgrounds on some screens (Transactions/Income) while others use
-          // cards/gradients, producing a consistent app look.
           Expanded(
-            child: Container(
-              // Use a plain white background for all pages so every tab has
-              // a consistent white canvas.
-              color: Colors.white,
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: _onPageChanged,
-                physics: const BouncingScrollPhysics(
-                  parent: AlwaysScrollableScrollPhysics(),
-                ),
-                children: _tabs,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.05, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
+                );
+              },
+              child: Container(
+                key: ValueKey<int>(_selectedIndex),
+                child: _tabs[_selectedIndex],
               ),
             ),
           ),
         ],
       ),
-      bottomNavigationBar: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-  // Remove horizontal inset so the rounded nav touches the screen edges
-  margin: EdgeInsets.zero,
-        // Reduce inner padding while keeping rounded container look
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-        decoration: BoxDecoration(
-          // Light themed nav: white rounded bar with subtle border and shadow
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.08),
-            width: 1.0,
+      floatingActionButton: _buildFAB(),
+    );
+  }
+
+  PreferredSizeWidget _buildModernAppBar() {
+    return AppBar(
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      flexibleSpace: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 6),
+        ),
+      ),
+      leading: IconButton(
+        icon: const Icon(Icons.menu_rounded, color: Colors.white),
+        onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+      ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ],
+            child: const Icon(Icons.account_balance_wallet, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            'Spendly',
+            style: TextStyle(
+              fontFamily: 'BagelFatOne',
+              fontSize: 24,
+              color: Colors.white,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.notifications_rounded, color: Colors.white, size: 20),
+          ),
+          onPressed: () {
+            // TODO: Show notifications
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildModernDrawer() {
+    return Drawer(
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF667EEA),
+              Color(0xFF764BA2),
+            ],
+          ),
         ),
         child: SafeArea(
-          top: false,
-          left: false,
-          right: false,
-          bottom: true, // ensure nav sits above system navigation bar
-            child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: Column(
             children: [
-              _buildTokenWithLabel(Icons.bar_chart_rounded, Icons.bar_chart, 0, 'Summary'),
-              _buildTokenWithLabel(Icons.receipt_long_rounded, Icons.receipt_long, 1, 'Spends'),
-              _buildTokenWithLabel(Icons.trending_up_rounded, Icons.trending_up, 2, 'Income'),
-              _buildTokenWithLabel(Icons.account_balance_wallet_rounded, Icons.account_balance_wallet, 3, 'Accounts'),
-              _buildTokenWithLabel(Icons.credit_card_rounded, Icons.credit_card, 4, 'Credit Card'),
+              const SizedBox(height: 20),
+              Container(
+                margin: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.person_rounded,
+                        size: 40,
+                        color: const Color(0xFF667EEA),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Welcome back!',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Spendly Pro',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _tabs.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemBuilder: (context, index) {
+                    final isSelected = _selectedIndex == index;
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => _onTabTapped(index),
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                            decoration: BoxDecoration(
+                              color: isSelected 
+                                  ? Colors.white.withOpacity(0.25) 
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isSelected 
+                                    ? Colors.white.withOpacity(0.4) 
+                                    : Colors.transparent,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _tabIcons[index],
+                                  color: Colors.white,
+                                  size: isSelected ? 26 : 24,
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Text(
+                                    _tabTitles[index],
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: isSelected ? 16 : 15,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    color: Colors.white,
+                                    size: 16,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: Colors.white.withOpacity(0.9), size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Spendly v1.1.5',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          Text(
+                            'Your smart companion',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildFAB() {
+    return ScaleTransition(
+      scale: _fabAnimation,
+      child: FloatingActionButton.extended(
+        onPressed: () {
+          // Navigate to add transaction - always open in Transactions tab
+          NavigationService().navigateToTab(1);
+        },
+        backgroundColor: const Color(0xFF667EEA),
+        elevation: 8,
+        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        label: const Text(
+          'Add Expense',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+          ),
+        ),
       ),
     );
   }

@@ -1373,315 +1373,219 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (dialogContext) {
-        // Create controllers inside the builder so they're tied to the dialog lifecycle
-        final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
-        final noteController = TextEditingController(text: tx.note);
-        final receivableAmountController = TextEditingController(text: receivableAmount);
-        
-        return StatefulBuilder(
-          builder: (stateContext, setState) {
-            return LayoutBuilder(
-              builder: (context, constraints) {
-                return SingleChildScrollView(
-                  reverse: true,
-                  padding: EdgeInsets.only(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+      ),
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (stateContext, setState) {
+          // Controllers tied to dialog lifecycle
+          final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
+          final noteController = TextEditingController(text: tx.note);
+          final receivableAmountController = TextEditingController(text: receivableAmount);
+
+          return SingleChildScrollView(
+            padding: EdgeInsets.only(bottom: MediaQuery.of(dialogContext).viewInsets.bottom),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(bounds),
+                        child: const Text(
+                          'Edit Transaction',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.grey[100]),
+                        child: IconButton(
+                          icon: Icon(Icons.close, color: Colors.grey[600], size: 22),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: Center(
-                    child: Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                      elevation: 12,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                  const SizedBox(height: 12),
+                  Divider(height: 1, color: Colors.grey[200]),
+                  const SizedBox(height: 16),
+
+                  // Account (disabled like previous behavior)
+                  _buildModernDropdown(
+                    label: 'Account / Card',
+                    icon: Icons.account_balance_wallet,
+                    value: accountName.isEmpty ? null : accountName,
+                    items: [
+                      DropdownMenuItem<String>(value: accountName, child: Text(accountName, style: const TextStyle(fontSize: 16, color: Colors.grey)))
+                    ],
+                    onChanged: (v) {},
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Amount (disabled)
+                  TextField(
+                    controller: amountController,
+                    decoration: _buildModernInputDecoration(labelText: 'Amount', icon: Icons.currency_rupee, errorText: amountError),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    enabled: false,
+                    style: const TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Category
+                  _buildModernDropdown<ExpenseCategory>(
+                    label: 'Category',
+                    icon: Icons.category,
+                    value: category,
+                    items: ExpenseCategory.values
+                        .map((c) => DropdownMenuItem<ExpenseCategory>(value: c, child: Text(c.name[0].toUpperCase() + c.name.substring(1), style: const TextStyle(fontSize: 16, color: Colors.black87))))
+                        .toList(),
+                    onChanged: (v) => setState(() => category = v ?? ExpenseCategory.office),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Note
+                  TextField(
+                    controller: noteController,
+                    decoration: _buildModernInputDecoration(labelText: 'Note', icon: Icons.note),
+                    onChanged: (v) => setState(() {}),
+                    style: const TextStyle(color: Colors.black87, fontSize: 16),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 18),
+
+                  // Receivable section (disabled inputs, but modern look)
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF764BA2).withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFF764BA2).withOpacity(0.18)),
+                    ),
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Edit Transaction',
-                                  style: TextStyle(fontFamily: 'Inter', 
-                                    color: const Color(0xFF6366F1),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 28,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.close, color: Color(0xFF6366F1), size: 28),
-                                  onPressed: () => Navigator.of(dialogContext).pop(),
-                                  tooltip: 'Close',
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            // Source type and account/amount fields are disabled in edit mode
-                            Row(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                Expanded(
-                                  child: Material(
-                                    color: Colors.grey[200],
-                                    borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(16),
-                                      bottomLeft: Radius.circular(16),
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.account_balance_wallet, color: Colors.grey[400]),
-                                          const SizedBox(width: 8),
-                                          Text('Account', style: TextStyle(color: Colors.grey[400])),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Material(
-                                    color: Colors.grey[200],
-                                    borderRadius: const BorderRadius.only(
-                                      topRight: Radius.circular(16),
-                                      bottomRight: Radius.circular(16),
-                                    ),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: [
-                                          Icon(Icons.credit_card, color: Colors.grey[400]),
-                                          const SizedBox(width: 8),
-                                          Text('Credit Card', style: TextStyle(color: Colors.grey[400])),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            DropdownButtonFormField<String>(
-                              value: accountName.isEmpty ? null : accountName,
-                              items: [
-                                DropdownMenuItem<String>(
-                                  value: accountName,
-                                  child: Text(accountName, style: const TextStyle(fontSize: 16, color: Colors.grey)),
-                                ),
-                              ],
-                              onChanged: null,
-                              decoration: InputDecoration(
-                                labelText: 'Account / Card',
-                                prefixIcon: Icon(Icons.account_balance_wallet, color: Colors.grey),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              dropdownColor: Colors.white,
-                              icon: Icon(Icons.arrow_drop_down, color: Colors.grey),
-                            ),
-                            const SizedBox(height: 18),
-                            TextField(
-                              decoration: InputDecoration(
-                                labelText: 'Amount',
-                                prefixIcon: Icon(Icons.currency_rupee, color: Colors.grey),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                              controller: amountController,
-                              enabled: false,
-                              style: const TextStyle(color: Colors.grey, fontSize: 16, fontWeight: FontWeight.w500),
-                            ),
-                            const SizedBox(height: 18),
-                            DropdownButtonFormField<ExpenseCategory>(
-                              initialValue: category,
-                              items: ExpenseCategory.values.map((c) => DropdownMenuItem(
-                                value: c,
-                                child: Text(
-                                  c.name[0].toUpperCase() + c.name.substring(1),
-                                  style: const TextStyle(fontSize: 16, color: Colors.black87),
-                                ),
-                              )).toList(),
-                              onChanged: (v) => setState(() => category = v ?? ExpenseCategory.office),
-                              decoration: InputDecoration(
-                                labelText: 'Category',
-                                prefixIcon: Icon(Icons.category, color: const Color(0xFF8B5CF6)),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              dropdownColor: Colors.white,
-                              icon: Icon(Icons.arrow_drop_down, color: const Color(0xFF8B5CF6)),
-                            ),
-                            const SizedBox(height: 18),
-                            TextField(
-                              decoration: InputDecoration(
-                                labelText: 'Note',
-                                prefixIcon: Icon(Icons.note, color: const Color(0xFF8B5CF6)),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              controller: noteController,
-                              onChanged: (v) => setState(() {}),
-                              style: const TextStyle(color: Colors.black87, fontSize: 16),
-                              maxLines: 2,
-                            ),
-                            const SizedBox(height: 18),
-                            // Receivable section is disabled in edit mode
                             Container(
-                              decoration: BoxDecoration(
-                                color: Colors.purple.shade50,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: Colors.purple.shade200),
-                              ),
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.people, color: Colors.grey, size: 20),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          'Split Bill / Receivable',
-                                          style: TextStyle(
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Row(
-                                    children: [
-                                      Checkbox(
-                                        value: isReceivable,
-                                        onChanged: null,
-                                        activeColor: Colors.grey,
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          'Split bill',
-                                          style: TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (isReceivable) ...[
-                                    const SizedBox(height: 12),
-                                    TextField(
-                                      enabled: false,
-                                      decoration: InputDecoration(
-                                        labelText: 'Receivable Amount',
-                                        prefixIcon: Icon(Icons.currency_rupee, color: Colors.grey),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                        filled: true,
-                                        fillColor: Colors.grey[100],
-                                        hintText: 'Receivable amount',
-                                      ),
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      controller: receivableAmountController,
-                                      style: const TextStyle(color: Colors.grey, fontSize: 16),
-                                    ),
-                                  ],
-                                ],
-                              ),
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(shape: BoxShape.circle, color: const Color(0xFF764BA2).withOpacity(0.15)),
+                              child: const Icon(Icons.people, color: Color(0xFF764BA2), size: 18),
                             ),
-                            const SizedBox(height: 28),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                TextButton(
-                                  onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: const Color(0xFF6366F1),
-                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                                    textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
-                                  ),
-                                  child: const Text('Cancel'),
-                                ),
-                                FloatingActionButton.extended(
-                                  heroTag: 'editTxFab',
-                                  backgroundColor: const Color(0xFF6366F1),
-                                  foregroundColor: Colors.white,
-                                  elevation: 2,
-                                  onPressed: (accountName.isEmpty || amountError != null || amountController.text.isEmpty || isSubmitting ||
-                                      (isReceivable && (receivableAmountError != null || receivableAmount.isEmpty)))
-                                      ? null
-                                      : () async {
-                                          setState(() => isSubmitting = true);
-                                          try {
-                                            final enteredAmount = double.parse(amountController.text);
-                                            final updatedTx = ExpenseTransaction(
-                                              id: tx.id,
-                                              accountName: accountName,
-                                              amount: enteredAmount,
-                                              date: tx.date,
-                                              category: category,
-                                              note: noteController.text,
-                                              sourceType: sourceType,
-                                              isReceivable: isReceivable,
-                                              receivableAmount: isReceivable ? double.parse(receivableAmount) : 0.0,
-                                              receivableAmountPaid: tx.receivableAmountPaid, // Preserve existing paid amount
-                                            );
-                                            await Provider.of<DataProvider>(context, listen: false).updateTransaction(txIndex, updatedTx, tx.amount, tx.accountName);
-                                            if (dialogContext.mounted) {
-                                              Navigator.of(dialogContext).pop();
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: const Text('Transaction updated successfully!'),
-                                                  backgroundColor: const Color(0xFF6366F1),
-                                                  behavior: SnackBarBehavior.floating,
-                                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                  duration: const Duration(milliseconds: 1500),
-                                                ),
-                                              );
-                                            }
-                                          } catch (e) {
-                                            setState(() => isSubmitting = false);
-                                            if (dialogContext.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Text('Error updating transaction: $e'),
-                                                  backgroundColor: Colors.red,
-                                                  behavior: SnackBarBehavior.floating,
-                                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                  duration: const Duration(milliseconds: 1500),
-                                                ),
-                                              );
-                                            }
-                                          }
-                                        },
-                                  label: isSubmitting
-                                      ? const SizedBox(
-                                          width: 22,
-                                          height: 22,
-                                          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                                        )
-                                      : const Text('Save'),
-                                ),
-                              ],
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text('Receivable / Split Bill', style: TextStyle(color: const Color(0xFF764BA2), fontWeight: FontWeight.w700, fontSize: 15)),
                             ),
                           ],
                         ),
-                      ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Checkbox(value: isReceivable, onChanged: null, activeColor: Colors.grey[400]),
+                            const SizedBox(width: 8),
+                            Expanded(child: Text(isReceivable ? 'Receivable' : 'Not receivable', style: TextStyle(color: Colors.grey[700]))),
+                          ],
+                        ),
+                        if (isReceivable) ...[
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: receivableAmountController,
+                            enabled: false,
+                            decoration: InputDecoration(
+                              labelText: 'Receivable amount',
+                              prefixIcon: Container(padding: const EdgeInsets.all(10), child: const Icon(Icons.currency_rupee, size: 20, color: Color(0xFF8B5CF6))),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              filled: true,
+                              fillColor: Colors.grey[50],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                );
-              },
-            );
-          },
-        );
-      },
+                  const SizedBox(height: 24),
+
+                  // Action buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
+                        style: TextButton.styleFrom(foregroundColor: Colors.grey[600], padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14), textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        child: const Text('Cancel'),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [Color(0xFF667EEA), Color(0xFF764BA2)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                          borderRadius: BorderRadius.circular(28),
+                          boxShadow: [
+                            BoxShadow(color: const Color(0xFF667EEA).withOpacity(0.18), blurRadius: 14, offset: const Offset(0, 6)),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28))),
+                          onPressed: (accountName.isEmpty || amountController.text.isEmpty || isSubmitting) ? null : () async {
+                            setState(() => isSubmitting = true);
+                            try {
+                              final enteredAmount = double.parse(amountController.text);
+                              final updatedTx = ExpenseTransaction(
+                                id: tx.id,
+                                accountName: accountName,
+                                amount: enteredAmount,
+                                date: tx.date,
+                                category: category,
+                                note: noteController.text,
+                                sourceType: sourceType,
+                                isReceivable: isReceivable,
+                                receivableAmount: isReceivable ? double.parse(receivableAmount) : 0.0,
+                                receivableAmountPaid: tx.receivableAmountPaid,
+                              );
+                              await Provider.of<DataProvider>(context, listen: false).updateTransaction(txIndex, updatedTx, tx.amount, tx.accountName);
+                              if (dialogContext.mounted) {
+                                Navigator.of(dialogContext).pop();
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction updated successfully!'), backgroundColor: Color(0xFF6366F1), behavior: SnackBarBehavior.floating, margin: EdgeInsets.only(bottom: 72, left: 16, right: 16), duration: Duration(milliseconds: 1500)));
+                              }
+                            } catch (e) {
+                              setState(() => isSubmitting = false);
+                              if (dialogContext.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error updating transaction: $e'), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating, margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16), duration: const Duration(milliseconds: 1500)));
+                              }
+                            }
+                          },
+                          child: isSubmitting
+                            ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
+                                  : Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.save, size: 18, color: Colors.white),
+                                  SizedBox(width: 8),
+                                  Text('Save', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                ],
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -2132,155 +2036,203 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
     bool isSubmitting = false;
     bool isReceivable = false;
     String receivableAmount = '';
+    DateTime? receivableDate;
     TransactionSourceType sourceType = TransactionSourceType.bankAccount;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
       builder: (dialogContext) => StatefulBuilder(
         builder: (stateContext, setState) => LayoutBuilder(
           builder: (context, constraints) => SingleChildScrollView(
-            reverse: true,
             padding: EdgeInsets.only(
               left: 0,
               right: 0,
               top: 0,
               bottom: MediaQuery.of(context).viewInsets.bottom,
             ),
-            child: Center(
-              child: Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                elevation: 12,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header with gradient title
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ).createShader(bounds),
+                        child: const Text(
+                          'Add Transaction',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[100],
+                        ),
+                        child: IconButton(
+                          icon: Icon(Icons.close, color: Colors.grey[600], size: 24),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
+                          tooltip: 'Close',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: Colors.grey[200]),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Add Transaction',
-                            style: TextStyle(fontFamily: 'Inter', 
-                              color: const Color(0xFF6366F1), // Modern indigo
-                              fontWeight: FontWeight.bold,
-                              fontSize: 28,
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Color(0xFF6366F1), size: 28),
-                            onPressed: () => Navigator.of(dialogContext).pop(),
-                            tooltip: 'Close',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-                      Row(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Expanded(
-                            child: Material(
-                              color: sourceType == TransactionSourceType.bankAccount
-                                  ? const Color(0xFF6366F1) // Modern indigo
-                                  : Colors.grey[200],
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(16),
-                                bottomLeft: Radius.circular(16),
-                              ),
-                              child: InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    sourceType = TransactionSourceType.bankAccount;
-                                    accountName = accounts.isNotEmpty ? accounts[0].name : '';
-                                    amountError = null;
-                                  });
-                                },
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          children: [
+                            Expanded(
+                              child: Material(
+                                color: sourceType == TransactionSourceType.bankAccount
+                                    ? const Color(0xFF667EEA)
+                                    : Colors.grey[100],
                                 borderRadius: const BorderRadius.only(
                                   topLeft: Radius.circular(16),
                                   bottomLeft: Radius.circular(16),
                                 ),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.account_balance_wallet,
-                                        color: sourceType == TransactionSourceType.bankAccount
-                                            ? Colors.white
-                                            : Colors.grey[600],
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Account',
-                                        style: TextStyle(
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      sourceType = TransactionSourceType.bankAccount;
+                                      accountName = accounts.isNotEmpty ? accounts[0].name : '';
+                                      amountError = null;
+                                    });
+                                  },
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(16),
+                                    bottomLeft: Radius.circular(16),
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.account_balance_wallet,
                                           color: sourceType == TransactionSourceType.bankAccount
                                               ? Colors.white
-                                              : Colors.grey[800],
+                                              : Colors.grey[600],
+                                          size: 20,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Account',
+                                          style: TextStyle(
+                                            color: sourceType == TransactionSourceType.bankAccount
+                                                ? Colors.white
+                                                : Colors.grey[600],
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          Expanded(
-                            child: Material(
-                              color: sourceType == TransactionSourceType.creditCard
-                                  ? const Color(0xFF6366F1)
-                                  : Colors.grey[200],
-                              borderRadius: const BorderRadius.only(
-                                topRight: Radius.circular(16),
-                                bottomRight: Radius.circular(16),
-                              ),
-                              child: InkWell(
-                                onTap: () {
-                                  final creditCards = Provider.of<DataProvider>(context, listen: false).creditCards;
-                                  setState(() {
-                                    sourceType = TransactionSourceType.creditCard;
-                                    accountName = creditCards.isNotEmpty ? creditCards[0].name : '';
-                                    amountError = null;
-                                  });
-                                },
+                            Expanded(
+                              child: Material(
+                                color: sourceType == TransactionSourceType.creditCard
+                                    ? const Color(0xFF667EEA)
+                                    : Colors.grey[100],
                                 borderRadius: const BorderRadius.only(
                                   topRight: Radius.circular(16),
                                   bottomRight: Radius.circular(16),
                                 ),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.credit_card,
-                                        color: sourceType == TransactionSourceType.creditCard
-                                            ? Colors.white
-                                            : Colors.grey[600],
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Credit Card',
-                                        style: TextStyle(
+                                child: InkWell(
+                                  onTap: () {
+                                    final creditCards = Provider.of<DataProvider>(context, listen: false).creditCards;
+                                    setState(() {
+                                      sourceType = TransactionSourceType.creditCard;
+                                      accountName = creditCards.isNotEmpty ? creditCards[0].name : '';
+                                      amountError = null;
+                                    });
+                                  },
+                                  borderRadius: const BorderRadius.only(
+                                    topRight: Radius.circular(16),
+                                    bottomRight: Radius.circular(16),
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.credit_card,
                                           color: sourceType == TransactionSourceType.creditCard
                                               ? Colors.white
-                                              : Colors.grey[800],
+                                              : Colors.grey[600],
+                                          size: 20,
                                         ),
-                                      ),
-                                    ],
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Credit Card',
+                                          style: TextStyle(
+                                            color: sourceType == TransactionSourceType.creditCard
+                                                ? Colors.white
+                                                : Colors.grey[600],
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        initialValue: accountName.isEmpty ? null : accountName,
+                      const SizedBox(height: 24),
+                      const SizedBox(height: 24),
+                      
+                      // Account/Card selection dropdown
+                      _buildModernDropdown(
+                        label: sourceType == TransactionSourceType.bankAccount ? 'Account' : 'Credit Card',
+                        icon: sourceType == TransactionSourceType.bankAccount
+                            ? Icons.account_balance_wallet
+                            : Icons.credit_card,
+                        value: accountName.isEmpty ? null : accountName,
                         items: (sourceType == TransactionSourceType.bankAccount
                                 ? accounts.cast<dynamic>()
                                 : Provider.of<DataProvider>(context, listen: false).creditCards.cast<dynamic>())
@@ -2312,26 +2264,15 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                           accountName = v ?? '';
                           amountError = null;
                         }),
-                        decoration: InputDecoration(
-                          labelText: sourceType == TransactionSourceType.bankAccount ? 'Account' : 'Credit Card',
-                          prefixIcon: Icon(
-                            sourceType == TransactionSourceType.bankAccount
-                                ? Icons.account_balance_wallet
-                                : Icons.credit_card,
-                            color: const Color(0xFF8B5CF6),
-                          ),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        dropdownColor: Colors.white,
-                        icon: Icon(Icons.arrow_drop_down, color: const Color(0xFF8B5CF6)),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
+                      
+                      // Amount field
                       TextField(
-                        decoration: InputDecoration(
+                        decoration: _buildModernInputDecoration(
                           labelText: 'Amount',
-                          prefixIcon: Icon(Icons.currency_rupee, color: const Color(0xFF8B5CF6)),
+                          icon: Icons.currency_rupee,
                           errorText: amountError,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
                         ),
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (v) {
@@ -2371,10 +2312,14 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                         style: const TextStyle(color: Colors.black87, fontSize: 16, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 18),
-                      DropdownButtonFormField<ExpenseCategory>(
-                        initialValue: category,
+                      
+                      // Category dropdown
+                      _buildModernDropdown(
+                        label: 'Category',
+                        icon: Icons.category,
+                        value: category,
                         items: ExpenseCategory.values
-                            .map((c) => DropdownMenuItem(
+                            .map((c) => DropdownMenuItem<ExpenseCategory>(
                                   value: c,
                                   child: Text(
                                     c.name[0].toUpperCase() + c.name.substring(1),
@@ -2383,153 +2328,198 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                                 ))
                             .toList(),
                         onChanged: (v) => setState(() => category = v ?? ExpenseCategory.office),
-                        decoration: InputDecoration(
-                          labelText: 'Category',
-                          prefixIcon: Icon(Icons.category, color: const Color(0xFF8B5CF6)),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        dropdownColor: Colors.white,
-                        icon: Icon(Icons.arrow_drop_down, color: const Color(0xFF8B5CF6)),
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 16),
+                      
+                      // Note field
                       TextField(
-                        decoration: InputDecoration(
+                        decoration: _buildModernInputDecoration(
                           labelText: 'Note',
-                          prefixIcon: Icon(Icons.note, color: const Color(0xFF8B5CF6)),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          icon: Icons.note,
                         ),
                         onChanged: (v) => setState(() => note = v),
                         style: const TextStyle(color: Colors.black87, fontSize: 16),
                         maxLines: 2,
                       ),
                       const SizedBox(height: 18),
-                      // Receivable Section
+                      
+                      // Receivable Section with enhanced styling
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.purple.shade50,
+                          color: const Color(0xFF764BA2).withOpacity(0.08),
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.purple.shade200),
+                          border: Border.all(color: const Color(0xFF764BA2).withOpacity(0.2)),
                         ),
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Receivable header with toggle
                             Row(
                               children: [
-                                Icon(Icons.people, color: const Color(0xFF8B5CF6), size: 20),
-                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: const Color(0xFF764BA2).withOpacity(0.15),
+                                  ),
+                                  child: const Icon(Icons.people, color: Color(0xFF764BA2), size: 18),
+                                ),
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    'Split Bill / Receivable',
+                                    'Receivable / Split Bill',
                                     style: TextStyle(
-                                      color: const Color(0xFF8B5CF6),
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
+                                      color: const Color(0xFF764BA2),
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 15,
                                     ),
                                   ),
                                 ),
-                                // Toggle for showing actual expense
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      'Show actual',
-                                      style: TextStyle(
-                                        color: () {
-                                          // Check if receivable amount equals total amount
-                                          if (isReceivable && receivableAmount.isNotEmpty && amount.isNotEmpty) {
-                                            final receivableVal = double.tryParse(receivableAmount);
-                                            final totalAmount = double.tryParse(amount);
-                                            if (receivableVal != null && totalAmount != null && receivableVal >= totalAmount) {
-                                              return Colors.grey[400]; // Grey out when full payment
-                                            }
-                                          }
-                                          return Colors.grey[600];
-                                        }(),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Switch(
-                                      value: _showActualExpense,
-                                      onChanged: () {
-                                        // Check if receivable amount equals total amount
-                                        if (isReceivable && receivableAmount.isNotEmpty && amount.isNotEmpty) {
-                                          final receivableVal = double.tryParse(receivableAmount);
-                                          final totalAmount = double.tryParse(amount);
-                                          if (receivableVal != null && totalAmount != null && receivableVal >= totalAmount) {
-                                            return null; // Disable when full payment
-                                          }
-                                        }
-                                        return (value) {
-                                          setState(() {
-                                            _showActualExpense = value;
-                                          });
-                                        };
-                                      }(),
-                                      activeColor: const Color(0xFF8B5CF6),
-                                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Checkbox(
+                                Switch(
                                   value: isReceivable,
                                   onChanged: (value) {
-                                    setState(() {
-                                      isReceivable = value ?? false;
-                                      if (!isReceivable) {
-                                        receivableAmount = '';
-                                        receivableAmountError = null;
-                                      }
-                                    });
+                                    if (value && amount.isEmpty) {
+                                      // Show error inline, similar to amount validation
+                                      setState(() {
+                                        amountError = 'Add amount first';
+                                      });
+                                    } else {
+                                      setState(() {
+                                        amountError = null;
+                                        isReceivable = value;
+                                        if (!isReceivable) {
+                                          receivableAmount = '';
+                                          receivableAmountError = null;
+                                          receivableDate = null;
+                                        }
+                                      });
+                                    }
                                   },
                                   activeColor: const Color(0xFF8B5CF6),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    'Split bill',
-                                    style: TextStyle(
-                                      color: Colors.grey[700],
-                                      fontSize: 14,
-                                    ),
-                                  ),
                                 ),
                               ],
                             ),
                             if (isReceivable) ...[
                               const SizedBox(height: 12),
-                              TextField(
-                                decoration: InputDecoration(
-                                  labelText: 'Receivable Amount',
-                                  prefixIcon: Icon(Icons.currency_rupee, color: const Color(0xFF8B5CF6)),
-                                  errorText: receivableAmountError,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  hintText: 'Amount friends will pay back',
-                                ),
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                onChanged: (v) {
-                                  setState(() {
-                                    receivableAmount = v;
-                                    receivableAmountError = null;
-                                    if (receivableAmount.isNotEmpty) {
-                                      final receivableVal = double.tryParse(receivableAmount);
-                                      final totalAmount = double.tryParse(amount);
-                                      if (receivableVal == null || receivableVal <= 0) {
-                                        receivableAmountError = 'Enter a valid receivable amount';
-                                      } else if (totalAmount != null && receivableVal > totalAmount) {
-                                        receivableAmountError = 'Receivable amount cannot exceed total amount';
-                                      }
-                                    }
-                                  });
+                              // Date picker
+                              GestureDetector(
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: receivableDate ?? DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                                  );
+                                  if (picked != null) {
+                                    setState(() => receivableDate = picked);
+                                  }
                                 },
-                                style: const TextStyle(color: Colors.black87, fontSize: 16),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFF8B5CF6), width: 1.5),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.calendar_today, color: const Color(0xFF8B5CF6), size: 16),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        receivableDate != null
+                                            ? '${receivableDate!.day}/${receivableDate!.month}/${receivableDate!.year}'
+                                            : 'Pick date',
+                                        style: const TextStyle(
+                                          color: Color(0xFF8B5CF6),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              const SizedBox(height: 12),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: TextField(
+                                  decoration: InputDecoration(
+                                    labelText: 'Receivable Amount',
+                                    prefixIcon: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Icon(Icons.currency_rupee, color: const Color(0xFF8B5CF6), size: 20),
+                                    ),
+                                    prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                                    errorText: receivableAmountError,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 2),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    hintText: 'Receivable amount',
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                    labelStyle: const TextStyle(
+                                      color: Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  onChanged: (v) {
+                                    setState(() {
+                                      receivableAmount = v;
+                                      receivableAmountError = null;
+                                      if (receivableAmount.isNotEmpty) {
+                                        final receivableVal = double.tryParse(receivableAmount);
+                                        final totalAmount = double.tryParse(amount);
+                                        if (receivableVal == null || receivableVal <= 0) {
+                                          receivableAmountError = 'Enter a valid receivable amount';
+                                        } else if (totalAmount != null && receivableVal > totalAmount) {
+                                          receivableAmountError = 'Cannot exceed total';
+                                        }
+                                      }
+                                    });
+                                  },
+                                  style: const TextStyle(color: Colors.black87, fontSize: 16),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // Show actual expense checkbox
+                              Row(
+                                children: [
+                                  Checkbox(
+                                    value: _showActualExpense,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _showActualExpense = value ?? false;
+                                      });
+                                    },
+                                    activeColor: const Color(0xFF8B5CF6),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'Show actual expense',
+                                      style: TextStyle(
+                                        color: Colors.grey[700],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                               if (_showActualExpense && amount.isNotEmpty && receivableAmount.isNotEmpty && (double.tryParse(receivableAmount) ?? 0) < (double.tryParse(amount) ?? 0)) ...[
                                 const SizedBox(height: 8),
@@ -2563,53 +2553,73 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                         ),
                       ),
                       const SizedBox(height: 28),
+                      
+                      // Action buttons with modern styling
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           TextButton(
                             onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
                             style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFF6366F1),
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                              textStyle: const TextStyle(fontSize: 17, fontWeight: FontWeight.w500),
+                              foregroundColor: Colors.grey[600],
+                              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                              textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                             ),
                             child: const Text('Cancel'),
                           ),
-                          FloatingActionButton.extended(
-                            heroTag: 'addTxFab',
-                            backgroundColor: const Color(0xFF6366F1),
-                            foregroundColor: Colors.white,
-                            elevation: 2,
-                            onPressed: (accountName.isEmpty || amountError != null || amount.isEmpty || isSubmitting ||
-                                (isReceivable && (receivableAmountError != null || receivableAmount.isEmpty)))
-                                ? null
-                                : () async {
-                                    setState(() => isSubmitting = true);
-                                    try {
-                                      final enteredAmount = double.parse(amount);
-                                      
-                                      // Validate if account/card exists and has sufficient balance
-                                      final dataProvider = Provider.of<DataProvider>(context, listen: false);
-                                      if (!dataProvider.canAddTransactionToAccount(accountName, sourceType)) {
-                                        throw Exception('Selected ${sourceType == TransactionSourceType.bankAccount ? 'account' : 'credit card'} does not exist');
-                                      }
-                                      
-                                      if (!dataProvider.hasSufficientBalance(accountName, sourceType, enteredAmount)) {
-                                        final message = sourceType == TransactionSourceType.bankAccount 
-                                            ? 'Insufficient balance in bank account'
-                                            : 'Amount exceeds available credit limit';
-                                        throw Exception(message);
-                                      }
-                                      
-                                      await dataProvider.addTransaction(
-                                        ExpenseTransaction(
-                                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                          accountName: accountName,
-                                          amount: enteredAmount,
-                                          date: DateTime.now(),
-                                          category: category,
-                                          note: note,
-                                          sourceType: sourceType,
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(28),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF667EEA).withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                              ),
+                              onPressed: (accountName.isEmpty || amountError != null || amount.isEmpty || isSubmitting ||
+                                  (isReceivable && (receivableAmountError != null || receivableAmount.isEmpty)))
+                                  ? null
+                                  : () async {
+                                      setState(() => isSubmitting = true);
+                                      try {
+                                        final enteredAmount = double.parse(amount);
+                                        
+                                        // Validate if account/card exists and has sufficient balance
+                                        final dataProvider = Provider.of<DataProvider>(context, listen: false);
+                                        if (!dataProvider.canAddTransactionToAccount(accountName, sourceType)) {
+                                          throw Exception('Selected ${sourceType == TransactionSourceType.bankAccount ? 'account' : 'credit card'} does not exist');
+                                        }
+                                        
+                                        if (!dataProvider.hasSufficientBalance(accountName, sourceType, enteredAmount)) {
+                                          final message = sourceType == TransactionSourceType.bankAccount 
+                                              ? 'Insufficient balance in bank account'
+                                              : 'Amount exceeds available credit limit';
+                                          throw Exception(message);
+                                        }
+                                        
+                                        await dataProvider.addTransaction(
+                                          ExpenseTransaction(
+                                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                            accountName: accountName,
+                                            amount: enteredAmount,
+                                            date: DateTime.now(),
+                                            category: category,
+                                            note: note,
+                                            sourceType: sourceType,
                                           isReceivable: isReceivable,
                                           receivableAmount: isReceivable ? double.parse(receivableAmount) : 0.0,
                                         ),
@@ -2641,20 +2651,28 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                                       }
                                     }
                                   },
-                            label: isSubmitting
+                              child: isSubmitting
                                 ? const SizedBox(
                                     width: 22,
                                     height: 22,
                                     child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
                                   )
-                                : const Text('Add'),
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.add, size: 18, color: Colors.white),
+                                      SizedBox(width: 10),
+                                      Text('Add', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                    ],
+                                  ),
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -2901,6 +2919,8 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                                 child: AnimatedSize(
                                   duration: const Duration(milliseconds: 350),
                                   curve: Curves.easeInOutCubic,
+                                  alignment: Alignment.topCenter,
+                                  clipBehavior: Clip.hardEdge,
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -3179,47 +3199,79 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                                                   Expanded(
                                                     child: Padding(
                                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                      child: ElevatedButton.icon(
-                                                        icon: const Icon(Icons.edit, size: 18),
-                                                        label: const Text('Edit'),
-                                                        style: ElevatedButton.styleFrom(
-                                                          backgroundColor: const Color(0xFF6366F1),
-                                                          foregroundColor: Colors.white,
-                                                          padding: const EdgeInsets.symmetric(vertical: 14),
-                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          gradient: const LinearGradient(
+                                                            colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                                                            begin: Alignment.topLeft,
+                                                            end: Alignment.bottomRight,
+                                                          ),
+                                                          borderRadius: BorderRadius.circular(14),
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: const Color(0xFF667EEA).withOpacity(0.18),
+                                                              blurRadius: 12,
+                                                              offset: const Offset(0, 6),
+                                                            ),
+                                                          ],
                                                         ),
-                                                        onPressed: () => _showEditTransactionDialog(context, Provider.of<DataProvider>(context, listen: false).accounts, tx, txIndex),
+                                                        child: ElevatedButton.icon(
+                                                          icon: const Icon(Icons.edit, size: 18),
+                                                          label: const Text('Edit'),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: Colors.transparent,
+                                                            foregroundColor: Colors.white,
+                                                            elevation: 0,
+                                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                                          ),
+                                                          onPressed: () => _showEditTransactionDialog(context, Provider.of<DataProvider>(context, listen: false).accounts, tx, txIndex),
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
                                                   Expanded(
                                                     child: Padding(
                                                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                      child: ElevatedButton.icon(
-                                                        icon: const Icon(Icons.delete, size: 18),
-                                                        label: const Text('Delete'),
-                                                        style: ElevatedButton.styleFrom(
-                                                          backgroundColor: Colors.red,
-                                                          foregroundColor: Colors.white,
-                                                          padding: const EdgeInsets.symmetric(vertical: 14),
-                                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.redAccent,
+                                                          borderRadius: BorderRadius.circular(14),
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                              color: Colors.redAccent.withOpacity(0.16),
+                                                              blurRadius: 12,
+                                                              offset: const Offset(0, 6),
+                                                            ),
+                                                          ],
                                                         ),
-                                                        onPressed: () async {
-                                                          if (await _confirmDelete(context, 'transaction')) {
-                                                            if (context.mounted) {
-                                                              Provider.of<DataProvider>(context, listen: false).deleteTransaction(txIndex);
-                                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                                SnackBar(
-                                                                  content: const Text('Transaction deleted'),
-                                                                  backgroundColor: Colors.red,
-                                                                  behavior: SnackBarBehavior.floating,
-                                                                  margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                                  duration: const Duration(milliseconds: 1500),
-                                                                ),
-                                                              );
+                                                        child: ElevatedButton.icon(
+                                                          icon: const Icon(Icons.delete, size: 18),
+                                                          label: const Text('Delete'),
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor: Colors.transparent,
+                                                            foregroundColor: Colors.white,
+                                                            elevation: 0,
+                                                            padding: const EdgeInsets.symmetric(vertical: 14),
+                                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                                          ),
+                                                          onPressed: () async {
+                                                            if (await _confirmDelete(context, 'transaction')) {
+                                                              if (context.mounted) {
+                                                                Provider.of<DataProvider>(context, listen: false).deleteTransaction(txIndex);
+                                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                                  SnackBar(
+                                                                    content: const Text('Transaction deleted'),
+                                                                    backgroundColor: Colors.red,
+                                                                    behavior: SnackBarBehavior.floating,
+                                                                    margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                                                    duration: const Duration(milliseconds: 1500),
+                                                                  ),
+                                                                );
+                                                              }
                                                             }
-                                                          }
-                                                        },
+                                                          },
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
@@ -3618,6 +3670,93 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
           ),
         ),
       ),
+    );
+  }
+
+  // Helper method to build modern dropdown
+  Widget _buildModernDropdown<T>({
+    required String label,
+    required IconData icon,
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+  }) {
+    return DropdownButtonFormField<T>(
+      value: value,
+      items: items,
+      onChanged: onChanged,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Container(
+          padding: const EdgeInsets.all(10),
+          child: Icon(icon, color: const Color(0xFF667EEA), size: 20),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF667EEA), width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        labelStyle: const TextStyle(
+          color: Colors.grey,
+          fontWeight: FontWeight.w500,
+          fontSize: 13,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+      ),
+      dropdownColor: Colors.white,
+      icon: Icon(Icons.arrow_drop_down, color: const Color(0xFF667EEA), size: 24),
+      style: const TextStyle(
+        color: Colors.black87,
+        fontSize: 15,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  // Helper method to build modern input decoration
+  InputDecoration _buildModernInputDecoration({
+    required String labelText,
+    required IconData icon,
+    String? errorText,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      prefixIcon: Container(
+        padding: const EdgeInsets.all(10),
+        child: Icon(icon, color: const Color(0xFF667EEA), size: 20),
+      ),
+      prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+      errorText: errorText,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF667EEA), width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      labelStyle: const TextStyle(
+        color: Colors.grey,
+        fontWeight: FontWeight.w500,
+        fontSize: 13,
+      ),
+      filled: true,
+      fillColor: Colors.white,
     );
   }
 }

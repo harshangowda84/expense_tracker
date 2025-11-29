@@ -159,8 +159,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  int _selectedIndex = 0;
-  late AnimationController _navController;
+  late TabController _tabController;
   
   // Update functionality
   UpdateInfo? _updateInfo;
@@ -173,28 +172,29 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     CreditCardsTab(),
   ];
 
-  static const List<_NavItem> _navItems = [
-    _NavItem(icon: Icons.grid_view_rounded, label: 'Overview'),
-    _NavItem(icon: Icons.swap_vert_rounded, label: 'Transactions'),
-    _NavItem(icon: Icons.attach_money_rounded, label: 'Income'),
-    _NavItem(icon: Icons.wallet_rounded, label: 'Wallets'),
-    _NavItem(icon: Icons.payment_rounded, label: 'Cards'),
+  static const List<_TabData> _tabData = [
+    _TabData(icon: Icons.analytics_outlined, activeIcon: Icons.analytics, label: 'Analytics'),
+    _TabData(icon: Icons.receipt_outlined, activeIcon: Icons.receipt, label: 'Expenses'),
+    _TabData(icon: Icons.trending_up_outlined, activeIcon: Icons.trending_up, label: 'Income'),
+    _TabData(icon: Icons.account_balance_outlined, activeIcon: Icons.account_balance, label: 'Accounts'),
+    _TabData(icon: Icons.credit_card_outlined, activeIcon: Icons.credit_card, label: 'Cards'),
   ];
 
   @override
   void initState() {
     super.initState();
     
-    _navController = AnimationController(
-      duration: const Duration(milliseconds: 250),
-      vsync: this,
-    );
+    _tabController = TabController(length: _tabs.length, vsync: this);
     
-    _navController.forward();
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
     
     // Register tab navigation callback
     NavigationService().setTabSelectionCallback((tabIndex) {
-      _onTabTapped(tabIndex);
+      _tabController.animateTo(tabIndex);
     });
     
     // Check for updates
@@ -218,262 +218,244 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   @override
   void dispose() {
-    _navController.dispose();
+    _tabController.dispose();
     super.dispose();
-  }
-
-  void _onTabTapped(int index) {
-    if (index != _selectedIndex) {
-      setState(() => _selectedIndex = index);
-      _navController.reset();
-      _navController.forward();
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
-      body: Column(
-        children: [
-          _buildCompactHeader(),
-          if (_updateInfo != null)
-            UpdateBanner(
-              updateInfo: _updateInfo!,
-              onDismiss: () => setState(() => _updateInfo = null),
-            ),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 350),
-              transitionBuilder: (child, animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0, 0.02),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(
-                      parent: animation,
-                      curve: Curves.easeOutCubic,
-                    )),
-                    child: child,
-                  ),
-                );
-              },
-              child: Container(
-                key: ValueKey<int>(_selectedIndex),
-                child: _tabs[_selectedIndex],
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) {
+          return [
+            SliverAppBar(
+              expandedHeight: 180,
+              floating: false,
+              pinned: true,
+              elevation: 0,
+              backgroundColor: Colors.white,
+              flexibleSpace: FlexibleSpaceBar(
+                background: _buildHeader(),
+                collapseMode: CollapseMode.pin,
               ),
-            ),
-          ),
-        ],
-      ),
-      bottomNavigationBar: _buildModernBottomNav(),
-      floatingActionButton: _buildCenterFAB(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
-  Widget _buildCompactHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF06B6D4), Color(0xFF0891B2)],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF06B6D4).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: const Icon(
-                  Icons.account_balance_wallet_rounded,
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(60),
+                child: Container(
                   color: Colors.white,
-                  size: 24,
+                  child: Column(
+                    children: [
+                      if (_updateInfo != null)
+                        UpdateBanner(
+                          updateInfo: _updateInfo!,
+                          onDismiss: () => setState(() => _updateInfo = null),
+                        ),
+                      _buildTabBar(),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Spendly',
-                      style: TextStyle(
-                        fontFamily: 'BagelFatOne',
-                        fontSize: 22,
-                        color: Colors.white,
-                        height: 1,
-                      ),
-                    ),
-                    SizedBox(height: 2),
-                    Text(
-                      'Track smarter, spend better',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white70,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.notifications_rounded, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ),
-            ],
-          ),
+            ),
+          ];
+        },
+        body: TabBarView(
+          controller: _tabController,
+          physics: const BouncingScrollPhysics(),
+          children: _tabs,
         ),
       ),
     );
   }
 
-  Widget _buildModernBottomNav() {
+  Widget _buildHeader() {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 30,
-            offset: const Offset(0, -10),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(_navItems.length, (index) {
-              if (index == 2) {
-                return const SizedBox(width: 56); // Space for center FAB
-              }
-              return _buildNavItem(index);
-            }),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(int index) {
-    final isSelected = _selectedIndex == index;
-    final item = _navItems[index];
-    
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => _onTabTapped(index),
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF06B6D4).withOpacity(0.1) : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF06B6D4) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  item.icon,
-                  color: isSelected ? Colors.white : Colors.grey.shade600,
-                  size: isSelected ? 24 : 22,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                item.label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                  color: isSelected ? const Color(0xFF06B6D4) : Colors.grey.shade600,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCenterFAB() {
-    return Container(
-      width: 64,
-      height: 64,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF06B6D4), Color(0xFF0891B2)],
+          colors: [
+            Color(0xFF1E293B),
+            Color(0xFF334155),
+          ],
         ),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF06B6D4).withOpacity(0.4),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            NavigationService().navigateToTab(1);
-          },
-          customBorder: const CircleBorder(),
-          child: const Icon(
-            Icons.add_rounded,
-            color: Colors.white,
-            size: 32,
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF3B82F6).withOpacity(0.3),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.account_balance_wallet_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Spendly',
+                          style: TextStyle(
+                            fontFamily: 'BagelFatOne',
+                            fontSize: 28,
+                            color: Colors.white,
+                            height: 1.2,
+                          ),
+                        ),
+                        Text(
+                          'Financial Intelligence',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.white60,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.search_rounded, color: Colors.white),
+                      onPressed: () {},
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                    ),
+                    child: Stack(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                          onPressed: () {},
+                        ),
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            width: 8,
+                            height: 8,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFEF4444),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      height: 60,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: TabBar(
+        controller: _tabController,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
+        indicator: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF3B82F6).withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        indicatorSize: TabBarIndicatorSize.tab,
+        dividerColor: Colors.transparent,
+        labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: EdgeInsets.zero,
+        tabs: _tabData.asMap().entries.map((entry) {
+          final index = entry.key;
+          final tab = entry.value;
+          final isSelected = _tabController.index == index;
+          
+          return Tab(
+            height: 44,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isSelected ? tab.activeIcon : tab.icon,
+                    size: 20,
+                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    tab.label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                      color: isSelected ? Colors.white : Colors.grey.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
 }
 
-class _NavItem {
+class _TabData {
   final IconData icon;
+  final IconData activeIcon;
   final String label;
   
-  const _NavItem({required this.icon, required this.label});
+  const _TabData({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
 }

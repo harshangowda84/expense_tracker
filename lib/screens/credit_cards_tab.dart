@@ -8,8 +8,35 @@ import 'account_transactions_page.dart';
 
 enum PaymentMethod { other, bankAccount }
 
-class CreditCardsTab extends StatelessWidget {
+class CreditCardsTab extends StatefulWidget {
   const CreditCardsTab({super.key});
+
+  @override
+  State<CreditCardsTab> createState() => _CreditCardsTabState();
+}
+
+class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProviderStateMixin {
+  late AnimationController _arrowController;
+  late Animation<double> _arrowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _arrowController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+    
+    _arrowAnimation = Tween<double>(begin: -10.0, end: 10.0).animate(
+      CurvedAnimation(parent: _arrowController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _arrowController.dispose();
+    super.dispose();
+  }
 
   void _showResetCreditCardDialog(BuildContext context, CreditCard card, int index) {
     showDialog(
@@ -885,101 +912,181 @@ class CreditCardsTab extends StatelessWidget {
     int selectedDay = 1;
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
-                  maxWidth: MediaQuery.of(context).size.width * 0.9,
-                ),
-                padding: const EdgeInsets.all(24), // Reduced padding for more space
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)], // Purple gradient to match payment dialog
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: SingleChildScrollView(
+                child: Container(
+                  padding: const EdgeInsets.all(28),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: PerformanceUtils.createOptimizedScrollView(
-                  physics: const ClampingScrollPhysics(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Icon with gradient background
+                      Container(
+                        width: 64,
+                        height: 64,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFEC4899).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.credit_card_rounded,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Title
                       const Text(
                         'Add Credit Card',
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: Colors.white,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    TextField(
-                      controller: cardNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Card Name',
-                        filled: true,
-                        fillColor: Colors.white
+                      const SizedBox(height: 6),
+                      // Subtitle
+                      Text(
+                        'Manage your credit card expenses and payments',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          height: 1.4,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: cardLimitController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Card Limit',
-                        filled: true,
-                        fillColor: Colors.white
+                      const SizedBox(height: 24),
+                      // Card Name Field
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: TextField(
+                          controller: cardNameController,
+                          style: const TextStyle(fontSize: 15),
+                          decoration: InputDecoration(
+                            labelText: 'Card Name',
+                            labelStyle: TextStyle(color: Colors.grey[600]),
+                            hintText: 'e.g., HDFC Platinum, ICICI Amazon',
+                            hintStyle: TextStyle(fontSize: 13, color: Colors.grey[400]),
+                            prefixIcon: Icon(Icons.credit_card, color: Colors.grey[600], size: 22),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    InkWell(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          backgroundColor: Colors.transparent,
-                          builder: (BuildContext context) {
-                            return Container(
-                              height: 400,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(20),
-                                  topRight: Radius.circular(20),
+                      const SizedBox(height: 16),
+                      // Card Limit Field
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey[200]!),
+                        ),
+                        child: TextField(
+                          controller: cardLimitController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(fontSize: 15),
+                          decoration: InputDecoration(
+                            labelText: 'Credit Limit',
+                            labelStyle: TextStyle(color: Colors.grey[600]),
+                            hintText: 'Enter your credit limit',
+                            hintStyle: TextStyle(fontSize: 13, color: Colors.grey[400]),
+                            prefixIcon: Icon(Icons.currency_rupee, color: Colors.grey[600], size: 22),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Bill Due Date Selector
+                      InkWell(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            backgroundColor: Colors.transparent,
+                            isScrollControlled: true,
+                            builder: (BuildContext context) {
+                              return Container(
+                                height: 420,
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(24),
+                                    topRight: Radius.circular(24),
+                                  ),
                                 ),
-                              ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: Colors.deepPurple.shade50,
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(20),
-                                        topRight: Radius.circular(20),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [Colors.pink.shade50, Colors.purple.shade50],
+                                        ),
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(24),
+                                          topRight: Radius.circular(24),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(10),
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+                                              ),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: const Icon(Icons.calendar_today, color: Colors.white, size: 20),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          const Text(
+                                            'Select Bill Due Date',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF1E293B),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                    child: const Row(
-                                      children: [
-                                        Icon(Icons.calendar_today, color: Colors.deepPurple),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Select Bill Due Date',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.deepPurple,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: GridView.builder(
-                                      padding: const EdgeInsets.all(16),
+                                    Expanded(
+                                      child: GridView.builder(
+                                        padding: const EdgeInsets.all(20),
                                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: 5,
                                         childAspectRatio: 1,
@@ -1031,80 +1138,89 @@ class CreditCardsTab extends StatelessWidget {
                       },
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey[50],
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey[200]!),
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            const Text(
-                              'Bill Due Date',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
+                            Icon(Icons.calendar_month, color: Colors.grey[600], size: 22),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Bill Due Date',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Day $selectedDay of every month',
+                                    style: const TextStyle(
+                                      color: Color(0xFF1E293B),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.calendar_today, color: Colors.deepPurple),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${selectedDay}${_getDaySuffix(selectedDay)} of every month',
-                                    style: const TextStyle(
-                                      color: Colors.deepPurple,
-                                      fontSize: 14, // Reduced font size slightly
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
                           ],
                         ),
                       ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Info text
+                    Row(
+                      children: [
+                        Icon(Icons.info_outline, size: 13, color: Colors.grey[500]),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Payment reminder will be shown before this date',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 24),
                     Row(
                       children: [
                         Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.purple,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.grey[700],
+                              side: BorderSide(color: Colors.grey[300]!),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
                             ),
                             onPressed: () {
                               Navigator.of(context).pop();
                             },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.close, size: 16),
-                                SizedBox(width: 4),
-                                Text('Cancel', style: TextStyle(fontSize: 13)),
-                              ],
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.purple,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                              backgroundColor: const Color(0xFFEC4899),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
                             ),
                             onPressed: () async {
                               if (cardNameController.text.isNotEmpty && cardLimitController.text.isNotEmpty) {
@@ -1119,24 +1235,26 @@ class CreditCardsTab extends StatelessWidget {
                                   Navigator.of(context).pop();
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                      content: const Text('Credit card added successfully!'),
-                                      backgroundColor: Colors.deepPurple,
+                                      content: Row(
+                                        children: const [
+                                          Icon(Icons.check_circle, color: Colors.white),
+                                          SizedBox(width: 12),
+                                          Text('Credit card added successfully!'),
+                                        ],
+                                      ),
+                                      backgroundColor: const Color(0xFF10B981),
                                       behavior: SnackBarBehavior.floating,
-                                      margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                      duration: Duration(milliseconds: 1500),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      margin: const EdgeInsets.all(16),
+                                      duration: const Duration(seconds: 2),
                                     ),
                                   );
                                 }
                               }
                             },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.add, size: 16),
-                                SizedBox(width: 4),
-                                Text('Add', style: TextStyle(fontSize: 13)),
-                              ],
+                            child: const Text(
+                              'Add Card',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                             ),
                           ),
                         ),
@@ -1159,24 +1277,151 @@ class CreditCardsTab extends StatelessWidget {
       color: Colors.white,
       child: Column(
         children: [
+          // Back button header
+          Padding(
+            padding: const EdgeInsets.only(left: 4, top: 40, bottom: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Color(0xFF1E293B)),
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+                tooltip: 'Back',
+              ),
+            ),
+          ),
           Expanded(
             child: Selector<DataProvider, List<CreditCard>>(
               selector: (_, provider) => provider.creditCards,
               builder: (context, creditCards, _) {
                 if (creditCards.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.credit_card, size: 64, color: Colors.grey[400]),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No credit cards yet',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.grey[600],
+                  return Material(
+                    color: Colors.white,
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.pink.shade100,
+                                  Colors.purple.shade100,
+                                ],
+                              ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.credit_card_rounded,
+                              size: 48,
+                              color: Colors.pink.shade300,
+                            ),
                           ),
+                          const SizedBox(height: 20),
+                          Text(
+                            'Track Card Spending',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Add a credit card to track your spending',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.pink.shade50,
+                                  Colors.purple.shade50,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.pink.shade100,
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.lightbulb_rounded,
+                                      color: Colors.amber.shade600,
+                                      size: 24,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Get Started in 2 Easy Steps',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.pink.shade900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                _buildCardStep('1', 'Add Credit Card', 'Tap the button below', Icons.credit_card_rounded),
+                                const SizedBox(height: 8),
+                                _buildCardStep('2', 'Track Expenses', 'Add your card transactions', Icons.receipt_long_rounded),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          AnimatedBuilder(
+                            animation: _arrowAnimation,
+                            builder: (context, child) {
+                              return Transform.translate(
+                                offset: Offset(0, _arrowAnimation.value),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.arrow_downward_rounded,
+                                      size: 40,
+                                      color: Colors.pink.shade300,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Tap below',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.pink.shade400,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   );
                 }
@@ -1564,26 +1809,123 @@ class CreditCardsTab extends StatelessWidget {
           ),
           Container(
             padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text(
-                'Add Credit Card',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+            child: AnimatedBuilder(
+              animation: _arrowController,
+              builder: (context, child) {
+                return Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.pink.shade300.withOpacity(0.4 + (_arrowController.value * 0.3)),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _showAddCreditCardDialog(context),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [Colors.pink.shade400, Colors.purple.shade400],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.add_card_rounded, color: Colors.white, size: 24),
+                            const SizedBox(width: 12),
+                            const Text(
+                              'Add Credit Card',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardStep(String number, String title, String subtitle, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.pink.shade100.withOpacity(0.5),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.pink.shade400, Colors.purple.shade400],
               ),
-              onPressed: () => _showAddCreditCardDialog(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6366F1), // Modern indigo
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 52),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                elevation: 4,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
               ),
             ),
           ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(icon, color: Colors.pink.shade300, size: 24),
         ],
       ),
     );

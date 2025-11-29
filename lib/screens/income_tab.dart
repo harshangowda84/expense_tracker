@@ -5,6 +5,7 @@ import '../providers/data_provider.dart';
 import '../models/income_transaction.dart';
 import '../utils/income_category_utils.dart';
 import '../utils/performance_utils.dart';
+import 'accounts_tab.dart';
 
 // Track expanded transactions by their index
 final Set<int> _expandedIncomeIndices = {};
@@ -137,27 +138,39 @@ class _IncomeTabState extends State<IncomeTab> {
   }
 
   Widget _buildSearchAndFilters() {
+    final hasFilters = _selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null;
+    
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         children: [
-          // Search Bar
+          // Search bar - takes most of the space
           Expanded(
             child: Container(
+              height: 48,
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey[200]!),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: TextField(
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
+                style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
-                  hintText: 'Search',
-                  prefixIcon: Icon(Icons.search, color: Colors.grey[600]),
+                  hintText: 'Search income...',
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
+                  prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[400], size: 22),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: Icon(Icons.clear, color: Colors.grey[600]),
+                          icon: Icon(Icons.close_rounded, color: Colors.grey[400], size: 20),
                           onPressed: () {
                             _searchController.clear();
                             setState(() => _searchQuery = '');
@@ -165,77 +178,44 @@ class _IncomeTabState extends State<IncomeTab> {
                         )
                       : null,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-          // Filter Button
+          const SizedBox(width: 8),
+          // Filter button - compact
           Container(
+            height: 48,
+            width: 48,
             decoration: BoxDecoration(
-              color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) 
-                  ? const Color(0xFF6366F1) : Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) 
-                    ? const Color(0xFF6366F1) : Colors.grey[300]!,
-              ),
+              gradient: hasFilters
+                  ? const LinearGradient(
+                      colors: [Color(0xFF10B981), Color(0xFF14B8A6)],
+                    )
+                  : null,
+              color: hasFilters ? null : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: hasFilters ? Colors.transparent : Colors.grey[200]!),
+              boxShadow: [
+                BoxShadow(
+                  color: hasFilters 
+                      ? const Color(0xFF10B981).withOpacity(0.3)
+                      : Colors.black.withOpacity(0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Material(
               color: Colors.transparent,
               child: InkWell(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
                 onTap: _showFilterDialog,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.filter_list,
-                        color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) 
-                            ? Colors.white : Colors.grey[600],
-                        size: 20,
-                      ),
-                      const SizedBox(width: 4),
-                      if (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) ...[
-                        if (_selectedCategory != null) ...[
-                          Icon(
-                            IncomeCategoryUtils.getCategoryIcon(_selectedCategory!),
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                        ],
-                        if (_selectedDateFilter != DateFilterType.all) ...[
-                          Icon(
-                            Icons.calendar_today,
-                            color: Colors.white,
-                            size: 16,
-                          ),
-                          const SizedBox(width: 4),
-                        ],
-                        Text(
-                          _getFilterDisplayText(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ] else ...[
-                        Text(
-                          'Filter',
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
+                child: Icon(
+                  Icons.tune_rounded,
+                  color: hasFilters ? Colors.white : Colors.grey[600],
+                  size: 22,
                 ),
               ),
             ),
@@ -538,37 +518,147 @@ class _IncomeTabState extends State<IncomeTab> {
                 
                 if (filteredTransactions.isEmpty) {
                   return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.trending_up, size: 64, color: Colors.grey[400]),
-                        const SizedBox(height: 16),
-                        Text(
-                          _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
-                              ? 'No income matches your filters'
-                              : 'No income recorded yet',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.grey[600],
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 100,
+                            height: 100,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.green.shade100,
+                                  Colors.teal.shade100,
+                                ],
                               ),
-                        ),
-                        if (_searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) ...[
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                                _selectedCategory = null;
-                                _selectedDateFilter = DateFilterType.all;
-                                _selectedSourceFilter = null;
-                                _customStartDate = null;
-                                _customEndDate = null;
-                              });
-                            },
-                            child: const Text('Clear filters'),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
+                                  ? Icons.search_off_rounded
+                                  : Icons.trending_up_rounded,
+                              size: 48,
+                              color: Colors.green.shade400,
+                            ),
                           ),
+                          const SizedBox(height: 20),
+                          Text(
+                            _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
+                                ? 'No matches found'
+                                : 'Grow Your Wealth',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          if (_searchQuery.isEmpty && _selectedCategory == null && _selectedDateFilter == DateFilterType.all && _selectedSourceFilter == null) ...[
+                            Text(
+                              'Every income matters, track them all',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.green.shade50,
+                                    Colors.teal.shade50,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.green.shade100,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.wallet_rounded,
+                                        color: Colors.green.shade600,
+                                        size: 24,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Quick Setup Guide',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.green.shade900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(builder: (context) => const AccountsTab()),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: _buildIncomeStep('1', 'Add Account', 'Navigate to Accounts', Icons.account_balance_wallet_rounded),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildIncomeStep('2', 'Record Income', 'Use + button to add', Icons.add_circle_rounded),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24),
+                              child: Text(
+                                'Try adjusting your filters',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = '';
+                                  _selectedCategory = null;
+                                  _selectedDateFilter = DateFilterType.all;
+                                  _selectedSourceFilter = null;
+                                  _customStartDate = null;
+                                  _customEndDate = null;
+                                });
+                              },
+                              icon: const Icon(Icons.clear_all_rounded, size: 18),
+                              label: const Text('Clear Filters'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green.shade600,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   );
                 }
@@ -882,9 +972,15 @@ class _IncomeTabState extends State<IncomeTab> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                onPressed: hasAccounts ? _showAddIncomeDialog : null,
+                onPressed: () {
+                  if (hasAccounts) {
+                    _showAddIncomeDialog();
+                  } else {
+                    _showRequireAccountDialog(context);
+                  }
+                },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: hasAccounts ? const Color(0xFF6366F1) : Colors.grey[400],
+                  backgroundColor: const Color(0xFF6366F1),
                   foregroundColor: Colors.white,
                   minimumSize: const Size(double.infinity, 52),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -1682,6 +1778,152 @@ class _IncomeTabState extends State<IncomeTab> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIncomeStep(String number, String title, String subtitle, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.green.shade100.withOpacity(0.5),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.green.shade400, Colors.teal.shade400],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(icon, color: Colors.green.shade300, size: 24),
+        ],
+      ),
+    );
+  }
+
+  void _showRequireAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.green.shade400, Colors.teal.shade400],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.info_outline_rounded, color: Colors.white, size: 32),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Account Required',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Please add an account first to track your income.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF10B981),
+                        side: const BorderSide(color: Color(0xFF10B981)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Cancel', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        DefaultTabController.of(context).animateTo(1); // Navigate to Accounts tab
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Add Account', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

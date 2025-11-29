@@ -5,6 +5,8 @@ import '../models/account.dart';
 import '../models/credit_card.dart';
 import '../providers/data_provider.dart';
 import 'receivable_transactions_page.dart';
+import 'accounts_tab.dart';
+import 'credit_cards_tab.dart';
 import '../utils/performance_utils.dart';
 
 enum DateFilterType {
@@ -24,7 +26,7 @@ class TransactionsTab extends StatefulWidget {
   State<TransactionsTab> createState() => _TransactionsTabState();
 }
 
-class _TransactionsTabState extends State<TransactionsTab> {
+class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProviderStateMixin {
   String _searchQuery = '';
   ExpenseCategory? _selectedCategory;
   DateFilterType _selectedDateFilter = DateFilterType.all;
@@ -34,13 +36,24 @@ class _TransactionsTabState extends State<TransactionsTab> {
   String? _selectedReceivableFilter; // null = all, 'receivable' = only receivable, 'non-receivable' = only non-receivable
   bool _showActualExpense = true; // Toggle for showing "Your actual expense" feature
   final TextEditingController _searchController = TextEditingController();
+  AnimationController? _buttonGlowController;
 
   // Track expanded transactions by their index
   final Set<int> _expandedTransactionIndices = {};
 
   @override
+  void initState() {
+    super.initState();
+    _buttonGlowController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
+    _buttonGlowController?.dispose();
     super.dispose();
   }
 
@@ -135,34 +148,40 @@ class _TransactionsTabState extends State<TransactionsTab> {
   }
 
   Widget _buildSearchAndFilters() {
+    final hasFilters = _selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null;
+    
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Row(
         children: [
-          // Top: Wide Search Bar (reduced height, vertically centered)
-          SizedBox(
-            height: 44,
+          // Search bar - takes most of the space
+          Expanded(
+            flex: 5,
             child: Container(
+              height: 48,
               decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey[300]!),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: Colors.grey[200]!),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              alignment: Alignment.center,
               child: TextField(
                 controller: _searchController,
                 onChanged: (value) => setState(() => _searchQuery = value),
-                textAlignVertical: TextAlignVertical.center,
-                style: const TextStyle(height: 1.0),
+                style: const TextStyle(fontSize: 15),
                 decoration: InputDecoration(
-                  isDense: true,
-                  hintText: 'Search',
-                  prefixIcon: const Icon(Icons.search),
-                  prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                  hintText: 'Search transactions...',
+                  hintStyle: TextStyle(color: Colors.grey[400], fontSize: 15),
+                  prefixIcon: Icon(Icons.search_rounded, color: Colors.grey[400], size: 22),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear),
+                          icon: Icon(Icons.close_rounded, color: Colors.grey[400], size: 20),
                           onPressed: () {
                             _searchController.clear();
                             setState(() => _searchQuery = '');
@@ -170,106 +189,82 @@ class _TransactionsTabState extends State<TransactionsTab> {
                         )
                       : null,
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 6),
-          // Bottom row: Filter and Receivables split the same width as search
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: Container(
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
-                          ? const Color(0xFF6366F1)
-                          : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
-                            ? const Color(0xFF6366F1)
-                            : Colors.grey[300]!,
-                      ),
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(10),
-                        onTap: _showFilterModal,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.filter_list,
-                                color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
-                                    ? Colors.white
-                                    : Colors.grey[600],
-                                size: 16,
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Filter',
-                                style: TextStyle(
-                                  color: (_selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null)
-                                      ? Colors.white
-                                      : Colors.grey[700],
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+          const SizedBox(width: 8),
+          // Filter button - compact
+          Container(
+            height: 48,
+            width: 48,
+            decoration: BoxDecoration(
+              gradient: hasFilters
+                  ? const LinearGradient(
+                      colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+                    )
+                  : null,
+              color: hasFilters ? null : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: hasFilters ? Colors.transparent : Colors.grey[200]!),
+              boxShadow: [
+                BoxShadow(
+                  color: hasFilters 
+                      ? const Color(0xFF667EEA).withOpacity(0.3)
+                      : Colors.black.withOpacity(0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: _showFilterModal,
+                child: Icon(
+                  Icons.tune_rounded,
+                  color: hasFilters ? Colors.white : Colors.grey[600],
+                  size: 22,
                 ),
               ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: SizedBox(
-                  height: 44,
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: () {
-                        Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const ReceivableTransactionsPage(),
-                        ));
-                      },
-                      child: Container(
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(Icons.people, color: Colors.white, size: 16),
-                            SizedBox(width: 6),
-                            Text(
-                              'Receivables',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Receivables button - compact with icon
+          Container(
+            height: 48,
+            width: 48,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+              ),
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const ReceivableTransactionsPage(),
+                  ));
+                },
+                child: const Icon(
+                  Icons.people_rounded,
+                  color: Colors.white,
+                  size: 22,
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -2689,37 +2684,144 @@ class _TransactionsTabState extends State<TransactionsTab> {
               
               if (filteredTransactions.isEmpty) {
                 return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.receipt_long, size: 64, color: Colors.grey[400]),
-                      const SizedBox(height: 16),
-                      Text(
-                        _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
-                            ? 'No transactions match your filters'
-                            : 'No transactions yet',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: Colors.grey[600],
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.blue.shade100,
+                                Colors.purple.shade100,
+                              ],
                             ),
-                      ),
-                      if (_searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all || _selectedSourceFilter != null) ...[
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                              _selectedCategory = null;
-                              _selectedDateFilter = DateFilterType.all;
-                              _selectedSourceFilter = null;
-                              _customStartDate = null;
-                              _customEndDate = null;
-                            });
-                          },
-                          child: const Text('Clear filters'),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
+                                ? Icons.search_off_rounded
+                                : Icons.receipt_long_rounded,
+                            size: 48,
+                            color: Colors.blue.shade300,
+                          ),
                         ),
+                        const SizedBox(height: 20),
+                        Text(
+                          _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
+                              ? 'No matches found'
+                              : 'Start Your Journey',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        if (_searchQuery.isEmpty && _selectedCategory == null && _selectedDateFilter == DateFilterType.all && _selectedSourceFilter == null) ...[
+                          Text(
+                            'Track every penny with ease',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.blue.shade50,
+                                  Colors.purple.shade50,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.blue.shade100,
+                                width: 1,
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.lightbulb_rounded,
+                                      color: Colors.amber.shade600,
+                                      size: 24,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Get Started in 2 Easy Steps',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue.shade900,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                InkWell(
+                                  onTap: () {
+                                    _showAccountTypeDialog(context);
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: _buildStep('1', 'Add an Account', 'Go to Accounts tab', Icons.account_balance_rounded),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildStep('2', 'Add Transaction', 'Tap the + button below', Icons.add_circle_outline_rounded),
+                              ],
+                            ),
+                          ),
+                        ] else ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              'Try adjusting your filters',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[500],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _searchQuery = '';
+                                _selectedCategory = null;
+                                _selectedDateFilter = DateFilterType.all;
+                                _selectedSourceFilter = null;
+                                _customStartDate = null;
+                                _customEndDate = null;
+                              });
+                            },
+                            icon: const Icon(Icons.clear_all_rounded, size: 18),
+                            label: const Text('Clear Filters'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue.shade600,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                 );
               }
@@ -3142,8 +3244,8 @@ class _TransactionsTabState extends State<TransactionsTab> {
               );
             },
           ),
-          ),
         ),
+      ),
         Container(
           padding: const EdgeInsets.all(16.0),
           child: Consumer<DataProvider>(
@@ -3152,29 +3254,370 @@ class _TransactionsTabState extends State<TransactionsTab> {
               final bool hasCreditCards = provider.creditCards.isNotEmpty;
               final bool canAddTransaction = hasAccounts || hasCreditCards;
               
-              return ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text(
-                  'Add Transaction',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                onPressed: canAddTransaction ? () => _showAddTransactionDialog(context, provider.accounts) : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1), // Modern indigo
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size(double.infinity, 52),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 4,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
+              return AnimatedBuilder(
+                animation: _buttonGlowController ?? AnimationController(vsync: this, duration: Duration.zero),
+                builder: (context, child) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.blue.shade300.withOpacity(0.4 + ((_buttonGlowController?.value ?? 0) * 0.3)),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          if (canAddTransaction) {
+                            _showAddTransactionDialog(context, provider.accounts);
+                          } else {
+                            _showRequireAccountDialog(context);
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.blue.shade400, Colors.purple.shade400],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.add_circle_rounded, color: Colors.white, size: 24),
+                              SizedBox(width: 12),
+                              Text(
+                                'Add Transaction',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               );
             },
           ),
         ),
       ],
+    );
+  }
+
+  void _showAccountTypeDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white,
+                  Colors.grey.shade50,
+                ],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.account_balance_wallet_rounded,
+                  size: 48,
+                  color: Color(0xFF667EEA),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Choose Type',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'What would you like to add?',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                _buildDialogOption(
+                  context: context,
+                  icon: Icons.account_balance_rounded,
+                  title: 'Account',
+                  subtitle: 'Add a bank account',
+                  gradientColors: [const Color(0xFF667EEA), const Color(0xFF764BA2)],
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AccountsTab()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _buildDialogOption(
+                  context: context,
+                  icon: Icons.credit_card_rounded,
+                  title: 'Credit Card',
+                  subtitle: 'Add a credit card',
+                  gradientColors: [const Color(0xFFEC4899), const Color(0xFF8B5CF6)],
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const CreditCardsTab()),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDialogOption({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Color> gradientColors,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.grey.shade200,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: gradientColors,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStep(String number, String title, String subtitle, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.blue.shade100.withOpacity(0.5),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.blue.shade400, Colors.purple.shade400],
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(icon, color: Colors.blue.shade300, size: 24),
+        ],
+      ),
+    );
+  }
+
+  void _showRequireAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue.shade400, Colors.purple.shade400],
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.info_outline_rounded, color: Colors.white, size: 32),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Account Required',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Please add an account or credit card first to track your transactions.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF6366F1),
+                        side: const BorderSide(color: Color(0xFF6366F1)),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Cancel', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showAccountTypeDialog(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      child: const Text('Add Account', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

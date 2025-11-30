@@ -2701,144 +2701,88 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
               final filteredTransactions = _filterTransactions(allTransactions);
               
               if (filteredTransactions.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.blue.shade100,
-                                Colors.purple.shade100,
-                              ],
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
-                                ? Icons.search_off_rounded
-                                : Icons.receipt_long_rounded,
-                            size: 48,
-                            color: Colors.blue.shade300,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
-                              ? 'No matches found'
-                              : 'Start Your Journey',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        if (_searchQuery.isEmpty && _selectedCategory == null && _selectedDateFilter == DateFilterType.all && _selectedSourceFilter == null) ...[
-                          Text(
-                            'Track every penny with ease',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: Colors.grey[500],
-                            ),
-                          ),
-                          const SizedBox(height: 20),
+                // Simplified, well-balanced empty state to avoid parser issues
+                return SingleChildScrollView(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
                           Container(
-                            padding: const EdgeInsets.all(16),
+                            width: 96,
+                            height: 96,
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.blue.shade50,
-                                  Colors.purple.shade50,
-                                ],
+                                colors: [Colors.blue.shade100, Colors.purple.shade100],
                               ),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
+                                  ? Icons.search_off_rounded
+                                  : Icons.receipt_long_rounded,
+                              size: 48,
+                              color: Colors.blue.shade300,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            _searchQuery.isNotEmpty || _selectedCategory != null || _selectedDateFilter != DateFilterType.all
+                                ? 'No matches found'
+                                : 'Start Your Journey',
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Track every penny with ease',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 15, color: Colors.grey[500]),
+                          ),
+                          const SizedBox(height: 20),
+                          // Steps container
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(colors: [Colors.blue.shade50, Colors.purple.shade50], begin: Alignment.topLeft, end: Alignment.bottomRight),
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: Colors.blue.shade100,
-                                width: 1,
-                              ),
+                              border: Border.all(color: Colors.blue.shade100, width: 1),
                             ),
                             child: Column(
                               children: [
                                 Row(
                                   children: [
-                                    Icon(
-                                      Icons.lightbulb_rounded,
-                                      color: Colors.amber.shade600,
-                                      size: 24,
-                                    ),
+                                    Icon(Icons.lightbulb_rounded, color: Colors.amber.shade600, size: 24),
                                     const SizedBox(width: 8),
-                                    Text(
-                                      'Get Started in 2 Easy Steps',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.blue.shade900,
-                                      ),
-                                    ),
+                                    Text('Get Started in 2 Easy Steps', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue.shade900)),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                InkWell(
-                                  onTap: () {
-                                    _showAccountTypeDialog(context);
-                                  },
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: _buildStep('1', 'Add an Account', 'Go to Accounts tab', Icons.account_balance_rounded),
-                                ),
+                                Builder(builder: (context) {
+                                  final provider = Provider.of<DataProvider>(context, listen: false);
+                                  final bool hasAccounts = provider.accounts.isNotEmpty;
+                                  return InkWell(
+                                    onTap: () {
+                                      if (hasAccounts) {
+                                        _showAddTransactionDialog(context, provider.accounts);
+                                      } else {
+                                        _showAccountTypeDialog(context);
+                                      }
+                                    },
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: _buildStep('1', 'Add an Account', hasAccounts ? 'Add your first transaction' : 'Tap here to add account', Icons.account_balance_rounded),
+                                  );
+                                }),
                                 const SizedBox(height: 8),
                                 _buildStep('2', 'Add Transaction', 'Tap the + button below', Icons.add_circle_outline_rounded),
                               ],
                             ),
                           ),
-                        ] else ...[
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: Text(
-                              'Try adjusting your filters',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton.icon(
-                            onPressed: () {
-                              _searchController.clear();
-                              setState(() {
-                                _searchQuery = '';
-                                _selectedCategory = null;
-                                _selectedDateFilter = DateFilterType.all;
-                                _selectedSourceFilter = null;
-                                _customStartDate = null;
-                                _customEndDate = null;
-                              });
-                            },
-                            icon: const Icon(Icons.clear_all_rounded, size: 18),
-                            label: const Text('Clear Filters'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue.shade600,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 );

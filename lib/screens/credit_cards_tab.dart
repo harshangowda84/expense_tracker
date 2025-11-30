@@ -648,10 +648,10 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                   maxHeight: MediaQuery.of(context).size.height * 0.8,
                   maxWidth: MediaQuery.of(context).size.width * 0.9,
                 ),
-                padding: const EdgeInsets.all(24), // Reduced padding for more space
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)], // Purple gradient to match payment dialog
+                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -672,6 +672,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                     const SizedBox(height: 24),
                     TextField(
                       controller: cardNameController,
+                      onChanged: (_) => setState(() {}),
                       decoration: const InputDecoration(
                         labelText: 'Card Name',
                         filled: true,
@@ -682,12 +683,47 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                     TextField(
                       controller: cardLimitController,
                       keyboardType: TextInputType.number,
+                      onChanged: (_) => setState(() {}),
                       decoration: const InputDecoration(
                         labelText: 'Card Limit',
                         filled: true,
                         fillColor: Colors.white,
                       ),
                     ),
+                    // Validation error message for limit
+                    if (cardLimitController.text.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                              double.tryParse(cardLimitController.text) != null && double.tryParse(cardLimitController.text)! > 0
+                                  ? Icons.check_circle
+                                  : Icons.error_outline,
+                              size: 14,
+                              color: double.tryParse(cardLimitController.text) != null && double.tryParse(cardLimitController.text)! > 0
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                double.tryParse(cardLimitController.text) == null
+                                    ? 'Please enter a valid number'
+                                    : double.tryParse(cardLimitController.text)! <= 0
+                                        ? 'Limit must be greater than 0'
+                                        : 'Valid limit',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: double.tryParse(cardLimitController.text) != null && double.tryParse(cardLimitController.text)! > 0
+                                      ? Colors.green
+                                      : Colors.red,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     const SizedBox(height: 16),
                     InkWell(
                       onTap: () {
@@ -808,7 +844,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                     '${selectedDay}${_getDaySuffix(selectedDay)} of every month',
                                     style: const TextStyle(
                                       color: Colors.deepPurple,
-                                      fontSize: 14, // Reduced font size slightly
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -852,41 +888,44 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                           ),
                           icon: const Icon(Icons.save),
                           label: const Text('Save'),
-                          onPressed: () async {
-                            if (cardNameController.text.isNotEmpty && cardLimitController.text.isNotEmpty) {
-                              final originalCard = card.copyWith(); // Deep copy for undo
-                              final updatedCard = CreditCard(
-                                name: cardNameController.text,
-                                limit: double.parse(cardLimitController.text),
-                                dueDate: selectedDay,
-                                addedDate: card.addedDate,
-                                usedAmount: card.usedAmount, // Preserve existing used amount
-                              );
-                              await Provider.of<DataProvider>(context, listen: false)
-                                  .updateCreditCard(index, updatedCard);
-                              if (context.mounted) {
-                                Navigator.of(context).pop();
-                                final rootContext = Navigator.of(context).context;
-                                ScaffoldMessenger.of(rootContext).showSnackBar(
-                                  SnackBar(
-                                    content: const Text('Credit card updated successfully!'),
-                                    backgroundColor: Colors.deepPurple,
-                                    behavior: SnackBarBehavior.floating,
-                                    margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                    duration: const Duration(seconds: 5),
-                                    action: SnackBarAction(
-                                      label: 'UNDO',
-                                      textColor: Colors.white,
-                                      onPressed: () {
-                                        Provider.of<DataProvider>(rootContext, listen: false)
-                                            .updateCreditCard(index, originalCard);
-                                      },
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          },
+                          onPressed: cardNameController.text.isNotEmpty &&
+                                  cardLimitController.text.isNotEmpty &&
+                                  double.tryParse(cardLimitController.text) != null &&
+                                  double.tryParse(cardLimitController.text)! > 0
+                              ? () async {
+                                  final originalCard = card.copyWith();
+                                  final updatedCard = CreditCard(
+                                    name: cardNameController.text,
+                                    limit: double.parse(cardLimitController.text),
+                                    dueDate: selectedDay,
+                                    addedDate: card.addedDate,
+                                    usedAmount: card.usedAmount,
+                                  );
+                                  await Provider.of<DataProvider>(context, listen: false)
+                                      .updateCreditCard(index, updatedCard);
+                                  if (context.mounted) {
+                                    Navigator.of(context).pop();
+                                    final rootContext = Navigator.of(context).context;
+                                    ScaffoldMessenger.of(rootContext).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('Credit card updated successfully!'),
+                                        backgroundColor: Colors.deepPurple,
+                                        behavior: SnackBarBehavior.floating,
+                                        margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+                                        duration: const Duration(seconds: 5),
+                                        action: SnackBarAction(
+                                          label: 'UNDO',
+                                          textColor: Colors.white,
+                                          onPressed: () {
+                                            Provider.of<DataProvider>(rootContext, listen: false)
+                                                .updateCreditCard(index, originalCard);
+                                          },
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              : null,
                         ),
                       ],
                     ),
@@ -1015,6 +1054,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           ),
+                          onChanged: (_) => setState(() {}),
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -1038,8 +1078,43 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                           ),
+                          onChanged: (_) => setState(() {}),
                         ),
                       ),
+                      // Validation error message for limit
+                      if (cardLimitController.text.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                double.tryParse(cardLimitController.text) != null && double.tryParse(cardLimitController.text)! > 0
+                                    ? Icons.check_circle
+                                    : Icons.error_outline,
+                                size: 14,
+                                color: double.tryParse(cardLimitController.text) != null && double.tryParse(cardLimitController.text)! > 0
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  double.tryParse(cardLimitController.text) == null
+                                      ? 'Please enter a valid number'
+                                      : double.tryParse(cardLimitController.text)! <= 0
+                                          ? 'Limit must be greater than 0'
+                                          : 'Valid limit',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: double.tryParse(cardLimitController.text) != null && double.tryParse(cardLimitController.text)! > 0
+                                        ? Colors.green
+                                        : Colors.red,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       const SizedBox(height: 16),
                       // Bill Due Date Selector
                       InkWell(
@@ -1233,21 +1308,24 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                               padding: const EdgeInsets.symmetric(vertical: 13),
                             ),
-                            onPressed: () async {
-                              if (cardNameController.text.isNotEmpty && cardLimitController.text.isNotEmpty) {
-                                final card = CreditCard(
-                                  name: cardNameController.text,
-                                  limit: double.parse(cardLimitController.text),
-                                  dueDate: selectedDay,
-                                  addedDate: DateTime.now(),
-                                );
-                                await Provider.of<DataProvider>(context, listen: false).addCreditCard(card);
-                                if (context.mounted) {
-                                  Navigator.of(context).pop();
-                                  _showSuccessDialog(context, 'Credit card added successfully!');
-                                }
-                              }
-                            },
+                            onPressed: cardNameController.text.isNotEmpty &&
+                                    cardLimitController.text.isNotEmpty &&
+                                    double.tryParse(cardLimitController.text) != null &&
+                                    double.tryParse(cardLimitController.text)! > 0
+                                ? () async {
+                                    final card = CreditCard(
+                                      name: cardNameController.text,
+                                      limit: double.parse(cardLimitController.text),
+                                      dueDate: selectedDay,
+                                      addedDate: DateTime.now(),
+                                    );
+                                    await Provider.of<DataProvider>(context, listen: false).addCreditCard(card);
+                                    if (context.mounted) {
+                                      Navigator.of(context).pop();
+                                      _showSuccessDialog(context, 'Credit card added successfully!');
+                                    }
+                                  }
+                                : null,
                             child: const Text(
                               'Add Card',
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),

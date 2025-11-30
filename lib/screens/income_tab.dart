@@ -27,7 +27,7 @@ class IncomeTab extends StatefulWidget {
   State<IncomeTab> createState() => _IncomeTabState();
 }
 
-class _IncomeTabState extends State<IncomeTab> {
+class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMixin {
   String _searchQuery = '';
   IncomeCategory? _selectedCategory;
   DateFilterType _selectedDateFilter = DateFilterType.all;
@@ -35,11 +35,22 @@ class _IncomeTabState extends State<IncomeTab> {
   DateTime? _customEndDate;
   String? _selectedSourceFilter;
   final TextEditingController _searchController = TextEditingController();
+  AnimationController? _buttonGlowController;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _buttonGlowController?.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _buttonGlowController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..repeat(reverse: true);
   }
 
   List<IncomeTransaction> _filterTransactions(List<IncomeTransaction> transactions) {
@@ -517,10 +528,12 @@ class _IncomeTabState extends State<IncomeTab> {
                 final filteredTransactions = _filterTransactions(allTransactions);
                 
                 if (filteredTransactions.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Column(
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
@@ -605,18 +618,49 @@ class _IncomeTabState extends State<IncomeTab> {
                                     ],
                                   ),
                                   const SizedBox(height: 12),
-                                  InkWell(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => const AccountsTab()),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(12),
-                                    child: _buildIncomeStep('1', 'Add Account', 'Navigate to Accounts', Icons.account_balance_wallet_rounded),
-                                  ),
+                                  // Glowing border for Add Account step
+                                  // Decide subtitle and tap behavior based on whether accounts exist
+                                  Builder(builder: (context) {
+                                    final bool hasAccounts = Provider.of<DataProvider>(context, listen: false).accounts.isNotEmpty;
+                                    return AnimatedBuilder(
+                                      animation: _buttonGlowController ?? AnimationController(vsync: this, duration: Duration.zero),
+                                      builder: (context, child) {
+                                        return Container(
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.greenAccent.withOpacity(0.5 + ((_buttonGlowController?.value ?? 0) * 0.3)),
+                                                blurRadius: 20 + ((_buttonGlowController?.value ?? 0) * 16),
+                                                spreadRadius: 2 + ((_buttonGlowController?.value ?? 0) * 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: InkWell(
+                                            onTap: () {
+                                              if (hasAccounts) {
+                                                _showAddIncomeDialog();
+                                              } else {
+                                                Navigator.push(
+                                                  context,
+                                                  MaterialPageRoute(builder: (context) => const AccountsTab()),
+                                                );
+                                              }
+                                            },
+                                            borderRadius: BorderRadius.circular(60),
+                                            child: _buildIncomeStep(
+                                              '1',
+                                              'Add Account',
+                                              hasAccounts ? 'Add your first income' : 'Tap here to add account',
+                                              Icons.account_balance_wallet_rounded,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }),
                                   const SizedBox(height: 8),
-                                  _buildIncomeStep('2', 'Record Income', 'Use + button to add', Icons.add_circle_rounded),
+                                  _buildIncomeStep('2', 'Record Income', 'Use + button below to add', Icons.add_circle_rounded),
                                 ],
                               ),
                             ),
@@ -658,6 +702,7 @@ class _IncomeTabState extends State<IncomeTab> {
                             ),
                           ],
                         ],
+                        ),
                       ),
                     ),
                   );

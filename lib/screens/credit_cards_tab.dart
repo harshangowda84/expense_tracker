@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../utils/performance_utils.dart';
+import '../utils/success_dialog.dart';
 import '../providers/data_provider.dart';
 import '../models/credit_card.dart';
 import '../models/account.dart';
@@ -546,67 +547,102 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
 
   void _showDeleteConfirmationDialog(BuildContext context, int index) async {
     final card = Provider.of<DataProvider>(context, listen: false).creditCards[index];
-  if (await showDialog(
+    if (await showDialog(
       context: context,
       builder: (BuildContext context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFEF4444), Color(0xFFEC4899)], // Modern red to pink for delete
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Delete Credit Card',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFEF4444),
+                  size: 32,
                 ),
               ),
               const SizedBox(height: 16),
+              // Title
+              const Text(
+                'Delete Credit Card?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Message
               Text(
                 'Are you sure you want to delete ${card.name}?',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
                 textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 24),
+              // Buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(fontSize: 16),
+                  // Cancel Button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[100],
+                        foregroundColor: Colors.grey[800],
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      elevation: 2,
-                    ),
-                    child: const Text(
-                      'Delete',
-                      style: TextStyle(fontSize: 16),
+                  // Delete Button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, true);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEF4444),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -618,15 +654,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
     )) {
       Provider.of<DataProvider>(context, listen: false).deleteCreditCard(index);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${card.name} deleted'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        SuccessDialog.show(context, message: '${card.name} deleted successfully!', duration: const Duration(seconds: 5));
       }
     }
   }
@@ -905,24 +933,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                       .updateCreditCard(index, updatedCard);
                                   if (context.mounted) {
                                     Navigator.of(context).pop();
-                                    final rootContext = Navigator.of(context).context;
-                                    ScaffoldMessenger.of(rootContext).showSnackBar(
-                                      SnackBar(
-                                        content: const Text('Credit card updated successfully!'),
-                                        backgroundColor: Colors.deepPurple,
-                                        behavior: SnackBarBehavior.floating,
-                                        margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                        duration: const Duration(seconds: 5),
-                                        action: SnackBarAction(
-                                          label: 'UNDO',
-                                          textColor: Colors.white,
-                                          onPressed: () {
-                                            Provider.of<DataProvider>(rootContext, listen: false)
-                                                .updateCreditCard(index, originalCard);
-                                          },
-                                        ),
-                                      ),
-                                    );
+                                    SuccessDialog.show(context, message: 'Credit card updated successfully!', duration: const Duration(seconds: 5));
                                   }
                                 }
                               : null,

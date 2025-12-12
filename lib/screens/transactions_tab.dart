@@ -8,6 +8,7 @@ import 'receivable_transactions_page.dart';
 import 'accounts_tab.dart';
 import 'credit_cards_tab.dart';
 import '../utils/performance_utils.dart';
+import '../utils/success_dialog.dart';
 
 enum DateFilterType {
   all,
@@ -1295,60 +1296,95 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFEF4444), Color(0xFFEC4899)], // Modern red to pink for delete
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Delete Transaction',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFEF4444),
+                  size: 32,
                 ),
               ),
               const SizedBox(height: 16),
+              // Title
+              const Text(
+                'Delete Transaction?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Message
               Text(
                 'Are you sure you want to delete this $title?',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
                 textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 24),
+              // Buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(fontSize: 16),
+                  // Cancel Button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[100],
+                        foregroundColor: Colors.grey[800],
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      elevation: 2,
-                    ),
-                    child: const Text(
-                      'Delete',
-                      style: TextStyle(fontSize: 16),
+                  // Delete Button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, true);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEF4444),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -1369,6 +1405,12 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
   bool isReceivable = tx.isReceivable;
   String receivableAmount = tx.receivableAmount > 0 ? tx.receivableAmount.toString() : '';
   TransactionSourceType sourceType = tx.sourceType;
+  bool hasEdits = false;
+
+  // Create controllers once, outside the builder
+  final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
+  final noteController = TextEditingController(text: tx.note);
+  final receivableAmountController = TextEditingController(text: receivableAmount);
 
     showModalBottomSheet(
       context: context,
@@ -1379,10 +1421,6 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
       ),
       builder: (dialogContext) => StatefulBuilder(
         builder: (stateContext, setState) {
-          // Controllers tied to dialog lifecycle
-          final amountController = TextEditingController(text: tx.amount.toStringAsFixed(2));
-          final noteController = TextEditingController(text: tx.note);
-          final receivableAmountController = TextEditingController(text: receivableAmount);
 
           return SingleChildScrollView(
             padding: EdgeInsets.only(bottom: MediaQuery.of(dialogContext).viewInsets.bottom),
@@ -1454,7 +1492,10 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                     items: ExpenseCategory.values
                         .map((c) => DropdownMenuItem<ExpenseCategory>(value: c, child: Text(c.name[0].toUpperCase() + c.name.substring(1), style: const TextStyle(fontSize: 16, color: Colors.black87))))
                         .toList(),
-                    onChanged: (v) => setState(() => category = v ?? ExpenseCategory.office),
+                    onChanged: (v) => setState(() {
+                      if (v != tx.category) hasEdits = true;
+                      category = v ?? ExpenseCategory.office;
+                    }),
                   ),
                   const SizedBox(height: 16),
 
@@ -1462,7 +1503,10 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                   TextField(
                     controller: noteController,
                     decoration: _buildModernInputDecoration(labelText: 'Note', icon: Icons.note),
-                    onChanged: (v) => setState(() {}),
+                    onChanged: (v) {
+                      if (v != tx.note) hasEdits = true;
+                      setState(() {});
+                    },
                     style: const TextStyle(color: Colors.black87, fontSize: 16),
                     maxLines: 2,
                   ),
@@ -1488,31 +1532,59 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: Text('Receivable / Split Bill', style: TextStyle(color: const Color(0xFF764BA2), fontWeight: FontWeight.w700, fontSize: 15)),
+                              child: Text('Receivable / Split Bill', style: TextStyle(color: Colors.grey[500], fontWeight: FontWeight.w700, fontSize: 15)),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Checkbox(value: isReceivable, onChanged: null, activeColor: Colors.grey[400]),
-                            const SizedBox(width: 8),
-                            Expanded(child: Text(isReceivable ? 'Receivable' : 'Not receivable', style: TextStyle(color: Colors.grey[700]))),
+                            Switch(
+                              value: isReceivable,
+                              onChanged: null,
+                              activeColor: Colors.grey[400],
+                              inactiveTrackColor: Colors.grey[300],
+                            ),
                           ],
                         ),
                         if (isReceivable) ...[
                           const SizedBox(height: 12),
                           TextField(
                             controller: receivableAmountController,
-                            enabled: false,
                             decoration: InputDecoration(
                               labelText: 'Receivable amount',
                               prefixIcon: Container(padding: const EdgeInsets.all(10), child: const Icon(Icons.currency_rupee, size: 20, color: Color(0xFF8B5CF6))),
+                              suffixText: receivableAmountError != null ? 'Invalid' : null,
+                              suffixStyle: const TextStyle(color: Colors.red, fontSize: 12),
                               border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                               filled: true,
-                              fillColor: Colors.grey[50],
+                              fillColor: Colors.grey[300],
+                              hintText: 'Enter amount owed',
                             ),
+                            enabled: false,
+                            style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500),
+                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            onChanged: (value) {
+                              setState(() {
+                                receivableAmount = value;
+                                if (value.isEmpty) {
+                                  receivableAmountError = null;
+                                } else {
+                                  final parsed = double.tryParse(value);
+                                  if (parsed == null || parsed <= 0) {
+                                    receivableAmountError = 'Invalid amount';
+                                  } else if (parsed > double.parse(amountController.text)) {
+                                    receivableAmountError = 'Cannot exceed total amount';
+                                  } else {
+                                    receivableAmountError = null;
+                                  }
+                                }
+                              });
+                            },
                           ),
+                          if (receivableAmountError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                receivableAmountError!,
+                                style: const TextStyle(color: Colors.red, fontSize: 12),
+                              ),
+                            ),
                         ],
                       ],
                     ),
@@ -1530,15 +1602,17 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                       ),
                       Container(
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [Color(0xFF667EEA), Color(0xFF764BA2)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                          gradient: hasEdits && !isSubmitting
+                              ? const LinearGradient(colors: [Color(0xFF667EEA), Color(0xFF764BA2)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                              : LinearGradient(colors: [Colors.grey[400]!, Colors.grey[400]!], begin: Alignment.topLeft, end: Alignment.bottomRight),
                           borderRadius: BorderRadius.circular(28),
-                          boxShadow: [
-                            BoxShadow(color: const Color(0xFF667EEA).withOpacity(0.18), blurRadius: 14, offset: const Offset(0, 6)),
-                          ],
+                          boxShadow: hasEdits && !isSubmitting
+                              ? [BoxShadow(color: const Color(0xFF667EEA).withOpacity(0.18), blurRadius: 14, offset: const Offset(0, 6))]
+                              : [],
                         ),
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, elevation: 0, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28))),
-                          onPressed: (accountName.isEmpty || amountController.text.isEmpty || isSubmitting) ? null : () async {
+                          onPressed: (!hasEdits || accountName.isEmpty || amountController.text.isEmpty || isSubmitting) ? null : () async {
                             setState(() => isSubmitting = true);
                             try {
                               final enteredAmount = double.parse(amountController.text);
@@ -1557,7 +1631,7 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                               await Provider.of<DataProvider>(context, listen: false).updateTransaction(txIndex, updatedTx, tx.amount, tx.accountName);
                               if (dialogContext.mounted) {
                                 Navigator.of(dialogContext).pop();
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Transaction updated successfully!'), backgroundColor: Color(0xFF6366F1), behavior: SnackBarBehavior.floating, margin: EdgeInsets.only(bottom: 72, left: 16, right: 16), duration: Duration(milliseconds: 1500)));
+                                SuccessDialog.show(context, message: 'Transaction updated successfully!');
                               }
                             } catch (e) {
                               setState(() => isSubmitting = false);
@@ -1982,48 +2056,8 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
   void _showPaymentConfirmationInTransactions(BuildContext context, double amount, bool isFullPayment) {
     final provider = Provider.of<DataProvider>(context, listen: false);
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(
-              Icons.check_circle,
-              color: Colors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                '${isFullPayment ? 'Marked as fully paid' : 'Payment of ₹${amount.toStringAsFixed(2)} recorded'}',
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-        duration: const Duration(seconds: 3),
-        action: provider.canUndoReceivablePayment
-            ? SnackBarAction(
-                label: 'UNDO',
-                textColor: Colors.white,
-                onPressed: () {
-                  provider.undoLastReceivablePayment();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Payment undone'),
-                      backgroundColor: Colors.blue,
-                      behavior: SnackBarBehavior.floating,
-                      margin: EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-              )
-            : null,
-      ),
-    );
+    final message = isFullPayment ? 'Marked as fully paid' : 'Payment of ₹${amount.toStringAsFixed(2)} recorded';
+    SuccessDialog.show(context, message: message, duration: const Duration(seconds: 3));
   }
 
   void _showAddTransactionDialog(BuildContext context, List<Account> accounts) {
@@ -2626,15 +2660,7 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                                       );
                                       if (dialogContext.mounted) {
                                         Navigator.of(dialogContext).pop();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Transaction added successfully!'),
-                                            backgroundColor: Color(0xFF6366F1),
-                                            behavior: SnackBarBehavior.floating,
-                                            margin: EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                            duration: Duration(milliseconds: 1500),
-                                          ),
-                                        );
+                                        SuccessDialog.show(context, message: 'Transaction added successfully!');
                                       }
                                     } catch (e) {
                                       setState(() => isSubmitting = false);
@@ -3203,15 +3229,7 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                                                             if (await _confirmDelete(context, 'transaction')) {
                                                               if (context.mounted) {
                                                                 Provider.of<DataProvider>(context, listen: false).deleteTransaction(txIndex);
-                                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                                  SnackBar(
-                                                                    content: const Text('Transaction deleted'),
-                                                                    backgroundColor: Colors.red,
-                                                                    behavior: SnackBarBehavior.floating,
-                                                                    margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                                    duration: const Duration(milliseconds: 1500),
-                                                                  ),
-                                                                );
+                                                                SuccessDialog.show(context, message: 'Transaction deleted successfully!');
                                                               }
                                                             }
                                                           },

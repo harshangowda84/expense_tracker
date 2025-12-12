@@ -5,6 +5,7 @@ import '../providers/data_provider.dart';
 import '../models/income_transaction.dart';
 import '../utils/income_category_utils.dart';
 import '../utils/performance_utils.dart';
+import '../utils/success_dialog.dart';
 import 'accounts_tab.dart';
 
 // Track expanded transactions by their index
@@ -442,60 +443,95 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
         child: Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFEF4444), Color(0xFFEC4899)], // Modern red to pink for delete
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                'Delete Income',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
+              // Icon
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEF4444).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Color(0xFFEF4444),
+                  size: 32,
                 ),
               ),
               const SizedBox(height: 16),
+              // Title
+              const Text(
+                'Delete Income?',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Message
               Text(
                 'Are you sure you want to delete this $itemType?',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                ),
                 textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  height: 1.5,
+                ),
               ),
               const SizedBox(height: 24),
+              // Buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(fontSize: 16),
+                  // Cancel Button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, false);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[100],
+                        foregroundColor: Colors.grey[800],
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                      elevation: 2,
-                    ),
-                    child: const Text(
-                      'Delete',
-                      style: TextStyle(fontSize: 16),
+                  // Delete Button
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, true);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEF4444),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -752,7 +788,6 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
                           final tx = entry.value;
                           final isExpanded = _expandedIncomeIndices.contains(txIndex);
                           return GestureDetector(
-                            behavior: HitTestBehavior.opaque,
                             onTap: () {
                               setState(() {
                                 if (isExpanded) {
@@ -782,6 +817,8 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
                               child: AnimatedSize(
                                 duration: const Duration(milliseconds: 350),
                                 curve: Curves.easeInOutCubic,
+                                alignment: Alignment.topCenter,
+                                clipBehavior: Clip.hardEdge,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -940,47 +977,71 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
                                           Expanded(
                                             child: Padding(
                                               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                              child: ElevatedButton.icon(
-                                                icon: const Icon(Icons.edit, size: 18),
-                                                label: const Text('Edit'),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(0xFF6366F1),
-                                                  foregroundColor: Colors.white,
-                                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(14),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: const Color(0xFF10B981).withOpacity(0.18),
+                                                      blurRadius: 12,
+                                                      offset: const Offset(0, 6),
+                                                    ),
+                                                  ],
                                                 ),
-                                                onPressed: () => _editIncomeTransaction(context, tx, txIndex),
+                                                child: ElevatedButton.icon(
+                                                  icon: const Icon(Icons.edit, size: 18),
+                                                  label: const Text('Edit'),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.transparent,
+                                                    foregroundColor: Colors.white,
+                                                    elevation: 0,
+                                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                                  ),
+                                                  onPressed: () => _editIncomeTransaction(context, tx, txIndex),
+                                                ),
                                               ),
                                             ),
                                           ),
                                           Expanded(
                                             child: Padding(
                                               padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                              child: ElevatedButton.icon(
-                                                icon: const Icon(Icons.delete, size: 18),
-                                                label: const Text('Delete'),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: Colors.red,
-                                                  foregroundColor: Colors.white,
-                                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  color: Colors.redAccent,
+                                                  borderRadius: BorderRadius.circular(14),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.redAccent.withOpacity(0.16),
+                                                      blurRadius: 12,
+                                                      offset: const Offset(0, 6),
+                                                    ),
+                                                  ],
                                                 ),
-                                                onPressed: () async {
-                                                  if (await _confirmDelete(context, 'income')) {
-                                                    if (context.mounted) {
-                                                      Provider.of<DataProvider>(context, listen: false).deleteIncomeTransaction(txIndex);
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(
-                                                          content: const Text('Income deleted'),
-                                                          backgroundColor: Colors.red,
-                                                          behavior: SnackBarBehavior.floating,
-                                                          margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                                          duration: const Duration(milliseconds: 1500),
-                                                        ),
-                                                      );
+                                                child: ElevatedButton.icon(
+                                                  icon: const Icon(Icons.delete, size: 18),
+                                                  label: const Text('Delete'),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.transparent,
+                                                    foregroundColor: Colors.white,
+                                                    elevation: 0,
+                                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                                  ),
+                                                  onPressed: () async {
+                                                    if (await _confirmDelete(context, 'income')) {
+                                                      if (context.mounted) {
+                                                        Provider.of<DataProvider>(context, listen: false).deleteIncomeTransaction(txIndex);
+                                                        SuccessDialog.show(context, message: 'Income deleted successfully!');
+                                                      }
                                                     }
-                                                  }
-                                                },
+                                                  },
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -1131,12 +1192,14 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
   }
 
   void _editIncomeTransaction(BuildContext context, IncomeTransaction transaction, int index) {
-    final amountController = TextEditingController(text: transaction.amount.toString());
+    final amountController = TextEditingController(text: transaction.amount.toStringAsFixed(2));
     final noteController = TextEditingController(text: transaction.note);
     final sourceController = TextEditingController(text: transaction.source);
     IncomeCategory selectedCategory = transaction.category;
     String? selectedAccount = transaction.accountName;
     DateTime selectedDate = transaction.date;
+    bool hasEdits = false;
+    bool isSubmitting = false;
 
     showModalBottomSheet(
       context: context,
@@ -1155,246 +1218,478 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
                     top: 0,
                     bottom: MediaQuery.of(context).viewInsets.bottom,
                   ),
-                  child: Center(
-                    child: Card(
-                      margin: const EdgeInsets.all(16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      child: Container(
-                        width: constraints.maxWidth - 32,
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF6366F1).withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: const Icon(
-                                        Icons.edit,
-                                        color: Color(0xFF6366F1),
-                                        size: 20,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Edit Income',
-                                      style: TextStyle(
-                                        fontSize: 20,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Header with gradient title
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              ShaderMask(
+                                shaderCallback: (bounds) => const LinearGradient(
+                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ).createShader(bounds),
+                                child: const Text(
+                                  'Edit Income',
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.grey[100],
+                                ),
+                                child: IconButton(
+                                  icon: Icon(Icons.close, color: Colors.grey[600], size: 24),
+                                  onPressed: () => Navigator.of(dialogContext).pop(),
+                                  tooltip: 'Close',
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Divider(height: 1, color: Colors.grey[200]),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Amount TextField with enhanced styling
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Amount',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
                                     ),
                                   ],
                                 ),
-                                // Close button to dismiss the edit sheet
-                                IconButton(
-                                  onPressed: () => Navigator.of(dialogContext).pop(),
-                                  icon: const Icon(Icons.close, color: Colors.grey),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            
-                            // Amount Field
-                            TextField(
-                              controller: amountController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                labelText: 'Amount',
-                                hintText: 'Enter amount',
-                                prefixIcon: const Icon(Icons.currency_rupee),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                filled: true,
-                                fillColor: Colors.grey[50],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Category Dropdown
-                            DropdownButtonFormField<IncomeCategory>(
-                              value: selectedCategory,
-                              decoration: InputDecoration(
-                                labelText: 'Category',
-                                prefixIcon: Icon(IncomeCategoryUtils.getCategoryIcon(selectedCategory)),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                filled: true,
-                                fillColor: Colors.grey[50],
-                              ),
-                              items: IncomeCategory.values.map((category) {
-                                return DropdownMenuItem(
-                                  value: category,
-                                  child: Text(IncomeCategoryUtils.getCategoryName(category)),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                if (value != null) {
-                                  setState(() {
-                                    selectedCategory = value;
-                                  });
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Account Dropdown
-                            Consumer<DataProvider>(
-                              builder: (context, dataProvider, child) {
-                                final accounts = dataProvider.accounts;
-                                return DropdownButtonFormField<String>(
-                                  value: selectedAccount,
+                                child: TextField(
+                                  controller: amountController,
                                   decoration: InputDecoration(
-                                    labelText: 'Account',
-                                    prefixIcon: const Icon(Icons.account_balance_wallet),
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                    prefixText: '₹ ',
+                                    prefixStyle: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                    hintText: '0.00',
+                                    hintStyle: TextStyle(color: Colors.grey[400]),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
                                     filled: true,
-                                    fillColor: Colors.grey[50],
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                                   ),
-                                  items: accounts.map((account) {
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  onChanged: (value) {
+                                    if (value != transaction.amount.toStringAsFixed(2)) {
+                                      setState(() => hasEdits = true);
+                                    }
+                                  },
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              
+                              // Category Selection
+                              const Text(
+                                'Category',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: DropdownButtonFormField<IncomeCategory>(
+                                  value: selectedCategory,
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  ),
+                                  items: IncomeCategoryUtils.getAllCategories().map((category) {
                                     return DropdownMenuItem(
-                                      value: account.name,
-                                      child: Text(account.name),
+                                      value: category,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            IncomeCategoryUtils.getCategoryIcon(category),
+                                            size: 18,
+                                            color: IncomeCategoryUtils.getCategoryColor(category),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(IncomeCategoryUtils.getCategoryName(category)),
+                                        ],
+                                      ),
                                     );
                                   }).toList(),
                                   onChanged: (value) {
-                                    setState(() {
-                                      selectedAccount = value;
-                                    });
+                                    if (value != transaction.category) {
+                                      setState(() => hasEdits = true);
+                                    }
+                                    setState(() => selectedCategory = value!);
                                   },
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Source Field
-                            TextField(
-                              controller: sourceController,
-                              decoration: InputDecoration(
-                                labelText: 'Source (Optional)',
-                                hintText: 'e.g., Company name, client name',
-                                prefixIcon: const Icon(Icons.business),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                filled: true,
-                                fillColor: Colors.grey[50],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Note Field
-                            TextField(
-                              controller: noteController,
-                              decoration: InputDecoration(
-                                labelText: 'Note (Optional)',
-                                hintText: 'Add a note',
-                                prefixIcon: const Icon(Icons.note),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                filled: true,
-                                fillColor: Colors.grey[50],
-                              ),
-                              maxLines: 2,
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Date Picker
-                            ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              title: Text(
-                                '${selectedDate.day}/${selectedDate.month}/${(selectedDate.year % 100).toString().padLeft(2, '0')}',
-                              ),
-                              trailing: const Icon(Icons.edit),
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: selectedDate,
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime.now(),
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    selectedDate = picked;
-                                  });
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 24),
-                            
-                            // Update Button
-                            ElevatedButton(
-                              onPressed: () async {
-                                final amount = double.tryParse(amountController.text);
-                                if (amount == null || amount <= 0) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Please enter a valid amount'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-                                
-                                if (selectedAccount == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Please select an account'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-                                
-                                final updatedTransaction = IncomeTransaction(
-                                  id: transaction.id, // Keep the same ID
-                                  amount: amount,
-                                  category: selectedCategory,
-                                  accountName: selectedAccount!,
-                                  source: sourceController.text.trim(),
-                                  note: noteController.text.trim(),
-                                  date: selectedDate,
-                                );
-                                
-                                if (context.mounted) {
-                                  Provider.of<DataProvider>(context, listen: false).updateIncomeTransaction(
-                                    index, 
-                                    updatedTransaction, 
-                                    transaction.amount, 
-                                    transaction.accountName
-                                  );
-                                  Navigator.of(context).pop();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: const Text('Income updated successfully!'),
-                                      backgroundColor: Colors.green,
-                                      behavior: SnackBarBehavior.floating,
-                                      margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                      duration: const Duration(milliseconds: 1500),
-                                    ),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6366F1),
-                                foregroundColor: Colors.white,
-                                minimumSize: const Size(double.infinity, 52),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                elevation: 2,
-                              ),
-                              child: const Text(
-                                'Update Income',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 20),
+                              
+                              // Account Selection
+                              const Text(
+                                'Account',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Consumer<DataProvider>(
+                                  builder: (context, dataProvider, child) {
+                                    return DropdownButtonFormField<String>(
+                                      value: selectedAccount,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                      ),
+                                      items: dataProvider.accounts.map((account) {
+                                        return DropdownMenuItem(
+                                          value: account.name,
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.account_balance_wallet,
+                                                size: 18,
+                                                color: Colors.orange[600],
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text('${account.name} (₹${account.balance.toStringAsFixed(0)})'),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedAccount = value;
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              
+                              // Source
+                              const Text(
+                                'Source (Optional)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  controller: sourceController,
+                                  decoration: InputDecoration(
+                                    hintText: 'e.g., Company Name, Client',
+                                    hintStyle: TextStyle(color: Colors.grey[400]),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              
+                              // Note
+                              const Text(
+                                'Note (Optional)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  controller: noteController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Add any notes...',
+                                    hintStyle: TextStyle(color: Colors.grey[400]),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  ),
+                                  maxLines: 2,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              
+                              // Date Picker
+                              const Text(
+                                'Date',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  color: Colors.white,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () async {
+                                      final picked = await showDatePicker(
+                                        context: context,
+                                        initialDate: selectedDate,
+                                        firstDate: DateTime(2020),
+                                        lastDate: DateTime.now(),
+                                      );
+                                      if (picked != null) {
+                                        setState(() {
+                                          selectedDate = picked;
+                                        });
+                                      }
+                                    },
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today,
+                                            size: 18,
+                                            color: Colors.grey[600],
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 28),
+                              
+                              // Cancel and Save Buttons
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(dialogContext).pop(),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.grey[600],
+                                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                                      textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                    ),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      gradient: hasEdits
+                                          ? const LinearGradient(
+                                              colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            )
+                                          : LinearGradient(
+                                              colors: [Colors.grey[400]!, Colors.grey[400]!],
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ),
+                                      borderRadius: BorderRadius.circular(28),
+                                      boxShadow: hasEdits
+                                          ? [
+                                              BoxShadow(
+                                                color: const Color(0xFF10B981).withOpacity(0.25),
+                                                blurRadius: 12,
+                                                offset: const Offset(0, 6),
+                                              ),
+                                            ]
+                                          : [],
+                                    ),
+                                    child: ElevatedButton(
+                                      onPressed: (!hasEdits || isSubmitting) ? null : () async {
+                                        final amount = double.tryParse(amountController.text);
+                                        if (amount == null || amount <= 0) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Please enter a valid amount'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        
+                                        if (selectedAccount == null) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Please select an account'),
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        
+                                        final updatedTransaction = IncomeTransaction(
+                                          id: transaction.id,
+                                          amount: amount,
+                                          category: selectedCategory,
+                                          accountName: selectedAccount!,
+                                          source: sourceController.text.trim(),
+                                          note: noteController.text.trim(),
+                                          date: selectedDate,
+                                        );
+                                        
+                                        if (context.mounted) {
+                                          Provider.of<DataProvider>(context, listen: false).updateIncomeTransaction(
+                                            index, 
+                                            updatedTransaction, 
+                                            transaction.amount, 
+                                            transaction.accountName
+                                          );
+                                          Navigator.of(dialogContext).pop();
+                                          SuccessDialog.show(context, message: 'Income updated successfully!');
+                                        }
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: const [
+                                          Icon(Icons.save, size: 18, color: Colors.white),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Save',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 );
@@ -1407,13 +1702,13 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
   }
 
   void _showAddIncomeDialog() {
-  final amountController = TextEditingController();
-  final noteController = TextEditingController();
-  final sourceController = TextEditingController();
-  IncomeCategory selectedCategory = IncomeCategory.salary;
-  final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
-  String? selectedAccount = accounts.isNotEmpty ? accounts.first.name : null;
-  DateTime selectedDate = DateTime.now();
+    final amountController = TextEditingController();
+    final noteController = TextEditingController();
+    final sourceController = TextEditingController();
+    IncomeCategory selectedCategory = IncomeCategory.salary;
+    final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
+    String? selectedAccount = accounts.isNotEmpty ? accounts.first.name : null;
+    DateTime selectedDate = DateTime.now();
 
     showModalBottomSheet(
       context: context,
@@ -1432,210 +1727,451 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
                     top: 0,
                     bottom: MediaQuery.of(context).viewInsets.bottom,
                   ),
-                  child: Center(
-                    child: Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-                      elevation: 12,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Header with gradient title
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              ShaderMask(
+                                shaderCallback: (bounds) => const LinearGradient(
+                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ).createShader(bounds),
+                                child: const Text(
                                   'Add Income',
                                   style: TextStyle(
-                                    fontFamily: 'Inter', 
-                                    color: const Color(0xFF6366F1),
+                                    fontFamily: 'Inter',
+                                    color: Colors.white,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 20,
+                                    fontSize: 24,
                                   ),
                                 ),
-                                IconButton(
-                                  onPressed: () => Navigator.pop(dialogContext),
-                                  icon: const Icon(Icons.close, color: Colors.grey),
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.grey[100],
                                 ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                            
-                            // Amount
-                            TextField(
-                              controller: amountController,
-                              decoration: const InputDecoration(
-                                labelText: 'Amount',
-                                prefixText: '₹',
-                                border: OutlineInputBorder(),
+                                child: IconButton(
+                                  icon: Icon(Icons.close, color: Colors.grey[600], size: 24),
+                                  onPressed: () => Navigator.of(dialogContext).pop(),
+                                  tooltip: 'Close',
+                                ),
                               ),
-                              keyboardType: TextInputType.number,
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Category
-                            DropdownButtonFormField<IncomeCategory>(
-                              value: selectedCategory,
-                              decoration: const InputDecoration(
-                                labelText: 'Category',
-                                border: OutlineInputBorder(),
+                            ],
+                          ),
+                        ),
+                        Divider(height: 1, color: Colors.grey[200]),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Amount TextField with enhanced styling
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Amount',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
                               ),
-                              items: IncomeCategoryUtils.getAllCategories().map((category) {
-                                return DropdownMenuItem(
-                                  value: category,
-                                  child: Text(IncomeCategoryUtils.getCategoryName(category)),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                setState(() {
-                                  selectedCategory = value!;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Account
-                            Consumer<DataProvider>(
-                              builder: (context, dataProvider, child) {
-                                return DropdownButtonFormField<String>(
-                                  value: selectedAccount,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Account',
-                                    border: OutlineInputBorder(),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  controller: amountController,
+                                  decoration: InputDecoration(
+                                    prefixText: '₹ ',
+                                    prefixStyle: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                    hintText: '0.00',
+                                    hintStyle: TextStyle(color: Colors.grey[400]),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                                   ),
-                                  items: dataProvider.accounts.map((account) {
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              
+                              // Category Selection
+                              const Text(
+                                'Category',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: DropdownButtonFormField<IncomeCategory>(
+                                  value: selectedCategory,
+                                  decoration: InputDecoration(
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  ),
+                                  items: IncomeCategoryUtils.getAllCategories().map((category) {
                                     return DropdownMenuItem(
-                                      value: account.name,
-                                      child: Text(account.name),
+                                      value: category,
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            IncomeCategoryUtils.getCategoryIcon(category),
+                                            size: 18,
+                                            color: IncomeCategoryUtils.getCategoryColor(category),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(IncomeCategoryUtils.getCategoryName(category)),
+                                        ],
+                                      ),
                                     );
                                   }).toList(),
                                   onChanged: (value) {
                                     setState(() {
-                                      selectedAccount = value;
+                                      selectedCategory = value!;
                                     });
                                   },
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Source
-                            TextField(
-                              controller: sourceController,
-                              decoration: const InputDecoration(
-                                labelText: 'Source (Optional)',
-                                hintText: 'e.g., Company Name, Client',
-                                border: OutlineInputBorder(),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Note
-                            TextField(
-                              controller: noteController,
-                              decoration: const InputDecoration(
-                                labelText: 'Note (Optional)',
-                                border: OutlineInputBorder(),
+                              const SizedBox(height: 20),
+                              
+                              // Account Selection
+                              const Text(
+                                'Account',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
                               ),
-                              maxLines: 2,
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Date
-                            ListTile(
-                              contentPadding: EdgeInsets.zero,
-                              leading: const Icon(Icons.calendar_today),
-                              title: Text(
-                                '${selectedDate.day}/${selectedDate.month}/${(selectedDate.year % 100).toString().padLeft(2, '0')}',
-                              ),
-                              trailing: const Icon(Icons.edit),
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: selectedDate,
-                                  firstDate: DateTime(2020),
-                                  lastDate: DateTime.now(),
-                                );
-                                if (picked != null) {
-                                  setState(() {
-                                    selectedDate = picked;
-                                  });
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 24),
-                            
-                            // Add Button
-                            ElevatedButton(
-                              onPressed: () async {
-                                final amount = double.tryParse(amountController.text);
-                                if (amount == null || amount <= 0) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Please enter a valid amount'),
-                                      backgroundColor: Colors.red,
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
                                     ),
-                                  );
-                                  return;
-                                }
-                                
-                                if (selectedAccount == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Please select an account'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final income = IncomeTransaction(
-                                  id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                  accountName: selectedAccount!,
-                                  amount: amount,
-                                  date: selectedDate,
-                                  category: selectedCategory,
-                                  note: noteController.text,
-                                  source: sourceController.text,
-                                );
-
-                                try {
-                                  await Provider.of<DataProvider>(context, listen: false)
-                                      .addIncomeTransaction(income);
-                                  
-                                  if (context.mounted) {
-                                    Navigator.of(dialogContext).pop();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text('Income added successfully!'),
-                                        backgroundColor: Colors.green,
+                                  ],
+                                ),
+                                child: Consumer<DataProvider>(
+                                  builder: (context, dataProvider, child) {
+                                    return DropdownButtonFormField<String>(
+                                      value: selectedAccount,
+                                      decoration: InputDecoration(
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                          borderSide: BorderSide(color: Colors.grey[300]!),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.white,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                                       ),
+                                      items: dataProvider.accounts.map((account) {
+                                        return DropdownMenuItem(
+                                          value: account.name,
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.account_balance_wallet,
+                                                size: 18,
+                                                color: Colors.orange[600],
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text('${account.name} (₹${account.balance.toStringAsFixed(0)})'),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(() {
+                                          selectedAccount = value;
+                                        });
+                                      },
                                     );
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Error: $e'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF6366F1),
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  },
+                                ),
                               ),
-                              child: const Text('Add Income', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            ),
-                          ],
+                              const SizedBox(height: 20),
+                              
+                              // Source
+                              const Text(
+                                'Source (Optional)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  controller: sourceController,
+                                  decoration: InputDecoration(
+                                    hintText: 'e.g., Company Name, Client',
+                                    hintStyle: TextStyle(color: Colors.grey[400]),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              
+                              // Note
+                              const Text(
+                                'Note (Optional)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: TextField(
+                                  controller: noteController,
+                                  decoration: InputDecoration(
+                                    hintText: 'Add any notes...',
+                                    hintStyle: TextStyle(color: Colors.grey[400]),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                  ),
+                                  maxLines: 2,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              
+                              // Date Picker
+                              const Text(
+                                'Date',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: Colors.grey[300]!),
+                                  color: Colors.white,
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () async {
+                                      final picked = await showDatePicker(
+                                        context: context,
+                                        initialDate: selectedDate,
+                                        firstDate: DateTime(2020),
+                                        lastDate: DateTime.now(),
+                                      );
+                                      if (picked != null) {
+                                        setState(() {
+                                          selectedDate = picked;
+                                        });
+                                      }
+                                    },
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.calendar_today,
+                                            size: 18,
+                                            color: Colors.grey[600],
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 28),
+                              
+                              // Add Button with gradient
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(14),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF10B981).withOpacity(0.25),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 6),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    final amount = double.tryParse(amountController.text);
+                                    if (amount == null || amount <= 0) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Please enter a valid amount'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    
+                                    if (selectedAccount == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Please select an account'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    final income = IncomeTransaction(
+                                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                      accountName: selectedAccount!,
+                                      amount: amount,
+                                      date: selectedDate,
+                                      category: selectedCategory,
+                                      note: noteController.text,
+                                      source: sourceController.text,
+                                    );
+
+                                    try {
+                                      await Provider.of<DataProvider>(context, listen: false)
+                                          .addIncomeTransaction(income);
+                                      
+                                      if (context.mounted) {
+                                        Navigator.of(dialogContext).pop();
+                                        SuccessDialog.show(context, message: 'Income added successfully!');
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Error: $e'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                  ),
+                                  child: const Text(
+                                    'Add Income',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                            ],
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 );

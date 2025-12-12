@@ -287,18 +287,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
       ),
       child: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667EEA),
-              Color(0xFF764BA2),
-              Color(0xFF8B5CF6),
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-          borderRadius: const BorderRadius.only(
+        decoration: const BoxDecoration(
+          color: Color(0xFFFAFAFC),
+          borderRadius: BorderRadius.only(
             topRight: Radius.circular(24),
             bottomRight: Radius.circular(24),
           ),
@@ -306,13 +297,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: SafeArea(
           child: Column(
             children: [
-              // Profile Header
+              // Profile Header - Gradient Background
               Container(
                 padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFF667EEA),
+                      Color(0xFF764BA2),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF667EEA).withOpacity(0.2),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
                 margin: const EdgeInsets.all(16),
                 child: Column(
@@ -322,14 +326,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       height: 88,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [Colors.white.withOpacity(0.9), Colors.white.withOpacity(0.7)],
+                          colors: [Colors.white.withOpacity(0.95), Colors.white.withOpacity(0.85)],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2),
-                            blurRadius: 24,
-                            offset: const Offset(0, 12),
+                            color: Colors.black.withOpacity(0.15),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
                           ),
                         ],
                       ),
@@ -353,7 +357,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     Text(
                       'Track & Manage',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withOpacity(0.85),
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -365,24 +369,28 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               // Menu Items
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   children: [
+                    // Main Navigation Section
+                    _buildDrawerSectionLabel('Main'),
                     _buildDrawerItem(
                       icon: Icons.dashboard_rounded,
                       title: 'Dashboard',
                       badge: null,
+                      color: const Color(0xFF667EEA),
                       onTap: () {
                         Navigator.pop(context);
                         _tabController.animateTo(0);
                       },
                     ),
-                    const SizedBox(height: 8),
-                    _buildDrawerSectionDivider(),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
+                    // Accounts Section
+                    _buildDrawerSectionLabel('Accounts & Cards'),
                     _buildDrawerItem(
                       icon: Icons.account_balance_wallet_rounded,
                       title: 'Accounts',
                       badge: null,
+                      color: const Color(0xFF10B981),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.push(
@@ -391,10 +399,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         );
                       },
                     ),
+                    const SizedBox(height: 4),
                     _buildDrawerItem(
                       icon: Icons.credit_card_rounded,
                       title: 'Credit Cards',
                       badge: null,
+                      color: const Color(0xFFF59E0B),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.push(
@@ -403,29 +413,34 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         );
                       },
                     ),
-                    const SizedBox(height: 8),
-                    _buildDrawerSectionDivider(),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+                    // Settings Section
+                    _buildDrawerSectionLabel('Settings & Actions'),
                     _buildDrawerItem(
                       icon: Icons.settings_rounded,
                       title: 'Settings',
                       badge: null,
+                      color: const Color(0xFF8B5CF6),
                       onTap: () {
                         Navigator.pop(context);
                       },
                     ),
+                    const SizedBox(height: 4),
                     _buildDrawerItem(
                       icon: Icons.backup_rounded,
                       title: 'Backup & Restore',
                       badge: null,
+                      color: const Color(0xFF06B6D4),
                       onTap: () {
                         Navigator.pop(context);
                       },
                     ),
+                    const SizedBox(height: 4),
                     _buildDrawerItem(
                       icon: Icons.system_update_rounded,
                       title: 'Check for Updates',
                       badge: 'New',
+                      color: const Color(0xFFEC4899),
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.push(
@@ -434,15 +449,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         );
                       },
                     ),
-                    const SizedBox(height: 8),
-                    _buildDrawerSectionDivider(),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 12),
+                    // About Section
+                    _buildDrawerSectionLabel('App'),
                     _buildDrawerItem(
-                      icon: Icons.info_rounded,
-                      title: 'About Spendly',
+                      icon: Icons.logout_rounded,
+                      title: 'Logout',
                       badge: null,
+                      color: const Color(0xFFEF4444),
                       onTap: () {
                         Navigator.pop(context);
+                        _showLogoutConfirmation(context);
                       },
                     ),
                   ],
@@ -451,13 +468,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               // Footer with version
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-                child: Text(
-                  'Version 1.1.5',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Divider(
+                      color: Colors.grey[300],
+                      thickness: 1,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Version 1.1.5',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -467,19 +494,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildDrawerSectionDivider() {
+  Widget _buildDrawerSectionLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Container(
-        height: 1,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.white.withOpacity(0),
-              Colors.white.withOpacity(0.15),
-              Colors.white.withOpacity(0),
-            ],
-          ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: Colors.grey[500],
+          letterSpacing: 0.8,
         ),
       ),
     );
@@ -489,6 +513,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     required IconData icon,
     required String title,
     String? badge,
+    required Color color,
     required VoidCallback onTap,
   }) {
     return Padding(
@@ -498,28 +523,36 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: onTap,
-          hoverColor: Colors.white.withOpacity(0.1),
+          hoverColor: color.withOpacity(0.08),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
+              color: color.withOpacity(0.08),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
+                    color: color.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withOpacity(0.1),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Icon(icon, color: Colors.white, size: 22),
+                  child: Icon(icon, color: color, size: 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Colors.grey[800],
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                       letterSpacing: 0.3,
@@ -530,16 +563,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
+                      color: const Color(0xFFFF6B6B),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.white.withOpacity(0.3), width: 0.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6B6B).withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      badge,
-                      style: const TextStyle(
+                    child: const Text(
+                      'New',
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ),
@@ -548,6 +588,150 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ),
       ),
+    );
+  }
+
+  void _showLogoutConfirmation(BuildContext context) {
+    _showConfirmationDialog(
+      context: context,
+      title: 'Logout?',
+      message: 'Are you sure you want to logout from Spendly?',
+      confirmText: 'Logout',
+      cancelText: 'Cancel',
+      icon: Icons.logout_rounded,
+      color: const Color(0xFFEF4444),
+      onConfirm: () {
+        Navigator.pop(context);
+        // TODO: Add logout logic here
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Logout logic will be added with login feature'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showConfirmationDialog({
+    required BuildContext context,
+    required String title,
+    required String message,
+    required String confirmText,
+    required String cancelText,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onConfirm,
+  }) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Icon
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Title
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                // Message
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                // Buttons
+                Row(
+                  children: [
+                    // Cancel Button
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[100],
+                          foregroundColor: Colors.grey[800],
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          cancelText,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Confirm Button
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onConfirm();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: color,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          confirmText,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

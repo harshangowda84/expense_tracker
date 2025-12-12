@@ -63,6 +63,132 @@ class UpdateService {
     return null;
   }
   
+  /// Get current and latest version information (always returns data, unlike checkForUpdate)
+  Future<VersionCheckResult> getVersionInfo() async {
+    try {
+      // Get current app version
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
+      
+      print('🔍 Current app version: $currentVersion');
+      
+      // Fetch latest release from GitHub
+      final response = await _dio.get(_githubApiUrl);
+      
+      if (response.statusCode == 200) {
+        final releaseData = response.data;
+        final latestVersion = releaseData['tag_name']?.replaceFirst('v', '') ?? '';
+        final releaseName = releaseData['name'] ?? '';
+        final releaseNotes = releaseData['body'] ?? '';
+        
+        print('🌐 Latest GitHub version: $latestVersion');
+        
+        // Find APK download URL
+        String? downloadUrl;
+        final assets = releaseData['assets'] as List<dynamic>? ?? [];
+        
+        for (final asset in assets) {
+          final fileName = asset['name'] as String? ?? '';
+          if (fileName.toLowerCase().endsWith('.apk')) {
+            downloadUrl = asset['browser_download_url'] as String?;
+            break;
+          }
+        }
+        
+        final isUpdateAvailable = _isNewerVersion(currentVersion, latestVersion) && downloadUrl != null;
+        
+        // Fetch current version info if different from latest
+        String currentVersionNotes = 'Current stable release';
+        String currentVersionName = 'Version $currentVersion';
+        
+        if (currentVersion != latestVersion) {
+          try {
+            // Fetch all releases to find current version info
+            final allReleasesUrl = 'https://api.github.com/repos/harshangowda84/expense_tracker/releases';
+            final allReleasesResponse = await _dio.get(allReleasesUrl);
+            
+            if (allReleasesResponse.statusCode == 200) {
+              final releases = allReleasesResponse.data as List<dynamic>? ?? [];
+              for (final release in releases) {
+                final versionTag = release['tag_name']?.replaceFirst('v', '') ?? '';
+                if (versionTag == currentVersion) {
+                  currentVersionName = release['name'] ?? 'Version $currentVersion';
+                  currentVersionNotes = release['body'] ?? 'Current stable release';
+                  print('✅ Found current version info: $currentVersionName');
+                  break;
+                }
+              }
+            }
+          } catch (e) {
+            print('⚠️ Could not fetch current version details: $e');
+          }
+        } else {
+          currentVersionName = releaseName;
+          currentVersionNotes = releaseNotes;
+        }
+        
+        return VersionCheckResult(
+          currentVersion: currentVersion,
+          latestVersion: latestVersion,
+          releaseName: releaseName,
+          releaseNotes: releaseNotes,
+          downloadUrl: downloadUrl,
+          isUpdateAvailable: isUpdateAvailable,
+          timestamp: DateTime.now(),
+          author: releaseData['author']?['login'] ?? 'Unknown',
+          publishedAt: DateTime.tryParse(releaseData['published_at'] as String? ?? ''),
+          downloadCount: releaseData['assets']?.isNotEmpty == true 
+              ? (releaseData['assets'][0]['download_count'] as int? ?? 0)
+              : 0,
+          isPrerelease: releaseData['prerelease'] as bool? ?? false,
+          isDraft: releaseData['draft'] as bool? ?? false,
+          currentVersionNotes: currentVersionNotes,
+          currentVersionName: currentVersionName,
+        );
+      }
+    } catch (e) {
+      print('❌ Error checking for version info: $e');
+    }
+    
+    // Return current version info even if fetch fails
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      return VersionCheckResult(
+        currentVersion: packageInfo.version,
+        latestVersion: packageInfo.version,
+        releaseName: 'Unable to fetch',
+        releaseNotes: 'Could not connect to check for updates',
+        downloadUrl: null,
+        isUpdateAvailable: false,
+        timestamp: DateTime.now(),
+        author: 'Unknown',
+        publishedAt: null,
+        downloadCount: 0,
+        isPrerelease: false,
+        isDraft: false,
+        currentVersionNotes: 'Could not retrieve version details',
+        currentVersionName: 'Version ${packageInfo.version}',
+      );
+    } catch (e) {
+      return VersionCheckResult(
+        currentVersion: '1.1.5',
+        latestVersion: '1.1.5',
+        releaseName: 'Unknown',
+        releaseNotes: 'Unable to retrieve version information',
+        downloadUrl: null,
+        isUpdateAvailable: false,
+        timestamp: DateTime.now(),
+        author: 'Unknown',
+        publishedAt: null,
+        downloadCount: 0,
+        isPrerelease: false,
+        isDraft: false,
+        currentVersionNotes: 'Unable to retrieve version information',
+        currentVersionName: 'Version 1.1.5',
+      );
+    }
+  }
+  
   /// Compare two version strings (e.g., "1.0.0" vs "1.0.1")
   bool _isNewerVersion(String current, String latest) {
     final currentParts = current.split('.').map(int.tryParse).where((e) => e != null).cast<int>().toList();
@@ -299,5 +425,44 @@ class DownloadResult {
   @override
   String toString() {
     return 'DownloadResult(success: $success, path: $filePath, message: $message)';
+  }
+}
+
+class VersionCheckResult {
+  final String currentVersion;
+  final String latestVersion;
+  final String releaseName;
+  final String releaseNotes;
+  final String? downloadUrl;
+  final bool isUpdateAvailable;
+  final DateTime timestamp;
+  final String author;
+  final DateTime? publishedAt;
+  final int downloadCount;
+  final bool isPrerelease;
+  final bool isDraft;
+  final String currentVersionNotes;
+  final String currentVersionName;
+  
+  VersionCheckResult({
+    required this.currentVersion,
+    required this.latestVersion,
+    required this.releaseName,
+    required this.releaseNotes,
+    required this.downloadUrl,
+    required this.isUpdateAvailable,
+    required this.timestamp,
+    required this.author,
+    required this.publishedAt,
+    required this.downloadCount,
+    required this.isPrerelease,
+    required this.isDraft,
+    this.currentVersionNotes = 'Current stable release',
+    this.currentVersionName = 'Current Version',
+  });
+  
+  @override
+  String toString() {
+    return 'VersionCheckResult(current: $currentVersion, latest: $latestVersion, available: $isUpdateAvailable, author: $author)';
   }
 }

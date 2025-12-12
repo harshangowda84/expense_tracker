@@ -15,6 +15,7 @@ import 'services/navigation_service.dart';
 import 'services/update_service.dart';
 import 'widgets/update_banner.dart';
 import 'utils/performance_utils.dart';
+import 'screens/check_for_updates_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -278,93 +279,110 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Widget _buildDrawer(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
     return Drawer(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
+      ),
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
+          gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: isDarkMode
-                ? [
-                    const Color(0xFF1E1E1E),
-                    const Color(0xFF2D2D2D),
-                  ]
-                : [
-                    const Color(0xFF667EEA),
-                    const Color(0xFF764BA2),
-                  ],
+            colors: [
+              Color(0xFF667EEA),
+              Color(0xFF764BA2),
+              Color(0xFF8B5CF6),
+            ],
+            stops: [0.0, 0.5, 1.0],
+          ),
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(24),
+            bottomRight: Radius.circular(24),
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(24),
+              // Profile Header
+              Container(
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+                ),
+                margin: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     Container(
-                      width: 80,
-                      height: 80,
+                      width: 88,
+                      height: 88,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
-                          colors: isDarkMode
-                              ? [const Color(0xFF667EEA), const Color(0xFF764BA2)]
-                              : [const Color(0xFF3B82F6), const Color(0xFF8B5CF6)],
+                          colors: [Colors.white.withOpacity(0.9), Colors.white.withOpacity(0.7)],
                         ),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF3B82F6).withOpacity(0.4),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 24,
+                            offset: const Offset(0, 12),
                           ),
                         ],
                       ),
                       child: const Icon(
-                        Icons.account_circle,
-                        color: Colors.white,
-                        size: 48,
+                        Icons.account_circle_rounded,
+                        color: Color(0xFF667EEA),
+                        size: 56,
                       ),
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'User Profile',
+                      'Spendly User',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
-                      'user@spendly.app',
+                      'Track & Manage',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withOpacity(0.8),
                         fontSize: 14,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Divider(color: Colors.white24, height: 1),
+              const SizedBox(height: 12),
+              // Menu Items
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                   children: [
                     _buildDrawerItem(
                       icon: Icons.dashboard_rounded,
                       title: 'Dashboard',
+                      badge: null,
                       onTap: () {
                         Navigator.pop(context);
                         _tabController.animateTo(0);
                       },
                     ),
-                    const Divider(color: Colors.white24, height: 24),
+                    const SizedBox(height: 8),
+                    _buildDrawerSectionDivider(),
+                    const SizedBox(height: 8),
                     _buildDrawerItem(
-                      icon: Icons.account_balance_outlined,
+                      icon: Icons.account_balance_wallet_rounded,
                       title: 'Accounts',
+                      badge: null,
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.push(
@@ -374,8 +392,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       },
                     ),
                     _buildDrawerItem(
-                      icon: Icons.credit_card_outlined,
+                      icon: Icons.credit_card_rounded,
                       title: 'Credit Cards',
+                      badge: null,
                       onTap: () {
                         Navigator.pop(context);
                         Navigator.push(
@@ -384,10 +403,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         );
                       },
                     ),
-                    const Divider(color: Colors.white24, height: 24),
+                    const SizedBox(height: 8),
+                    _buildDrawerSectionDivider(),
+                    const SizedBox(height: 8),
                     _buildDrawerItem(
                       icon: Icons.settings_rounded,
                       title: 'Settings',
+                      badge: null,
                       onTap: () {
                         Navigator.pop(context);
                       },
@@ -395,21 +417,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     _buildDrawerItem(
                       icon: Icons.backup_rounded,
                       title: 'Backup & Restore',
+                      badge: null,
                       onTap: () {
                         Navigator.pop(context);
                       },
                     ),
                     _buildDrawerItem(
-                      icon: Icons.help_rounded,
-                      title: 'Help & Support',
+                      icon: Icons.system_update_rounded,
+                      title: 'Check for Updates',
+                      badge: 'New',
                       onTap: () {
                         Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CheckForUpdatesPage()),
+                        );
                       },
                     ),
-                    const Divider(color: Colors.white24, height: 32),
+                    const SizedBox(height: 8),
+                    _buildDrawerSectionDivider(),
+                    const SizedBox(height: 8),
                     _buildDrawerItem(
                       icon: Icons.info_rounded,
-                      title: 'About',
+                      title: 'About Spendly',
+                      badge: null,
                       onTap: () {
                         Navigator.pop(context);
                       },
@@ -417,13 +448,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.all(16),
+              // Footer with version
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                 child: Text(
                   'Version 1.1.5',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
-                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -434,27 +467,87 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
+  Widget _buildDrawerSectionDivider() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Container(
+        height: 1,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.white.withOpacity(0),
+              Colors.white.withOpacity(0.15),
+              Colors.white.withOpacity(0),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDrawerItem({
     required IconData icon,
     required String title,
+    String? badge,
     required VoidCallback onTap,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.white, size: 24),
-      title: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          hoverColor: Colors.white.withOpacity(0.1),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+                if (badge != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white.withOpacity(0.3), width: 0.5),
+                    ),
+                    child: Text(
+                      badge,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      hoverColor: Colors.white.withOpacity(0.1),
     );
   }
 

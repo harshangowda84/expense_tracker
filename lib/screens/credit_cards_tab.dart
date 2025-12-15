@@ -55,117 +55,196 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
       context: context,
       builder: (dialogContext) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.85, // Constrain width
-            padding: const EdgeInsets.all(20), // Reduced padding
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Consistent modern blue to purple
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Reset Credit Card',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 22, // Slightly smaller font
-                  ),
-                ),
-                const SizedBox(height: 12), // Reduced spacing
-                Text(
-                  'Choose payment method for ${card.name}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15, // Slightly smaller font
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Outstanding: ₹${card.usedBalance.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20), // Reduced spacing
-                Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _showCustomPaymentDialog(context, card, index, PaymentMethod.other);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.orange,
-                        minimumSize: const Size(double.infinity, 44), // Reduced height
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.payment, size: 20), // Smaller icon
-                          SizedBox(width: 8),
-                          Text(
-                            'Paid by Other',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold), // Smaller font
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 10), // Reduced spacing
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        _showCustomPaymentDialog(context, card, index, PaymentMethod.bankAccount);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: Colors.orange,
-                        minimumSize: const Size(double.infinity, 44), // Reduced height
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.account_balance, size: 20), // Smaller icon
-                          SizedBox(width: 8),
-                          Text(
-                            'Paid by Bank Account',
-                            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold), // Smaller font
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8), // Reduced spacing
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10), // Reduced padding
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(fontSize: 15), // Smaller font
-                      ),
-                    ),
-                  ],
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
               ],
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header with icon
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.refresh_rounded,
+                          color: Color(0xFF10B981),
+                          size: 28,
+                        ),
+                      ),
+                      const Text(
+                        'Reset Credit Card',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(width: 40),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Card Info
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF10B981), width: 2),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          card.name,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          '₹${card.usedBalance.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            color: Color(0xFF10B981),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Outstanding Balance',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Instructions
+                  Text(
+                    'Choose payment method to settle the outstanding balance:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Payment Method Buttons
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF10B981).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _showCustomPaymentDialog(context, card, index, PaymentMethod.other);
+                      },
+                      icon: const Icon(Icons.payment, size: 20),
+                      label: const Text('Paid by Other'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF10B981).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        _showCustomPaymentDialog(context, card, index, PaymentMethod.bankAccount);
+                      },
+                      icon: const Icon(Icons.account_balance, size: 20),
+                      label: const Text('Paid by Bank Account'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Cancel Button
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.grey[600],
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    child: const Text(
+                      'Cancel',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -204,218 +283,286 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
         return StatefulBuilder(
           builder: (builderContext, setState) {
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
               child: Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Consistent modern blue to purple
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          paymentMethod == PaymentMethod.bankAccount 
-                              ? Icons.account_balance 
-                              : Icons.payment,
-                          color: Colors.white,
-                          size: 24,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header with icon
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              paymentMethod == PaymentMethod.bankAccount 
+                                  ? Icons.account_balance 
+                                  : Icons.payment,
+                              color: const Color(0xFF10B981),
+                              size: 28,
+                            ),
+                          ),
+                          Text(
                             paymentMethod == PaymentMethod.bankAccount 
                                 ? 'Pay from Bank Account' 
                                 : 'Pay by Other Method',
                             style: const TextStyle(
-                              color: Colors.white,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              fontSize: 20,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(width: 40),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Card Info
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF10B981), width: 2),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              card.name,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              '₹${card.usedBalance.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 28,
+                                color: Color(0xFF10B981),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Outstanding Balance',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    
+                      // Bank Account Selection (only for bank payment)
+                      if (paymentMethod == PaymentMethod.bankAccount) ...[
+                        Text(
+                          'Select Account',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey[300]!, width: 1),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<Account>(
+                              value: selectedAccount,
+                              isExpanded: true,
+                              dropdownColor: Colors.white,
+                              style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                              icon: Icon(Icons.arrow_drop_down, color: Colors.grey[600]),
+                              items: accounts.map((account) => DropdownMenuItem(
+                                value: account,
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.account_balance_wallet, 
+                                       color: const Color(0xFF10B981), size: 18),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '${account.name} (₹${account.balance.toStringAsFixed(2)})',
+                                        style: TextStyle(color: Colors.grey[700]),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )).toList(),
+                              onChanged: (Account? account) {
+                                setState(() {
+                                  selectedAccount = account;
+                                });
+                              },
                             ),
                           ),
                         ),
+                        const SizedBox(height: 20),
                       ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      '${card.name} - Outstanding: ₹${card.usedBalance.toStringAsFixed(2)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 20),
-                    
-                    // Bank Account Selection (only for bank payment)
-                    if (paymentMethod == PaymentMethod.bankAccount) ...[
+                      
+                      // Toggle for Pay Full/Custom Amount
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Colors.grey[50],
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                          border: Border.all(color: Colors.grey[300]!, width: 1),
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<Account>(
-                            value: selectedAccount,
-                            isExpanded: true,
-                            dropdownColor: const Color(0xFF6366F1),
-                            style: const TextStyle(color: Colors.white, fontSize: 16),
-                            icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                            items: accounts.map((account) => DropdownMenuItem(
-                              value: account,
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.account_balance_wallet, 
-                                       color: Colors.white, size: 18),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      '${account.name} (₹${account.balance.toStringAsFixed(2)})',
-                                      style: const TextStyle(color: Colors.white),
+                        child: Column(
+                          children: [
+                            Row(
+                              children: [
+                                Switch(
+                                  value: isPayingFull,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      isPayingFull = value;
+                                      if (value) {
+                                        amountController.clear();
+                                      }
+                                    });
+                                  },
+                                  activeColor: const Color(0xFF10B981),
+                                  activeTrackColor: const Color(0xFF10B981).withOpacity(0.3),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    isPayingFull ? 'Pay Full Amount' : 'Pay Custom Amount',
+                                    style: TextStyle(
+                                      color: Colors.grey[800],
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                ],
-                              ),
-                            )).toList(),
-                            onChanged: (Account? account) {
-                              setState(() {
-                                selectedAccount = account;
-                              });
-                            },
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    
-                    // Toggle for Pay Full/Custom Amount
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withOpacity(0.2)),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
-                            children: [
-                              Switch(
-                                value: isPayingFull,
-                                onChanged: (value) {
-                                  setState(() {
-                                    isPayingFull = value;
-                                    if (value) {
-                                      amountController.clear();
-                                    }
-                                  });
-                                },
-                                activeColor: Colors.white,
-                                activeTrackColor: Colors.white.withOpacity(0.3),
-                                inactiveThumbColor: Colors.white.withOpacity(0.7),
-                                inactiveTrackColor: Colors.white.withOpacity(0.2),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  isPayingFull ? 'Pay Full Amount' : 'Pay Custom Amount',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
+                                ),
+                              ],
+                            ),
+                            if (!isPayingFull) ...[
+                              const SizedBox(height: 16),
+                              TextField(
+                                controller: amountController,
+                                keyboardType: TextInputType.number,
+                                style: TextStyle(color: Colors.grey[800], fontSize: 16),
+                                decoration: InputDecoration(
+                                  hintText: 'Enter amount to pay',
+                                  hintStyle: TextStyle(color: Colors.grey[400]),
+                                  prefixIcon: Icon(Icons.currency_rupee, 
+                                                 color: Colors.grey[600]),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: Colors.grey[300]!),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: const BorderSide(color: Color(0xFF10B981), width: 2),
                                   ),
                                 ),
                               ),
                             ],
-                          ),
-                          if (!isPayingFull) ...[
-                            const SizedBox(height: 16),
-                            TextField(
-                              controller: amountController,
-                              keyboardType: TextInputType.number,
-                              style: const TextStyle(color: Colors.white, fontSize: 18),
-                              decoration: InputDecoration(
-                                hintText: 'Enter amount to pay',
-                                hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                                prefixIcon: Icon(Icons.currency_rupee, 
-                                               color: Colors.white.withOpacity(0.8)),
-                                filled: true,
-                                fillColor: Colors.white.withOpacity(0.1),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Action Buttons
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Pay Button
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: const Color(0xFF10B981).withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
-                                enabledBorder: OutlineInputBorder(
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: () => _processPayment(
+                                context, 
+                                card, 
+                                cardIndex, 
+                                paymentMethod, 
+                                isPayingFull, 
+                                amountController.text, 
+                                selectedAccount
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
                                 ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: Colors.white),
-                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                              ),
+                              child: Text(
+                                isPayingFull ? 'Pay Full Amount' : 'Pay Amount',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                               ),
                             ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextButton(
-                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                          const SizedBox(height: 12),
+                          // Back Button
+                          TextButton.icon(
+                            onPressed: () => Navigator.of(builderContext).pop(),
+                            icon: const Icon(Icons.arrow_back),
+                            label: const Text('Back'),
                             style: TextButton.styleFrom(
-                              foregroundColor: Colors.white,
+                              foregroundColor: Colors.grey[600],
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(fontSize: 16),
-                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: () => _processPayment(
-                              context, 
-                              card, 
-                              cardIndex, 
-                              paymentMethod, 
-                              isPayingFull, 
-                              amountController.text, 
-                              selectedAccount
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFF6366F1), // Consistent blue color
-                              minimumSize: const Size(double.infinity, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: Text(
-                              isPayingFull ? 'Pay Full' : 'Pay Amount',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -663,6 +810,8 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
     final TextEditingController cardNameController = TextEditingController(text: card.name);
     final TextEditingController cardLimitController = TextEditingController(text: card.limit.toString());
     int selectedDay = card.dueDate;
+    String? nameError;
+    String? limitError;
 
     showDialog(
       context: context,
@@ -670,278 +819,458 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
               child: Container(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.8,
-                  maxWidth: MediaQuery.of(context).size.width * 0.9,
+                  maxHeight: MediaQuery.of(context).size.height * 0.9,
+                  maxWidth: MediaQuery.of(context).size.width * 0.95,
                 ),
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
                 child: PerformanceUtils.createOptimizedScrollView(
                   physics: const ClampingScrollPhysics(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Text(
-                        'Edit Credit Card',
-                      style: TextStyle(
-                        fontSize: 24,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    TextField(
-                      controller: cardNameController,
-                      onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(
-                        labelText: 'Card Name',
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: cardLimitController,
-                      keyboardType: TextInputType.number,
-                      onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(
-                        labelText: 'Card Limit',
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                    // Validation error message for limit
-                    if (cardLimitController.text.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            Icon(
-                              double.tryParse(cardLimitController.text) != null && double.tryParse(cardLimitController.text)! > 0
-                                  ? Icons.check_circle
-                                  : Icons.error_outline,
-                              size: 14,
-                              color: double.tryParse(cardLimitController.text) != null && double.tryParse(cardLimitController.text)! > 0
-                                  ? Colors.green
-                                  : Colors.red,
+                      // Header with icon
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF59E0B).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                double.tryParse(cardLimitController.text) == null
-                                    ? 'Please enter a valid number'
-                                    : double.tryParse(cardLimitController.text)! <= 0
-                                        ? 'Limit must be greater than 0'
-                                        : 'Valid limit',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: double.tryParse(cardLimitController.text) != null && double.tryParse(cardLimitController.text)! > 0
-                                      ? Colors.green
-                                      : Colors.red,
+                            child: const Icon(
+                              Icons.credit_card_rounded,
+                              color: Color(0xFFF59E0B),
+                              size: 28,
+                            ),
+                          ),
+                          const Text(
+                            'Edit Credit Card',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(width: 40),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Card Name Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Card Name',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
+                              ],
+                            ),
+                            child: TextField(
+                              controller: cardNameController,
+                              onChanged: (value) {
+                                setState(() {
+                                  if (value.isEmpty) {
+                                    nameError = 'Card name is required';
+                                  } else {
+                                    nameError = null;
+                                  }
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Enter card name',
+                                filled: true,
+                                fillColor: Colors.white,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: nameError != null ? Colors.red : Colors.grey[300]!,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: nameError != null ? Colors.red : Colors.grey[300]!,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFF59E0B),
+                                    width: 2,
+                                  ),
+                                ),
+                                errorText: nameError,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    const SizedBox(height: 16),
-                    InkWell(
-                      onTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          backgroundColor: Colors.transparent,
-                          builder: (BuildContext context) {
-                            return Container(
-                              height: 400,
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.only(
-                                  topLeft: Radius.circular(20),
-                                  topRight: Radius.circular(20),
+                      const SizedBox(height: 16),
+
+                      // Card Limit Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Card Limit',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
                                 ),
+                              ],
+                            ),
+                            child: TextField(
+                              controller: cardLimitController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              onChanged: (value) {
+                                setState(() {
+                                  if (value.isEmpty) {
+                                    limitError = 'Card limit is required';
+                                  } else if (double.tryParse(value) == null) {
+                                    limitError = 'Enter a valid number';
+                                  } else if (double.parse(value) <= 0) {
+                                    limitError = 'Limit must be greater than 0';
+                                  } else {
+                                    limitError = null;
+                                  }
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Enter card limit',
+                                prefixText: '₹ ',
+                                prefixStyle: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: limitError != null ? Colors.red : Colors.grey[300]!,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: limitError != null ? Colors.red : Colors.grey[300]!,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFFF59E0B),
+                                    width: 2,
+                                  ),
+                                ),
+                                errorText: limitError,
                               ),
-                              child: Column(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: Colors.deepPurple.shade50,
-                                      borderRadius: const BorderRadius.only(
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Due Date Picker
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Bill Due Date',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          InkWell(
+                            onTap: () {
+                              showModalBottomSheet(
+                                context: context,
+                                backgroundColor: Colors.transparent,
+                                builder: (BuildContext context) {
+                                  return Container(
+                                    height: 400,
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.only(
                                         topLeft: Radius.circular(20),
                                         topRight: Radius.circular(20),
                                       ),
                                     ),
-                                    child: const Row(
+                                    child: Column(
                                       children: [
-                                        Icon(Icons.calendar_today, color: Colors.deepPurple),
-                                        SizedBox(width: 8),
-                                        Text(
-                                          'Select Bill Due Date',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.deepPurple,
+                                        Container(
+                                          padding: const EdgeInsets.all(16),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF59E0B).withOpacity(0.1),
+                                            borderRadius: const BorderRadius.only(
+                                              topLeft: Radius.circular(20),
+                                              topRight: Radius.circular(20),
+                                            ),
+                                          ),
+                                          child: const Row(
+                                            children: [
+                                              Icon(Icons.calendar_today, color: Color(0xFFF59E0B)),
+                                              SizedBox(width: 8),
+                                              Text(
+                                                'Select Bill Due Date',
+                                                style: TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Color(0xFFF59E0B),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        Expanded(
+                                          child: GridView.builder(
+                                            padding: const EdgeInsets.all(16),
+                                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 5,
+                                              childAspectRatio: 1,
+                                              crossAxisSpacing: 10,
+                                              mainAxisSpacing: 10,
+                                            ),
+                                            itemCount: 31,
+                                            itemBuilder: (context, index) {
+                                              final day = index + 1;
+                                              return InkWell(
+                                                onTap: () {
+                                                  setState(() {
+                                                    selectedDay = day;
+                                                  });
+                                                  Navigator.pop(context);
+                                                },
+                                                child: AnimatedContainer(
+                                                  duration: const Duration(milliseconds: 200),
+                                                  decoration: BoxDecoration(
+                                                    gradient: selectedDay == day
+                                                        ? const LinearGradient(
+                                                            colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                                            begin: Alignment.topLeft,
+                                                            end: Alignment.bottomRight,
+                                                          )
+                                                        : null,
+                                                    color: selectedDay == day ? null : Colors.grey[100],
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      day.toString(),
+                                                      style: TextStyle(
+                                                        color: selectedDay == day
+                                                            ? Colors.white
+                                                            : Colors.black87,
+                                                        fontSize: 16,
+                                                        fontWeight: selectedDay == day
+                                                            ? FontWeight.bold
+                                                            : FontWeight.normal,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                           ),
                                         ),
                                       ],
                                     ),
-                                  ),
-                                  Expanded(
-                                    child: GridView.builder(
-                                      padding: const EdgeInsets.all(16),
-                                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 5,
-                                        childAspectRatio: 1,
-                                        crossAxisSpacing: 10,
-                                        mainAxisSpacing: 10,
-                                      ),
-                                      itemCount: 31,
-                                      itemBuilder: (context, index) {
-                                        final day = index + 1;
-                                        return InkWell(
-                                          onTap: () {
-                                            setState(() {
-                                              selectedDay = day;
-                                            });
-                                            Navigator.pop(context);
-                                          },
-                                          child: AnimatedContainer(
-                                            duration: const Duration(milliseconds: 200),
-                                            decoration: BoxDecoration(
-                                              color: selectedDay == day
-                                                  ? Colors.deepPurple
-                                                  : Colors.deepPurple.shade50,
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Center(
-                                              child: Text(
-                                                day.toString(),
-                                                style: TextStyle(
-                                                  color: selectedDay == day
-                                                      ? Colors.white
-                                                      : Colors.deepPurple,
-                                                  fontSize: 16,
-                                                  fontWeight: selectedDay == day
-                                                      ? FontWeight.bold
-                                                      : FontWeight.normal,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                  );
+                                },
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(color: Colors.grey[300]!),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
                                   ),
                                 ],
                               ),
-                            );
-                          },
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Bill Due Date',
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_today,
+                                    color: Color(0xFFF59E0B),
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      '${selectedDay}${_getDaySuffix(selectedDay)} of every month',
+                                      style: const TextStyle(
+                                        color: Colors.black87,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: Colors.grey,
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(Icons.calendar_today, color: Colors.deepPurple),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    '${selectedDay}${_getDaySuffix(selectedDay)} of every month',
-                                    style: const TextStyle(
-                                      color: Colors.deepPurple,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 1,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.of(dialogContext).pop(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[100],
+                                foregroundColor: Colors.grey[800],
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFFF59E0B).withOpacity(0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: (cardNameController.text.isNotEmpty &&
+                                        cardLimitController.text.isNotEmpty &&
+                                        double.tryParse(cardLimitController.text) != null &&
+                                        double.tryParse(cardLimitController.text)! > 0 &&
+                                        nameError == null &&
+                                        limitError == null)
+                                    ? () async {
+                                        final updatedCard = CreditCard(
+                                          name: cardNameController.text,
+                                          limit: double.parse(cardLimitController.text),
+                                          dueDate: selectedDay,
+                                          addedDate: card.addedDate,
+                                          usedAmount: card.usedAmount,
+                                        );
+                                        await Provider.of<DataProvider>(context, listen: false)
+                                            .updateCreditCard(index, updatedCard);
+                                        if (context.mounted) {
+                                          Navigator.of(context).pop();
+                                          SuccessDialog.show(context, message: 'Credit card updated!', duration: const Duration(seconds: 2));
+                                        }
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  disabledBackgroundColor: Colors.grey[400],
+                                ),
+                                child: const Text(
+                                  'Save',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.purple,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          ),
-                          icon: const Icon(Icons.close),
-                          label: const Text('Cancel'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                        const SizedBox(width: 16),
-                        ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.purple,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                          ),
-                          icon: const Icon(Icons.save),
-                          label: const Text('Save'),
-                          onPressed: cardNameController.text.isNotEmpty &&
-                                  cardLimitController.text.isNotEmpty &&
-                                  double.tryParse(cardLimitController.text) != null &&
-                                  double.tryParse(cardLimitController.text)! > 0
-                              ? () async {
-                                  final originalCard = card.copyWith();
-                                  final updatedCard = CreditCard(
-                                    name: cardNameController.text,
-                                    limit: double.parse(cardLimitController.text),
-                                    dueDate: selectedDay,
-                                    addedDate: card.addedDate,
-                                    usedAmount: card.usedAmount,
-                                  );
-                                  await Provider.of<DataProvider>(context, listen: false)
-                                      .updateCreditCard(index, updatedCard);
-                                  if (context.mounted) {
-                                    Navigator.of(context).pop();
-                                    SuccessDialog.show(context, message: 'Credit card updated successfully!', duration: const Duration(seconds: 5));
-                                  }
-                                }
-                              : null,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -1381,6 +1710,20 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
               ),
             ),
           ),
+          // Credit Cards Heading
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Align(
+              alignment: Alignment.center,
+              child: Text(
+                'My Credit Cards',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+          ),
           Expanded(
             child: Selector<DataProvider, List<CreditCard>>(
               selector: (_, provider) => provider.creditCards,
@@ -1751,53 +2094,112 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                       children: [
                                         SizedBox(
                                           width: double.infinity,
-                                          child: OutlinedButton.icon(
-                                            onPressed: () => _showEditCreditCardDialog(context, card, index),
-                                            icon: const Icon(Icons.edit, size: 16),
-                                            label: const Text('Edit'),
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor: const Color(0xFF6366F1),
-                                              side: const BorderSide(color: Color(0xFF6366F1)),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(8),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
                                               ),
-                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              borderRadius: BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: const Color(0xFF6366F1).withOpacity(0.3),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => _showEditCreditCardDialog(context, card, index),
+                                              icon: const Icon(Icons.edit, size: 18),
+                                              label: const Text('Edit'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.transparent,
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                              ),
                                             ),
                                           ),
                                         ),
                                         const SizedBox(height: 8),
                                         SizedBox(
                                           width: double.infinity,
-                                          child: ElevatedButton.icon(
-                                            onPressed: card.usedBalance > 0 
-                                                ? () => _showResetCreditCardDialog(context, card, index)
-                                                : null,
-                                            icon: const Icon(Icons.refresh, size: 16),
-                                            label: const Text('Reset'),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: card.usedBalance > 0 ? const Color(0xFFF59E0B) : Colors.grey.shade300,
-                                              foregroundColor: card.usedBalance > 0 ? Colors.white : Colors.grey,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(8),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              gradient: card.usedBalance > 0
+                                                  ? const LinearGradient(
+                                                      colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                                      begin: Alignment.topLeft,
+                                                      end: Alignment.bottomRight,
+                                                    )
+                                                  : null,
+                                              color: card.usedBalance > 0 ? null : Colors.grey[300],
+                                              borderRadius: BorderRadius.circular(12),
+                                              boxShadow: card.usedBalance > 0
+                                                  ? [
+                                                      BoxShadow(
+                                                        color: const Color(0xFF10B981).withOpacity(0.3),
+                                                        blurRadius: 8,
+                                                        offset: const Offset(0, 2),
+                                                      ),
+                                                    ]
+                                                  : [],
+                                            ),
+                                            child: ElevatedButton.icon(
+                                              onPressed: card.usedBalance > 0 
+                                                  ? () => _showResetCreditCardDialog(context, card, index)
+                                                  : null,
+                                              icon: const Icon(Icons.refresh, size: 18),
+                                              label: const Text('Reset'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.transparent,
+                                                foregroundColor: card.usedBalance > 0 ? Colors.white : Colors.grey,
+                                                elevation: 0,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
                                               ),
-                                              padding: const EdgeInsets.symmetric(vertical: 12),
                                             ),
                                           ),
                                         ),
                                         const SizedBox(height: 8),
                                         SizedBox(
                                           width: double.infinity,
-                                          child: OutlinedButton.icon(
-                                            onPressed: () => _showDeleteConfirmationDialog(context, index),
-                                            icon: const Icon(Icons.delete_outline, size: 16),
-                                            label: const Text('Delete'),
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor: const Color(0xFFEF4444),
-                                              side: const BorderSide(color: Color(0xFFEF4444)),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(8),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              gradient: const LinearGradient(
+                                                colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
                                               ),
-                                              padding: const EdgeInsets.symmetric(vertical: 12),
+                                              borderRadius: BorderRadius.circular(12),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: const Color(0xFFEF4444).withOpacity(0.3),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: ElevatedButton.icon(
+                                              onPressed: () => _showDeleteConfirmationDialog(context, index),
+                                              icon: const Icon(Icons.delete_outline, size: 18),
+                                              label: const Text('Delete'),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: Colors.transparent,
+                                                foregroundColor: Colors.white,
+                                                elevation: 0,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -1810,20 +2212,38 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                           flex: 1,
                                           child: SizedBox(
                                             width: double.infinity,
-                                            child: OutlinedButton.icon(
-                                              onPressed: () => _showEditCreditCardDialog(context, card, index),
-                                              icon: const Icon(Icons.edit, size: 16),
-                                              label: FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: const Text('Edit'),
-                                              ),
-                                              style: OutlinedButton.styleFrom(
-                                                foregroundColor: const Color(0xFF6366F1),
-                                                side: const BorderSide(color: Color(0xFF6366F1)),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(8),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 ),
-                                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                borderRadius: BorderRadius.circular(10),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: const Color(0xFF6366F1).withOpacity(0.2),
+                                                    blurRadius: 6,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: ElevatedButton.icon(
+                                                onPressed: () => _showEditCreditCardDialog(context, card, index),
+                                                icon: const Icon(Icons.edit, size: 14),
+                                                label: FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: const Text('Edit', style: TextStyle(fontSize: 13)),
+                                                ),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.transparent,
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 0,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -1833,22 +2253,45 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                           flex: 1,
                                           child: SizedBox(
                                             width: double.infinity,
-                                            child: ElevatedButton.icon(
-                                              onPressed: card.usedBalance > 0 
-                                                  ? () => _showResetCreditCardDialog(context, card, index)
-                                                  : null,
-                                              icon: const Icon(Icons.refresh, size: 16),
-                                              label: FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: const Text('Reset'),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: card.usedBalance > 0
+                                                    ? const LinearGradient(
+                                                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                                        begin: Alignment.topLeft,
+                                                        end: Alignment.bottomRight,
+                                                      )
+                                                    : null,
+                                                color: card.usedBalance > 0 ? null : Colors.grey[300],
+                                                borderRadius: BorderRadius.circular(10),
+                                                boxShadow: card.usedBalance > 0
+                                                    ? [
+                                                        BoxShadow(
+                                                          color: const Color(0xFF10B981).withOpacity(0.2),
+                                                          blurRadius: 6,
+                                                          offset: const Offset(0, 2),
+                                                        ),
+                                                      ]
+                                                    : [],
                                               ),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: card.usedBalance > 0 ? const Color(0xFFF59E0B) : Colors.grey.shade300,
-                                                foregroundColor: card.usedBalance > 0 ? Colors.white : Colors.grey,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(8),
+                                              child: ElevatedButton.icon(
+                                                onPressed: card.usedBalance > 0 
+                                                    ? () => _showResetCreditCardDialog(context, card, index)
+                                                    : null,
+                                                icon: const Icon(Icons.refresh, size: 14),
+                                                label: FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: const Text('Reset', style: TextStyle(fontSize: 13)),
                                                 ),
-                                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.transparent,
+                                                  foregroundColor: card.usedBalance > 0 ? Colors.white : Colors.grey,
+                                                  elevation: 0,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                ),
                                               ),
                                             ),
                                           ),
@@ -1858,20 +2301,38 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                           flex: 1,
                                           child: SizedBox(
                                             width: double.infinity,
-                                            child: OutlinedButton.icon(
-                                              onPressed: () => _showDeleteConfirmationDialog(context, index),
-                                              icon: const Icon(Icons.delete_outline, size: 16),
-                                              label: FittedBox(
-                                                fit: BoxFit.scaleDown,
-                                                child: const Text('Delete'),
-                                              ),
-                                              style: OutlinedButton.styleFrom(
-                                                foregroundColor: const Color(0xFFEF4444),
-                                                side: const BorderSide(color: Color(0xFFEF4444)),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(8),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 ),
-                                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                borderRadius: BorderRadius.circular(10),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: const Color(0xFFEF4444).withOpacity(0.2),
+                                                    blurRadius: 6,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: ElevatedButton.icon(
+                                                onPressed: () => _showDeleteConfirmationDialog(context, index),
+                                                icon: const Icon(Icons.delete_outline, size: 14),
+                                                label: FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  child: const Text('Delete', style: TextStyle(fontSize: 13)),
+                                                ),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.transparent,
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 0,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                ),
                                               ),
                                             ),
                                           ),

@@ -6,6 +6,7 @@ import '../models/income_transaction.dart';
 import '../utils/income_category_utils.dart';
 import '../utils/performance_utils.dart';
 import '../utils/success_dialog.dart';
+import '../utils/error_dialog.dart';
 import 'accounts_tab.dart';
 
 // Track expanded transactions by their index
@@ -1620,22 +1621,16 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
                                       onPressed: (!hasEdits || isSubmitting) ? null : () async {
                                         final amount = double.tryParse(amountController.text);
                                         if (amount == null || amount <= 0) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Please enter a valid amount'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
+                                          if (context.mounted) {
+                                            ErrorDialog.show(context, message: 'Please enter a valid amount');
+                                          }
                                           return;
                                         }
                                         
                                         if (selectedAccount == null) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('Please select an account'),
-                                              backgroundColor: Colors.red,
-                                            ),
-                                          );
+                                          if (context.mounted) {
+                                            ErrorDialog.show(context, message: 'Please select an account');
+                                          }
                                           return;
                                         }
                                         
@@ -1709,6 +1704,7 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
     final accounts = Provider.of<DataProvider>(context, listen: false).accounts;
     String? selectedAccount = accounts.isNotEmpty ? accounts.first.name : null;
     DateTime selectedDate = DateTime.now();
+    String? amountError;
 
     showModalBottomSheet(
       context: context,
@@ -1814,13 +1810,42 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
                                     hintStyle: TextStyle(color: Colors.grey[400]),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(14),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                        color: amountError != null ? Colors.red : Colors.grey[300]!,
+                                      ),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(
+                                        color: amountError != null ? Colors.red : Colors.grey[300]!,
+                                      ),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                      borderSide: BorderSide(
+                                        color: amountError != null ? Colors.red : const Color(0xFF10B981),
+                                        width: 2,
+                                      ),
                                     ),
                                     filled: true,
                                     fillColor: Colors.white,
                                     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                    errorText: amountError,
                                   ),
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value.isEmpty) {
+                                        amountError = 'Amount is required';
+                                      } else if (double.tryParse(value) == null) {
+                                        amountError = 'Enter a valid amount (numbers and decimal only)';
+                                      } else if (double.parse(value) <= 0) {
+                                        amountError = 'Amount must be greater than 0';
+                                      } else {
+                                        amountError = null;
+                                      }
+                                    });
+                                  },
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -2082,90 +2107,118 @@ class _IncomeTabState extends State<IncomeTab> with SingleTickerProviderStateMix
                               ),
                               const SizedBox(height: 28),
                               
-                              // Add Button with gradient
-                              Container(
-                                decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFF10B981), Color(0xFF059669)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
-                                  borderRadius: BorderRadius.circular(14),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: const Color(0xFF10B981).withOpacity(0.25),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 6),
+                              // Action buttons - Cancel and Add
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Cancel Button
+                                  Expanded(
+                                    child: TextButton(
+                                      onPressed: () => Navigator.of(dialogContext).pop(),
+                                      style: TextButton.styleFrom(
+                                        foregroundColor: Colors.grey[600],
+                                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                                        textStyle: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      child: const Text('Cancel'),
                                     ),
-                                  ],
-                                ),
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    final amount = double.tryParse(amountController.text);
-                                    if (amount == null || amount <= 0) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Please enter a valid amount'),
-                                          backgroundColor: Colors.red,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Add Button
+                                  Expanded(
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
                                         ),
-                                      );
-                                      return;
-                                    }
-                                    
-                                    if (selectedAccount == null) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Please select an account'),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    final income = IncomeTransaction(
-                                      id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                      accountName: selectedAccount!,
-                                      amount: amount,
-                                      date: selectedDate,
-                                      category: selectedCategory,
-                                      note: noteController.text,
-                                      source: sourceController.text,
-                                    );
-
-                                    try {
-                                      await Provider.of<DataProvider>(context, listen: false)
-                                          .addIncomeTransaction(income);
-                                      
-                                      if (context.mounted) {
-                                        Navigator.of(dialogContext).pop();
-                                        SuccessDialog.show(context, message: 'Income added successfully!');
-                                      }
-                                    } catch (e) {
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error: $e'),
-                                            backgroundColor: Colors.red,
+                                        borderRadius: BorderRadius.circular(14),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: const Color(0xFF10B981).withOpacity(0.25),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 6),
                                           ),
-                                        );
-                                      }
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    foregroundColor: Colors.white,
-                                    elevation: 0,
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                  ),
-                                  child: const Text(
-                                    'Add Income',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
+                                        ],
+                                      ),
+                                      child: ElevatedButton(
+                                        onPressed: () async {
+                                          // Validate amount
+                                          if (amountController.text.isEmpty) {
+                                            if (context.mounted) {
+                                              ErrorDialog.show(context, message: 'Amount is required');
+                                            }
+                                            return;
+                                          }
+
+                                          if (amountError != null) {
+                                            if (context.mounted) {
+                                              ErrorDialog.show(context, message: amountError!);
+                                            }
+                                            return;
+                                          }
+                                          
+                                          if (selectedAccount == null) {
+                                            if (context.mounted) {
+                                              ErrorDialog.show(context, message: 'Please select an account');
+                                            }
+                                            return;
+                                          }
+
+                                          final amount = double.tryParse(amountController.text);
+                                          if (amount == null || amount <= 0) {
+                                            if (context.mounted) {
+                                              ErrorDialog.show(context, message: 'Please enter a valid amount');
+                                            }
+                                            return;
+                                          }
+
+                                          final income = IncomeTransaction(
+                                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                            accountName: selectedAccount!,
+                                            amount: amount,
+                                            date: selectedDate,
+                                            category: selectedCategory,
+                                            note: noteController.text,
+                                            source: sourceController.text,
+                                          );
+
+                                          try {
+                                            await Provider.of<DataProvider>(context, listen: false)
+                                                .addIncomeTransaction(income);
+                                            
+                                            if (context.mounted) {
+                                              Navigator.of(dialogContext).pop();
+                                              SuccessDialog.show(context, message: 'Income added successfully!');
+                                            }
+                                          } catch (e) {
+                                            if (context.mounted) {
+                                              ErrorDialog.show(context, message: 'Error: $e');
+                                            }
+                                          }
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.transparent,
+                                          foregroundColor: Colors.white,
+                                          elevation: 0,
+                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                        ),
+                                        child: const Text(
+                                          'Add Income',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
                               const SizedBox(height: 8),
                             ],

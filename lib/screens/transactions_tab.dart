@@ -9,6 +9,7 @@ import 'accounts_tab.dart';
 import 'credit_cards_tab.dart';
 import '../utils/performance_utils.dart';
 import '../utils/success_dialog.dart';
+import '../utils/error_dialog.dart';
 
 enum DateFilterType {
   all,
@@ -1636,7 +1637,7 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                             } catch (e) {
                               setState(() => isSubmitting = false);
                               if (dialogContext.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error updating transaction: $e'), backgroundColor: Colors.red, behavior: SnackBarBehavior.floating, margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16), duration: const Duration(milliseconds: 1500)));
+                                ErrorDialog.show(context, message: 'Error updating transaction: $e', duration: const Duration(seconds: 3));
                               }
                             }
                           },
@@ -2260,45 +2261,123 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                       const SizedBox(height: 24),
                       const SizedBox(height: 24),
                       
-                      // Account/Card selection dropdown
-                      _buildModernDropdown(
-                        label: sourceType == TransactionSourceType.bankAccount ? 'Account' : 'Credit Card',
-                        icon: sourceType == TransactionSourceType.bankAccount
-                            ? Icons.account_balance_wallet
-                            : Icons.credit_card,
-                        value: accountName.isEmpty ? null : accountName,
-                        items: (sourceType == TransactionSourceType.bankAccount
-                                ? accounts.cast<dynamic>()
-                                : Provider.of<DataProvider>(context, listen: false).creditCards.cast<dynamic>())
-                            .map<DropdownMenuItem<String>>((a) {
-                              final isAvailable = Provider.of<DataProvider>(context, listen: false)
-                                  .canAddTransactionToAccount(a.name, sourceType);
-                              double availableAmount = 0;
-                              if (sourceType == TransactionSourceType.bankAccount) {
-                                availableAmount = (a as Account).balance;
-                              } else {
-                                availableAmount = (a as CreditCard).availableBalance;
-                              }
-                              
-                              return DropdownMenuItem<String>(
-                                value: a.name,
-                                enabled: isAvailable,
-                                child: Text(
-                                  '${a.name} (₹${availableAmount.toStringAsFixed(0)})',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: isAvailable ? Colors.black87 : Colors.grey,
-                                    fontWeight: FontWeight.w500,
-                                  ),
+                      // Account/Card selection dropdown with empty state
+                      if (sourceType == TransactionSourceType.bankAccount && accounts.isEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.orange.shade600, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'No Accounts Added',
+                                      style: TextStyle(
+                                        color: Colors.orange.shade700,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Please add an account to add transactions',
+                                      style: TextStyle(
+                                        color: Colors.orange.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              );
-                            })
-                            .toList(),
-                        onChanged: (v) => setState(() {
-                          accountName = v ?? '';
-                          amountError = null;
-                        }),
-                      ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else if (sourceType == TransactionSourceType.creditCard && Provider.of<DataProvider>(context, listen: false).creditCards.isEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.orange.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.orange.shade600, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'No Credit Cards Added',
+                                      style: TextStyle(
+                                        color: Colors.orange.shade700,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Please add a credit card to add transactions',
+                                      style: TextStyle(
+                                        color: Colors.orange.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        _buildModernDropdown(
+                          label: sourceType == TransactionSourceType.bankAccount ? 'Account' : 'Credit Card',
+                          icon: sourceType == TransactionSourceType.bankAccount
+                              ? Icons.account_balance_wallet
+                              : Icons.credit_card,
+                          value: accountName.isEmpty ? null : accountName,
+                          items: (sourceType == TransactionSourceType.bankAccount
+                                  ? accounts.cast<dynamic>()
+                                  : Provider.of<DataProvider>(context, listen: false).creditCards.cast<dynamic>())
+                              .map<DropdownMenuItem<String>>((a) {
+                                final isAvailable = Provider.of<DataProvider>(context, listen: false)
+                                    .canAddTransactionToAccount(a.name, sourceType);
+                                double availableAmount = 0;
+                                if (sourceType == TransactionSourceType.bankAccount) {
+                                  availableAmount = (a as Account).balance;
+                                } else {
+                                  availableAmount = (a as CreditCard).availableBalance;
+                                }
+                                
+                                return DropdownMenuItem<String>(
+                                  value: a.name,
+                                  enabled: isAvailable,
+                                  child: Text(
+                                    '${a.name} (₹${availableAmount.toStringAsFixed(0)})',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: isAvailable ? Colors.black87 : Colors.grey,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                );
+                              })
+                              .toList(),
+                          onChanged: (v) => setState(() {
+                            accountName = v ?? '';
+                            amountError = null;
+                          }),
+                        ),
+                      ],
                       const SizedBox(height: 16),
                       
                       // Amount field
@@ -2315,8 +2394,10 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                             amountError = null;
                             if (amount.isEmpty) {
                               amountError = 'Amount is required';
-                            } else if (double.tryParse(amount) == null || double.parse(amount) <= 0) {
-                              amountError = 'Enter a valid amount';
+                            } else if (double.tryParse(amount) == null) {
+                              amountError = 'Enter a valid amount (numbers and decimal only)';
+                            } else if (double.parse(amount) <= 0) {
+                              amountError = 'Amount must be greater than 0';
                             } else if (sourceType == TransactionSourceType.bankAccount) {
                               final selectedAccount = accounts.firstWhere(
                                 (a) => a.name == accountName,
@@ -2555,7 +2636,7 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                                   ),
                                 ],
                               ),
-                              if (_showActualExpense && amount.isNotEmpty && receivableAmount.isNotEmpty && (double.tryParse(receivableAmount) ?? 0) < (double.tryParse(amount) ?? 0)) ...[
+                              if (_showActualExpense && amount.isNotEmpty && receivableAmount.isNotEmpty && (double.tryParse(receivableAmount) ?? 0) <= (double.tryParse(amount) ?? 0)) ...[
                                 const SizedBox(height: 8),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -2624,10 +2705,57 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
                               ),
-                              onPressed: (accountName.isEmpty || amountError != null || amount.isEmpty || isSubmitting ||
-                                  (isReceivable && (receivableAmountError != null || receivableAmount.isEmpty)))
-                                  ? null
-                                  : () async {
+                              onPressed: isSubmitting ? null : () async {
+                                      // Validate account/card selection
+                                      if (sourceType == TransactionSourceType.bankAccount && accounts.isEmpty) {
+                                        if (context.mounted) {
+                                          ErrorDialog.show(context, message: 'No accounts available. Please add an account first.');
+                                        }
+                                        return;
+                                      }
+
+                                      if (sourceType == TransactionSourceType.creditCard && Provider.of<DataProvider>(context, listen: false).creditCards.isEmpty) {
+                                        if (context.mounted) {
+                                          ErrorDialog.show(context, message: 'No credit cards available. Please add a credit card first.');
+                                        }
+                                        return;
+                                      }
+
+                                      if (accountName.isEmpty) {
+                                        if (context.mounted) {
+                                          ErrorDialog.show(context, message: 'Please select an account or credit card');
+                                        }
+                                        return;
+                                      }
+
+                                      if (amount.isEmpty) {
+                                        if (context.mounted) {
+                                          ErrorDialog.show(context, message: 'Amount is required');
+                                        }
+                                        return;
+                                      }
+
+                                      if (amountError != null) {
+                                        if (context.mounted) {
+                                          ErrorDialog.show(context, message: amountError!);
+                                        }
+                                        return;
+                                      }
+
+                                      if (isReceivable && receivableAmount.isEmpty) {
+                                        if (context.mounted) {
+                                          ErrorDialog.show(context, message: 'Receivable amount is required');
+                                        }
+                                        return;
+                                      }
+
+                                      if (isReceivable && receivableAmountError != null) {
+                                        if (context.mounted) {
+                                          ErrorDialog.show(context, message: receivableAmountError!);
+                                        }
+                                        return;
+                                      }
+
                                       setState(() => isSubmitting = true);
                                       try {
                                         final enteredAmount = double.parse(amount);
@@ -2665,15 +2793,7 @@ class _TransactionsTabState extends State<TransactionsTab> with SingleTickerProv
                                     } catch (e) {
                                       setState(() => isSubmitting = false);
                                       if (dialogContext.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Error adding transaction: $e'),
-                                            backgroundColor: Colors.red,
-                                            behavior: SnackBarBehavior.floating,
-                                            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-                                            duration: const Duration(milliseconds: 1500),
-                                          ),
-                                        );
+                                        ErrorDialog.show(context, message: 'Error adding transaction: $e', duration: const Duration(seconds: 3));
                                       }
                                     }
                                   },

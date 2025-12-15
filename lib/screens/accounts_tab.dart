@@ -4,6 +4,7 @@ import '../models/account.dart';
 import '../models/transaction.dart';
 import '../providers/data_provider.dart';
 import '../utils/success_dialog.dart';
+import '../utils/error_dialog.dart';
 import 'account_transactions_page.dart';
 
 class AccountsTab extends StatefulWidget {
@@ -326,6 +327,8 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
   void _showEditAccountDialog(BuildContext context, Account account, int index) {
     final TextEditingController nameController = TextEditingController(text: account.name);
     final TextEditingController balanceController = TextEditingController(text: account.balance.toString());
+    String? nameError;
+    String? balanceError;
 
     showDialog(
       context: context,
@@ -333,159 +336,296 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
         return StatefulBuilder(
           builder: (context, setState) {
             return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
               child: Container(
-                width: MediaQuery.of(context).size.width * 0.85,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Edit Account',
-                      style: TextStyle(fontFamily: 'Inter', 
-                        fontSize: 22,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    TextField(
-                      controller: nameController,
-                      onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(
-                        labelText: 'Account Name',
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: balanceController,
-                      keyboardType: TextInputType.number,
-                      onChanged: (_) => setState(() {}),
-                      decoration: const InputDecoration(
-                        labelText: 'Balance',
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      ),
-                    ),
-                    // Validation error message
-                    if (balanceController.text.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 8),
-                        child: Row(
-                          children: [
-                            Icon(
-                              double.tryParse(balanceController.text) != null && double.tryParse(balanceController.text)! > 0
-                                  ? Icons.check_circle
-                                  : Icons.error_outline,
-                              size: 14,
-                              color: double.tryParse(balanceController.text) != null && double.tryParse(balanceController.text)! > 0
-                                  ? Colors.green
-                                  : Colors.red,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header with icon
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                double.tryParse(balanceController.text) == null
-                                    ? 'Please enter a valid number'
-                                    : double.tryParse(balanceController.text)! <= 0
-                                        ? 'Balance must be greater than 0'
-                                        : 'Valid balance',
+                            child: const Icon(
+                              Icons.account_balance_wallet_rounded,
+                              color: Color(0xFF10B981),
+                              size: 28,
+                            ),
+                          ),
+                          Text(
+                            'Edit Account',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(width: 40),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Account Name Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Account Name',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: TextField(
+                              controller: nameController,
+                              onChanged: (value) {
+                                setState(() {
+                                  nameError = value.isEmpty ? 'Account name is required' : null;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Enter account name',
+                                filled: true,
+                                fillColor: Colors.white,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: nameError != null ? Colors.red : Colors.grey[300]!,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: nameError != null ? Colors.red : Colors.grey[300]!,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF10B981),
+                                    width: 2,
+                                  ),
+                                ),
+                                errorText: nameError,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      
+                      // Balance Field
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Balance',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: TextField(
+                              controller: balanceController,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              onChanged: (value) {
+                                setState(() {
+                                  if (value.isEmpty) {
+                                    balanceError = 'Balance is required';
+                                  } else if (double.tryParse(value) == null) {
+                                    balanceError = 'Enter a valid number';
+                                  } else if (double.parse(value) <= 0) {
+                                    balanceError = 'Balance must be greater than 0';
+                                  } else {
+                                    balanceError = null;
+                                  }
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: 'Enter balance',
+                                prefixText: '₹ ',
+                                prefixStyle: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black87,
+                                ),
+                                filled: true,
+                                fillColor: Colors.white,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: balanceError != null ? Colors.red : Colors.grey[300]!,
+                                  ),
+                                ),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                    color: balanceError != null ? Colors.red : Colors.grey[300]!,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: const BorderSide(
+                                    color: Color(0xFF10B981),
+                                    width: 2,
+                                  ),
+                                ),
+                                errorText: balanceError,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 28),
+                      
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[100],
+                                foregroundColor: Colors.grey[800],
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancel',
                                 style: TextStyle(
-                                  fontSize: 11,
-                                  color: double.tryParse(balanceController.text) != null && double.tryParse(balanceController.text)! > 0
-                                      ? Colors.green
-                                      : Colors.red,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF10B981).withOpacity(0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: (nameController.text.isNotEmpty &&
+                                        balanceController.text.isNotEmpty &&
+                                        double.tryParse(balanceController.text) != null &&
+                                        double.tryParse(balanceController.text)! > 0 &&
+                                        nameError == null &&
+                                        balanceError == null)
+                                    ? () async {
+                                        final updatedAccount = Account(
+                                          name: nameController.text,
+                                          balance: double.parse(balanceController.text),
+                                          balanceDate: DateTime.now(),
+                                        );
+                                        
+                                        final provider = Provider.of<DataProvider>(context, listen: false);
+                                        await provider.updateAccount(index, updatedAccount);
+                                        
+                                        if (context.mounted) {
+                                          Navigator.of(context).pop();
+                                          SuccessDialog.show(context, message: 'Account updated successfully!', duration: const Duration(seconds: 2));
+                                        }
+                                      }
+                                    : null,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  disabledBackgroundColor: Colors.grey[400],
+                                ),
+                                child: const Text(
+                                  'Save',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    const SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            ),
-                            onPressed: () {
-                              Navigator.of(context).pop();
-                            },
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.close, size: 18),
-                                SizedBox(width: 6),
-                                Text('Cancel', style: TextStyle(fontSize: 14)),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.blue,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            ),
-                            onPressed: nameController.text.isNotEmpty &&
-                                    balanceController.text.isNotEmpty &&
-                                    double.tryParse(balanceController.text) != null &&
-                                    double.tryParse(balanceController.text)! > 0
-                                ? () async {
-                                    final originalAccount = account;
-                                    final updatedAccount = Account(
-                                      name: nameController.text,
-                                      balance: double.parse(balanceController.text),
-                                      balanceDate: DateTime.now(),
-                                    );
-                                    
-                                    final provider = Provider.of<DataProvider>(context, listen: false);
-                                    await provider.updateAccount(index, updatedAccount);
-                                    
-                                    if (context.mounted) {
-                                      Navigator.of(context).pop();
-                                      SuccessDialog.show(context, message: 'Account updated successfully!', duration: const Duration(seconds: 5));
-                                    }
-                                  }
-                                : null,
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                Icon(Icons.save, size: 18),
-                                SizedBox(width: 6),
-                                Text('Save', style: TextStyle(fontSize: 14)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             );
@@ -498,79 +638,226 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
   void _showEditBalanceDialog(BuildContext context, Account account) {
     String amount = account.balance.toStringAsFixed(2);
     final controller = TextEditingController(text: amount);
+    String? balanceError;
+
     showDialog(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Edit Balance'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                autofocus: true,
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(labelText: 'Balance'),
-                controller: controller,
-                onChanged: (v) {
-                  amount = v;
-                  setState(() {});
-                },
-              ),
-              if (amount.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Row(
-                    children: [
-                      Icon(
-                        double.tryParse(amount) != null && double.tryParse(amount)! > 0
-                            ? Icons.check_circle
-                            : Icons.error_outline,
-                        size: 14,
-                        color: double.tryParse(amount) != null && double.tryParse(amount)! > 0
-                            ? Colors.green
-                            : Colors.red,
+        builder: (context, setState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header with icon
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          double.tryParse(amount) == null
-                              ? 'Please enter a valid number'
-                              : double.tryParse(amount)! <= 0
-                                  ? 'Balance must be greater than 0'
-                                  : 'Valid balance',
+                      child: const Icon(
+                        Icons.account_balance_rounded,
+                        color: Color(0xFF10B981),
+                        size: 28,
+                      ),
+                    ),
+                    const Text(
+                      'Reset Balance',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(width: 40),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                
+                // Balance Field
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'New Balance',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.03),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: TextField(
+                        autofocus: true,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        controller: controller,
+                        onChanged: (value) {
+                          setState(() {
+                            amount = value;
+                            if (value.isEmpty) {
+                              balanceError = 'Balance is required';
+                            } else if (double.tryParse(value) == null) {
+                              balanceError = 'Enter a valid number';
+                            } else if (double.parse(value) <= 0) {
+                              balanceError = 'Balance must be greater than 0';
+                            } else {
+                              balanceError = null;
+                            }
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Enter new balance',
+                          prefixText: '₹ ',
+                          prefixStyle: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87,
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: balanceError != null ? Colors.red : Colors.grey[300]!,
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: balanceError != null ? Colors.red : Colors.grey[300]!,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF10B981),
+                              width: 2,
+                            ),
+                          ),
+                          errorText: balanceError,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+                
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[100],
+                          foregroundColor: Colors.grey[800],
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
                           style: TextStyle(
-                            fontSize: 11,
-                            color: double.tryParse(amount) != null && double.tryParse(amount)! > 0
-                                ? Colors.green
-                                : Colors.red,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF10B981), Color(0xFF059669)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF10B981).withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: (double.tryParse(amount) != null && double.tryParse(amount)! > 0 && balanceError == null)
+                              ? () async {
+                                  final newBalance = double.tryParse(amount);
+                                  if (newBalance != null) {
+                                    final provider = Provider.of<DataProvider>(context, listen: false);
+                                    await provider.setAccountBalance(account.name, newBalance);
+                                    Navigator.of(dialogContext).pop();
+                                    if (context.mounted) {
+                                      SuccessDialog.show(context, message: 'Balance updated!', duration: const Duration(seconds: 2));
+                                    }
+                                  }
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            disabledBackgroundColor: Colors.grey[400],
+                          ),
+                          child: const Text(
+                            'Save',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-            ],
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: double.tryParse(amount) != null && double.tryParse(amount)! > 0
-                  ? () async {
-                      final newBalance = double.tryParse(amount);
-                      if (newBalance != null) {
-                        final provider = Provider.of<DataProvider>(context, listen: false);
-                        await provider.setAccountBalance(account.name, newBalance);
-                        Navigator.of(dialogContext).pop();
-                        SuccessDialog.show(context, message: 'Balance updated!', duration: const Duration(seconds: 5));
-                      }
-                    }
-                  : null,
-              child: const Text('Save'),
-            ),
-          ],
         ),
       ),
     );
@@ -707,6 +994,20 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
                 ),
                 onPressed: () => Navigator.of(context).pop(),
                 tooltip: 'Back',
+              ),
+            ),
+          ),
+          // Accounts Heading
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Align(
+              alignment: Alignment.center,
+              child: Text(
+                'My Accounts',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ),
           ),
@@ -1076,58 +1377,112 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
                                         children: [
                                           SizedBox(
                                             width: double.infinity,
-                                            child: OutlinedButton.icon(
-                                              onPressed: () => _showEditAccountDialog(context, account, index),
-                                              icon: const Icon(Icons.edit, size: 16),
-                                              label: const Text('Edit'),
-                                              style: OutlinedButton.styleFrom(
-                                                foregroundColor: const Color(0xFF6366F1),
-                                                side: const BorderSide(color: Color(0xFF6366F1)),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(8),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 ),
-                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                                borderRadius: BorderRadius.circular(12),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: const Color(0xFF6366F1).withOpacity(0.3),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: ElevatedButton.icon(
+                                                onPressed: () => _showEditAccountDialog(context, account, index),
+                                                icon: const Icon(Icons.edit, size: 18),
+                                                label: const Text('Edit'),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.transparent,
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 0,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                ),
                                               ),
                                             ),
                                           ),
                                           const SizedBox(height: 8),
                                           SizedBox(
                                             width: double.infinity,
-                                            child: ElevatedButton.icon(
-                                              onPressed: () => _showEditBalanceDialog(context, account),
-                                              icon: const Icon(Icons.account_balance_wallet, size: 16),
-                                              label: const Text('Balance'),
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF10B981),
-                                                foregroundColor: Colors.white,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(8),
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
                                                 ),
-                                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                                borderRadius: BorderRadius.circular(12),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: const Color(0xFF10B981).withOpacity(0.3),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: ElevatedButton.icon(
+                                                onPressed: () => _showEditBalanceDialog(context, account),
+                                                icon: const Icon(Icons.account_balance_wallet, size: 18),
+                                                label: const Text('Balance'),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.transparent,
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 0,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                                ),
                                               ),
                                             ),
                                           ),
                                           const SizedBox(height: 8),
                                           SizedBox(
                                             width: double.infinity,
-                                            child: OutlinedButton.icon(
-                                              onPressed: () async {
-                                                if (await _confirmDelete(context, account.name)) {
-                                                  if (context.mounted) {
-                                                    Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
-                                                    SuccessDialog.show(context, message: '${account.name} deleted successfully!', duration: const Duration(seconds: 5));
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                gradient: const LinearGradient(
+                                                  colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(12),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: const Color(0xFFEF4444).withOpacity(0.3),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: ElevatedButton.icon(
+                                                onPressed: () async {
+                                                  if (await _confirmDelete(context, account.name)) {
+                                                    if (context.mounted) {
+                                                      Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
+                                                      SuccessDialog.show(context, message: '${account.name} deleted successfully!', duration: const Duration(seconds: 2));
+                                                    }
                                                   }
-                                                }
-                                              },
-                                              icon: const Icon(Icons.delete_outline, size: 16),
-                                              label: const Text('Delete'),
-                                              style: OutlinedButton.styleFrom(
-                                                foregroundColor: const Color(0xFFEF4444),
-                                                side: const BorderSide(color: Color(0xFFEF4444)),
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(8),
+                                                },
+                                                icon: const Icon(Icons.delete_outline, size: 18),
+                                                label: const Text('Delete'),
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: Colors.transparent,
+                                                  foregroundColor: Colors.white,
+                                                  elevation: 0,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(vertical: 12),
                                                 ),
-                                                padding: const EdgeInsets.symmetric(vertical: 12),
                                               ),
                                             ),
                                           ),
@@ -1140,20 +1495,38 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
                                             flex: 1,
                                             child: SizedBox(
                                               width: double.infinity,
-                                              child: OutlinedButton.icon(
-                                                onPressed: () => _showEditAccountDialog(context, account, index),
-                                                icon: const Icon(Icons.edit, size: 16),
-                                                label: FittedBox(
-                                                  fit: BoxFit.scaleDown,
-                                                  child: const Text('Edit'),
-                                                ),
-                                                style: OutlinedButton.styleFrom(
-                                                  foregroundColor: const Color(0xFF6366F1),
-                                                  side: const BorderSide(color: Color(0xFF6366F1)),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(8),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
                                                   ),
-                                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: const Color(0xFF6366F1).withOpacity(0.2),
+                                                      blurRadius: 6,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: ElevatedButton.icon(
+                                                  onPressed: () => _showEditAccountDialog(context, account, index),
+                                                  icon: const Icon(Icons.edit, size: 14),
+                                                  label: FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    child: const Text('Edit', style: TextStyle(fontSize: 13)),
+                                                  ),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.transparent,
+                                                    foregroundColor: Colors.white,
+                                                    elevation: 0,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(10),
+                                                    ),
+                                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -1163,20 +1536,38 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
                                             flex: 1,
                                             child: SizedBox(
                                               width: double.infinity,
-                                              child: ElevatedButton.icon(
-                                                onPressed: () => _showEditBalanceDialog(context, account),
-                                                icon: const Icon(Icons.account_balance_wallet, size: 16),
-                                                label: FittedBox(
-                                                  fit: BoxFit.scaleDown,
-                                                  child: const Text('Balance'),
-                                                ),
-                                                style: ElevatedButton.styleFrom(
-                                                  backgroundColor: const Color(0xFF10B981),
-                                                  foregroundColor: Colors.white,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(8),
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
                                                   ),
-                                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: const Color(0xFF10B981).withOpacity(0.2),
+                                                      blurRadius: 6,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: ElevatedButton.icon(
+                                                  onPressed: () => _showEditBalanceDialog(context, account),
+                                                  icon: const Icon(Icons.account_balance_wallet, size: 14),
+                                                  label: FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    child: const Text('Balance', style: TextStyle(fontSize: 13)),
+                                                  ),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.transparent,
+                                                    foregroundColor: Colors.white,
+                                                    elevation: 0,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(10),
+                                                    ),
+                                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -1186,27 +1577,45 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
                                             flex: 1,
                                             child: SizedBox(
                                               width: double.infinity,
-                                              child: OutlinedButton.icon(
-                                                onPressed: () async {
-                                                  if (await _confirmDelete(context, account.name)) {
-                                                    if (context.mounted) {
-                                                      Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
-                                                      SuccessDialog.show(context, message: '${account.name} deleted successfully!', duration: const Duration(seconds: 5));
+                                              child: Container(
+                                                decoration: BoxDecoration(
+                                                  gradient: const LinearGradient(
+                                                    colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                                                    begin: Alignment.topLeft,
+                                                    end: Alignment.bottomRight,
+                                                  ),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: const Color(0xFFEF4444).withOpacity(0.2),
+                                                      blurRadius: 6,
+                                                      offset: const Offset(0, 2),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: ElevatedButton.icon(
+                                                  onPressed: () async {
+                                                    if (await _confirmDelete(context, account.name)) {
+                                                      if (context.mounted) {
+                                                        Provider.of<DataProvider>(context, listen: false).deleteAccount(index);
+                                                        SuccessDialog.show(context, message: '${account.name} deleted successfully!', duration: const Duration(seconds: 2));
+                                                      }
                                                     }
-                                                  }
-                                                },
-                                                icon: const Icon(Icons.delete_outline, size: 16),
-                                                label: FittedBox(
-                                                  fit: BoxFit.scaleDown,
-                                                  child: const Text('Delete'),
-                                                ),
-                                                style: OutlinedButton.styleFrom(
-                                                  foregroundColor: const Color(0xFFEF4444),
-                                                  side: const BorderSide(color: Color(0xFFEF4444)),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(8),
+                                                  },
+                                                  icon: const Icon(Icons.delete_outline, size: 14),
+                                                  label: FittedBox(
+                                                    fit: BoxFit.scaleDown,
+                                                    child: const Text('Delete', style: TextStyle(fontSize: 13)),
                                                   ),
-                                                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: Colors.transparent,
+                                                    foregroundColor: Colors.white,
+                                                    elevation: 0,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius: BorderRadius.circular(10),
+                                                    ),
+                                                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                                                  ),
                                                 ),
                                               ),
                                             ),

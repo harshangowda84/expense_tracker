@@ -16,6 +16,7 @@ import 'services/update_service.dart';
 import 'widgets/update_banner.dart';
 import 'utils/performance_utils.dart';
 import 'screens/check_for_updates_page.dart';
+import 'screens/logout_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -318,12 +319,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ),
                   ],
                 ),
-                margin: const EdgeInsets.all(16),
+                margin: const EdgeInsets.fromLTRB(4, 4, 4, 4),
                 child: Column(
                   children: [
                     Container(
-                      width: 88,
-                      height: 88,
+                      width: 26,
+                      height: 26,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [Colors.white.withOpacity(0.95), Colors.white.withOpacity(0.85)],
@@ -340,134 +341,135 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       child: const Icon(
                         Icons.account_circle_rounded,
                         color: Color(0xFF667EEA),
-                        size: 56,
+                        size: 26,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     const Text(
                       'Spendly User',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 22,
+                        fontSize: 19,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.3,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       'Track & Manage',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.85),
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 6),
               // Menu Items
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  children: [
-                    // Main Navigation Section
-                    _buildDrawerSectionLabel('Main'),
-                    _buildDrawerItem(
-                      icon: Icons.dashboard_rounded,
-                      title: 'Dashboard',
-                      badge: null,
-                      color: const Color(0xFF667EEA),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _tabController.animateTo(0);
-                      },
-                    ),
-                    const SizedBox(height: 4),
-                    // Accounts Section
-                    _buildDrawerSectionLabel('Accounts & Cards'),
-                    _buildDrawerItem(
-                      icon: Icons.account_balance_wallet_rounded,
-                      title: 'Accounts',
-                      badge: null,
-                      color: const Color(0xFF10B981),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const AccountsTab()),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 4),
-                    _buildDrawerItem(
-                      icon: Icons.credit_card_rounded,
-                      title: 'Credit Cards',
-                      badge: null,
-                      color: const Color(0xFFF59E0B),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CreditCardsTab()),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    // Settings Section
-                    _buildDrawerSectionLabel('Settings & Actions'),
-                    _buildDrawerItem(
-                      icon: Icons.settings_rounded,
-                      title: 'Settings',
-                      badge: null,
-                      color: const Color(0xFF8B5CF6),
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    const SizedBox(height: 4),
-                    _buildDrawerItem(
-                      icon: Icons.backup_rounded,
-                      title: 'Backup & Restore',
-                      badge: null,
-                      color: const Color(0xFF06B6D4),
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
-                    const SizedBox(height: 4),
-                    _buildDrawerItem(
-                      icon: Icons.system_update_rounded,
-                      title: 'Check for Updates',
-                      badge: 'New',
-                      color: const Color(0xFFEC4899),
-                      onTap: () {
-                        Navigator.pop(context);
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CheckForUpdatesPage()),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    // About Section
-                    _buildDrawerSectionLabel('App'),
-                    _buildDrawerItem(
-                      icon: Icons.logout_rounded,
-                      title: 'Logout',
-                      badge: null,
-                      color: const Color(0xFFEF4444),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showLogoutConfirmation(context);
-                      },
-                    ),
-                  ],
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Main Navigation Section
+                      _buildDrawerSectionLabel('Main'),
+                      _buildDrawerItem(
+                        icon: Icons.dashboard_rounded,
+                        title: 'Dashboard',
+                        badge: 'New',
+                        color: const Color(0xFF667EEA),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _tabController.animateTo(0);
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      // Accounts Section
+                      _buildDrawerSectionLabel('Accounts & Cards'),
+                      _buildDrawerItem(
+                        icon: Icons.account_balance_wallet_rounded,
+                        title: 'Accounts',
+                        badge: 'New',
+                        color: const Color(0xFF10B981),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AccountsTab()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 3),
+                      _buildDrawerItem(
+                        icon: Icons.credit_card_rounded,
+                        title: 'Credit Cards',
+                        badge: 'New',
+                        color: const Color(0xFFF59E0B),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const CreditCardsTab()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      // Settings Section
+                      _buildDrawerSectionLabel('Settings & Actions'),
+                      _buildDrawerItem(
+                        icon: Icons.settings_rounded,
+                        title: 'Settings',
+                        badge: 'Soon',
+                        color: const Color(0xFF8B5CF6),
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      _buildDrawerItem(
+                        icon: Icons.backup_rounded,
+                        title: 'Backup & Restore',
+                        badge: 'Soon',
+                        color: const Color(0xFF06B6D4),
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                      const SizedBox(height: 4),
+                      _buildDrawerItem(
+                        icon: Icons.system_update_rounded,
+                        title: 'Check for Updates',
+                        badge: 'New',
+                        color: const Color(0xFFEC4899),
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const CheckForUpdatesPage()),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      // About Section
+                      _buildDrawerSectionLabel('App'),
+                      _buildDrawerItem(
+                        icon: Icons.logout_rounded,
+                        title: 'Logout',
+                        badge: 'Exit',
+                        color: const Color(0xFFEF4444),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _showLogoutConfirmation(context);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
               // Footer with version
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -475,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       color: Colors.grey[300],
                       thickness: 1,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 2),
                     Text(
                       'Version 1.1.5',
                       style: TextStyle(
@@ -496,14 +498,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Widget _buildDrawerSectionLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 6),
       child: Text(
         label,
         style: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w700,
           color: Colors.grey[500],
-          letterSpacing: 0.8,
+          letterSpacing: 0.6,
         ),
       ),
     );
@@ -517,69 +519,69 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     required VoidCallback onTap,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           onTap: onTap,
           hoverColor: color.withOpacity(0.08),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               color: color.withOpacity(0.08),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(7),
                   decoration: BoxDecoration(
                     color: color.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
                         color: color.withOpacity(0.1),
-                        blurRadius: 6,
+                        blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  child: Icon(icon, color: color, size: 22),
+                  child: Icon(icon, color: color, size: 20),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     title,
                     style: TextStyle(
                       color: Colors.grey[800],
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      letterSpacing: 0.3,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
                 if (badge != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFF6B6B),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFFF6B6B).withOpacity(0.3),
                           blurRadius: 4,
-                          offset: const Offset(0, 2),
+                          offset: const Offset(0, 1),
                         ),
                       ],
                     ),
-                    child: const Text(
-                      'New',
-                      style: TextStyle(
+                    child: Text(
+                      badge ?? 'New',
+                      style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                        letterSpacing: 0.3,
                       ),
                     ),
                   ),
@@ -601,13 +603,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       icon: Icons.logout_rounded,
       color: const Color(0xFFEF4444),
       onConfirm: () {
-        Navigator.pop(context);
-        // TODO: Add logout logic here
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Logout logic will be added with login feature'),
-            duration: Duration(seconds: 2),
+        // Navigate to logout page and remove all routes until home
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => const LogoutPage(),
           ),
+          (route) => route.isFirst,
         );
       },
     );

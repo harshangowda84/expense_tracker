@@ -51,6 +51,99 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
   }
 
   void _showResetCreditCardDialog(BuildContext context, CreditCard card, int index) {
+    // Check if card has used balance
+    if (card.usedBalance <= 0) {
+      showDialog(
+        context: context,
+        builder: (dialogContext) {
+          return Dialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Icon
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10B981).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline_rounded,
+                      color: Color(0xFF10B981),
+                      size: 48,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // Title
+                  const Text(
+                    'No Outstanding Credit',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Message
+                  Text(
+                    'No credit has been used on ${card.name}. There is nothing to reset.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Close Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(dialogContext).pop(),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF10B981),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'OK',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      );
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -58,6 +151,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           backgroundColor: Colors.transparent,
           elevation: 0,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
@@ -92,12 +186,15 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                           size: 28,
                         ),
                       ),
-                      const Text(
-                        'Reset Credit Card',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                      const Expanded(
+                        child: Text(
+                          'Reset Credit Card',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 40),
@@ -286,20 +383,21 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               backgroundColor: Colors.transparent,
               elevation: 0,
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: SingleChildScrollView(
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: SingleChildScrollView(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -322,14 +420,17 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                               size: 28,
                             ),
                           ),
-                          Text(
-                            paymentMethod == PaymentMethod.bankAccount 
-                                ? 'Pay from Bank Account' 
-                                : 'Pay by Other Method',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                          Expanded(
+                            child: Text(
+                              paymentMethod == PaymentMethod.bankAccount 
+                                  ? 'Pay from Bank Account' 
+                                  : 'Pay by Other Method',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 40),
@@ -662,30 +763,37 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
       }
 
       if (context.mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isPayingFull 
-                  ? '${card.name} balance reset successfully!' 
-                  : 'Payment of ₹${paymentAmount.toStringAsFixed(2)} successful!'
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        // Close dialogs first
+        Navigator.of(context).pop(); // Close payment dialog
+        Navigator.of(context).pop(); // Close reset dialog
+        
+        // Show success dialog immediately after dialogs are closed
+        Future.delayed(const Duration(milliseconds: 50), () {
+          if (context.mounted) {
+            SuccessDialog.show(
+              context, 
+              message: isPayingFull 
+                  ? '${card.name} balance paid successfully!' 
+                  : 'Payment of ₹${paymentAmount.toStringAsFixed(2)} successful!',
+              duration: const Duration(seconds: 3),
+            );
+          }
+        });
       }
     } catch (e) {
       if (context.mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        // Show error dialog
+        showDialog(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Error'),
             content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.only(bottom: 72, left: 16, right: 16),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('OK'),
+              ),
+            ],
           ),
         );
       }
@@ -822,25 +930,21 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               backgroundColor: Colors.transparent,
               elevation: 0,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.9,
-                  maxWidth: MediaQuery.of(context).size.width * 0.95,
-                ),
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
-                child: PerformanceUtils.createOptimizedScrollView(
-                  physics: const ClampingScrollPhysics(),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: SingleChildScrollView(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -852,21 +956,24 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B).withOpacity(0.1),
+                              color: const Color(0xFF10B981).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
                               Icons.credit_card_rounded,
-                              color: Color(0xFFF59E0B),
+                              color: Color(0xFF10B981),
                               size: 28,
                             ),
                           ),
-                          const Text(
-                            'Edit Credit Card',
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                          const Expanded(
+                            child: Text(
+                              'Edit Credit Card',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 40),
@@ -929,7 +1036,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFFF59E0B),
+                                    color: Color(0xFF10B981),
                                     width: 2,
                                   ),
                                 ),
@@ -1011,7 +1118,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
                                   borderSide: const BorderSide(
-                                    color: Color(0xFFF59E0B),
+                                    color: Color(0xFF10B981),
                                     width: 2,
                                   ),
                                 ),
@@ -1060,7 +1167,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                         Container(
                                           padding: const EdgeInsets.all(16),
                                           decoration: BoxDecoration(
-                                            color: const Color(0xFFF59E0B).withOpacity(0.1),
+                                            color: const Color(0xFF10B981).withOpacity(0.1),
                                             borderRadius: const BorderRadius.only(
                                               topLeft: Radius.circular(20),
                                               topRight: Radius.circular(20),
@@ -1068,14 +1175,14 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                           ),
                                           child: const Row(
                                             children: [
-                                              Icon(Icons.calendar_today, color: Color(0xFFF59E0B)),
+                                              Icon(Icons.calendar_today, color: Color(0xFF10B981)),
                                               SizedBox(width: 8),
                                               Text(
                                                 'Select Bill Due Date',
                                                 style: TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.w500,
-                                                  color: Color(0xFFF59E0B),
+                                                  color: Color(0xFF10B981),
                                                 ),
                                               ),
                                             ],
@@ -1156,7 +1263,7 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                 children: [
                                   const Icon(
                                     Icons.calendar_today,
-                                    color: Color(0xFFF59E0B),
+                                    color: Color(0xFF10B981),
                                     size: 20,
                                   ),
                                   const SizedBox(width: 12),
@@ -1211,14 +1318,14 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                             child: Container(
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFF59E0B).withOpacity(0.3),
+                                    color: const Color(0xFF10B981).withOpacity(0.3),
                                     blurRadius: 12,
                                     offset: const Offset(0, 4),
                                   ),
@@ -1691,37 +1798,40 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
       color: Colors.white,
       child: Column(
         children: [
-          // Back button header
+          // Credit Cards Heading with back button
           Padding(
-            padding: const EdgeInsets.only(left: 4, top: 40, bottom: 4),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.only(left: 16, top: 50, right: 16, bottom: 16),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: Color(0xFF1E293B)),
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Color(0xFF1E293B)),
+                  onPressed: () => Navigator.of(context).pop(),
+                  tooltip: 'Back',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 50, minHeight: 50),
                 ),
-                onPressed: () => Navigator.of(context).pop(),
-                tooltip: 'Back',
-              ),
-            ),
-          ),
-          // Credit Cards Heading
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Align(
-              alignment: Alignment.center,
-              child: Text(
-                'My Credit Cards',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      'My Credit Cards',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 50),
+              ],
             ),
           ),
           Expanded(
@@ -1895,6 +2005,9 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                       child: Card(
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        color: Colors.grey[100],
+                        elevation: 2,
+                        shadowColor: const Color(0xFFEC4899).withOpacity(0.2),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () {
@@ -1922,6 +2035,46 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              // Credit Card Header with Icon
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEC4899).withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: const Color(0xFFEC4899).withOpacity(0.15),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEC4899).withOpacity(0.2),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Icon(
+                                        Icons.credit_card_rounded,
+                                        color: Color(0xFFEC4899),
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        card.name,
+                                        style: const TextStyle(
+                                          color: Colors.black87,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -1931,14 +2084,6 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          card.name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
                                         Text(
                                           'Added on:',
                                           style: TextStyle(
@@ -2131,34 +2276,27 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                           width: double.infinity,
                                           child: Container(
                                             decoration: BoxDecoration(
-                                              gradient: card.usedBalance > 0
-                                                  ? const LinearGradient(
-                                                      colors: [Color(0xFF10B981), Color(0xFF059669)],
-                                                      begin: Alignment.topLeft,
-                                                      end: Alignment.bottomRight,
-                                                    )
-                                                  : null,
-                                              color: card.usedBalance > 0 ? null : Colors.grey[300],
+                                              gradient: const LinearGradient(
+                                                colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                                begin: Alignment.topLeft,
+                                                end: Alignment.bottomRight,
+                                              ),
                                               borderRadius: BorderRadius.circular(12),
-                                              boxShadow: card.usedBalance > 0
-                                                  ? [
-                                                      BoxShadow(
-                                                        color: const Color(0xFF10B981).withOpacity(0.3),
-                                                        blurRadius: 8,
-                                                        offset: const Offset(0, 2),
-                                                      ),
-                                                    ]
-                                                  : [],
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: const Color(0xFF10B981).withOpacity(0.3),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
                                             ),
                                             child: ElevatedButton.icon(
-                                              onPressed: card.usedBalance > 0 
-                                                  ? () => _showResetCreditCardDialog(context, card, index)
-                                                  : null,
+                                              onPressed: () => _showResetCreditCardDialog(context, card, index),
                                               icon: const Icon(Icons.refresh, size: 18),
-                                              label: const Text('Reset'),
+                                              label: Text(card.usedBalance > 0 ? 'Pay' : 'Paid'),
                                               style: ElevatedButton.styleFrom(
                                                 backgroundColor: Colors.transparent,
-                                                foregroundColor: card.usedBalance > 0 ? Colors.white : Colors.grey,
+                                                foregroundColor: Colors.white,
                                                 elevation: 0,
                                                 shape: RoundedRectangleBorder(
                                                   borderRadius: BorderRadius.circular(12),
@@ -2255,37 +2393,30 @@ class _CreditCardsTabState extends State<CreditCardsTab> with SingleTickerProvid
                                             width: double.infinity,
                                             child: Container(
                                               decoration: BoxDecoration(
-                                                gradient: card.usedBalance > 0
-                                                    ? const LinearGradient(
-                                                        colors: [Color(0xFF10B981), Color(0xFF059669)],
-                                                        begin: Alignment.topLeft,
-                                                        end: Alignment.bottomRight,
-                                                      )
-                                                    : null,
-                                                color: card.usedBalance > 0 ? null : Colors.grey[300],
+                                                gradient: const LinearGradient(
+                                                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
                                                 borderRadius: BorderRadius.circular(10),
-                                                boxShadow: card.usedBalance > 0
-                                                    ? [
-                                                        BoxShadow(
-                                                          color: const Color(0xFF10B981).withOpacity(0.2),
-                                                          blurRadius: 6,
-                                                          offset: const Offset(0, 2),
-                                                        ),
-                                                      ]
-                                                    : [],
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: const Color(0xFF10B981).withOpacity(0.2),
+                                                    blurRadius: 6,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: ElevatedButton.icon(
-                                                onPressed: card.usedBalance > 0 
-                                                    ? () => _showResetCreditCardDialog(context, card, index)
-                                                    : null,
+                                                onPressed: () => _showResetCreditCardDialog(context, card, index),
                                                 icon: const Icon(Icons.refresh, size: 14),
                                                 label: FittedBox(
                                                   fit: BoxFit.scaleDown,
-                                                  child: const Text('Reset', style: TextStyle(fontSize: 13)),
+                                                  child: Text(card.usedBalance > 0 ? 'Pay' : 'Paid', style: const TextStyle(fontSize: 13)),
                                                 ),
                                                 style: ElevatedButton.styleFrom(
                                                   backgroundColor: Colors.transparent,
-                                                  foregroundColor: card.usedBalance > 0 ? Colors.white : Colors.grey,
+                                                  foregroundColor: Colors.white,
                                                   elevation: 0,
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius: BorderRadius.circular(10),

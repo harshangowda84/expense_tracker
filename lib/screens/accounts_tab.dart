@@ -647,204 +647,158 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           backgroundColor: Colors.transparent,
           elevation: 0,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Header with icon
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.15),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Header with icon
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF10B981).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.account_balance_rounded,
+                          color: Color(0xFF10B981),
+                          size: 28,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.account_balance_rounded,
-                        color: Color(0xFF10B981),
-                        size: 28,
-                      ),
-                    ),
-                    const Text(
-                      'Reset Balance',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(width: 40),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                
-                // Balance Field
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'New Balance',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.03),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: TextField(
-                        autofocus: true,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        controller: controller,
-                        onChanged: (value) {
-                          setState(() {
-                            amount = value;
-                            if (value.isEmpty) {
-                              balanceError = 'Balance is required';
-                            } else if (double.tryParse(value) == null) {
-                              balanceError = 'Enter a valid number';
-                            } else if (double.parse(value) <= 0) {
-                              balanceError = 'Balance must be greater than 0';
-                            } else {
-                              balanceError = null;
-                            }
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Enter new balance',
-                          prefixText: '₹ ',
-                          prefixStyle: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
+                      const Expanded(
+                        child: Text(
+                          'Edit Balance',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: balanceError != null ? Colors.red : Colors.grey[300]!,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: balanceError != null ? Colors.red : Colors.grey[300]!,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF10B981),
-                              width: 2,
-                            ),
-                          ),
-                          errorText: balanceError,
-                        ),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 28),
-                
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(dialogContext).pop(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[100],
-                          foregroundColor: Colors.grey[800],
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      const SizedBox(width: 40),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Balance Field
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'New Balance',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Container(
+                      const SizedBox(height: 8),
+                      Container(
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF10B981), Color(0xFF059669)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF10B981).withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
                             ),
                           ],
                         ),
+                        child: TextField(
+                          autofocus: true,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          controller: controller,
+                          onChanged: (value) {
+                            setState(() {
+                              amount = value;
+                              if (value.isEmpty) {
+                                balanceError = 'Balance is required';
+                              } else if (double.tryParse(value) == null) {
+                                balanceError = 'Enter a valid number';
+                              } else if (double.parse(value) <= 0) {
+                                balanceError = 'Balance must be greater than 0';
+                              } else {
+                                balanceError = null;
+                              }
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Enter new balance',
+                            prefixText: '₹ ',
+                            prefixStyle: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: balanceError != null ? Colors.red : Colors.grey[300]!,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide(
+                                color: balanceError != null ? Colors.red : Colors.grey[300]!,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF10B981),
+                                width: 2,
+                              ),
+                            ),
+                            errorText: balanceError,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 28),
+                  
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
                         child: ElevatedButton(
-                          onPressed: (double.tryParse(amount) != null && double.tryParse(amount)! > 0 && balanceError == null)
-                              ? () async {
-                                  final newBalance = double.tryParse(amount);
-                                  if (newBalance != null) {
-                                    final provider = Provider.of<DataProvider>(context, listen: false);
-                                    await provider.setAccountBalance(account.name, newBalance);
-                                    Navigator.of(dialogContext).pop();
-                                    if (context.mounted) {
-                                      SuccessDialog.show(context, message: 'Balance updated!', duration: const Duration(seconds: 2));
-                                    }
-                                  }
-                                }
-                              : null,
+                          onPressed: () => Navigator.of(dialogContext).pop(),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.grey[100],
+                            foregroundColor: Colors.grey[800],
                             elevation: 0,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            disabledBackgroundColor: Colors.grey[400],
                           ),
                           child: const Text(
-                            'Save',
+                            'Cancel',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w600,
@@ -852,10 +806,62 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF10B981), Color(0xFF059669)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF10B981).withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton(
+                            onPressed: (double.tryParse(amount) != null && double.tryParse(amount)! > 0 && balanceError == null)
+                                ? () async {
+                                    final newBalance = double.tryParse(amount);
+                                    if (newBalance != null) {
+                                      final provider = Provider.of<DataProvider>(context, listen: false);
+                                      await provider.setAccountBalance(account.name, newBalance);
+                                      Navigator.of(dialogContext).pop();
+                                      if (context.mounted) {
+                                        SuccessDialog.show(context, message: 'Balance updated!', duration: const Duration(seconds: 2));
+                                      }
+                                    }
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              disabledBackgroundColor: Colors.grey[400],
+                            ),
+                            child: const Text(
+                              'Save',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -978,37 +984,40 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
       color: Colors.white,
       child: Column(
         children: [
-          // Back button header
+          // Back button header with title
           Padding(
-            padding: const EdgeInsets.only(left: 4, top: 40, bottom: 4),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.only(left: 16, top: 50, right: 16, bottom: 16),
+            child: Row(
+              children: [
+                IconButton(
+                  icon: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: Color(0xFF1E293B)),
                   ),
-                  child: const Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Color(0xFF1E293B)),
+                  onPressed: () => Navigator.of(context).pop(),
+                  tooltip: 'Back',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 50, minHeight: 50),
                 ),
-                onPressed: () => Navigator.of(context).pop(),
-                tooltip: 'Back',
-              ),
-            ),
-          ),
-          // Accounts Heading
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Align(
-              alignment: Alignment.center,
-              child: Text(
-                'My Accounts',
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      'My Accounts',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                        decoration: TextDecoration.none,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 50),
+              ],
             ),
           ),
           Expanded(
@@ -1180,6 +1189,9 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
                       child: Card(
                         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        color: Colors.grey[100],
+                        elevation: 2,
+                        shadowColor: const Color(0xFF667EEA).withOpacity(0.2),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
                           onTap: () {
@@ -1208,6 +1220,46 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                // Account Header with Icon
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF667EEA).withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: const Color(0xFF667EEA).withOpacity(0.15),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF667EEA).withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: const Icon(
+                                          Icons.account_balance_wallet_rounded,
+                                          color: Color(0xFF667EEA),
+                                          size: 18,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          account.name,
+                                          style: const TextStyle(
+                                            color: Colors.black87,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
                                 Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -1217,14 +1269,6 @@ class _AccountsTabState extends State<AccountsTab> with SingleTickerProviderStat
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            account.name,
-                                            style: TextStyle(fontFamily: 'Inter', 
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
                                           Text(
                                             'Last updated:',
                                             style: TextStyle(
